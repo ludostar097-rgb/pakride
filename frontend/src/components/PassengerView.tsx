@@ -15,7 +15,10 @@ import {
   KeyRound,
   MessageSquare,
   Volume2,
-  Check
+  Check,
+  MapPin,
+  Sparkles,
+  Compass
 } from 'lucide-react';
 import {
   VehicleCategory,
@@ -23,8 +26,10 @@ import {
   RideRequest,
   RideOffer
 } from '../shared/types';
-import { KARACHI_LANDMARKS } from '../shared/constants';
 import { MapView } from './MapView';
+import { LocationSearchInput } from './LocationSearchInput';
+import { LiveChatModal } from './LiveChatModal';
+import { GeocodingService } from '../services/geocoding';
 import { Socket } from 'socket.io-client';
 
 interface PassengerViewProps {
@@ -42,20 +47,17 @@ export const PassengerView: React.FC<PassengerViewProps> = ({
   t,
   apiBaseUrl
 }) => {
+  const [selectedCity, setSelectedCity] = useState<'Karachi' | 'Islamabad' | 'Rawalpindi' | 'Lahore'>('Karachi');
   const [category, setCategory] = useState<VehicleCategory>('CAR');
-  const [pickup, setPickup] = useState<LocationCoordinates>({
-    lat: KARACHI_LANDMARKS[0].lat,
-    lng: KARACHI_LANDMARKS[0].lng,
-    address: KARACHI_LANDMARKS[0].name,
-    landmark: KARACHI_LANDMARKS[0].zone
-  });
-  const [destination, setDestination] = useState<LocationCoordinates>({
-    lat: KARACHI_LANDMARKS[4].lat,
-    lng: KARACHI_LANDMARKS[4].lng,
-    address: KARACHI_LANDMARKS[4].name,
-    landmark: KARACHI_LANDMARKS[4].zone
-  });
+  const [mapTargetMode, setMapTargetMode] = useState<'pickup' | 'destination'>('pickup');
+  const [isLocatingGps, setIsLocatingGps] = useState(false);
+
+  // Initialize with dynamic popular hubs for the initial city
+  const initialHubs = GeocodingService.getPopularHubs('Karachi');
+  const [pickup, setPickup] = useState<LocationCoordinates>(initialHubs[0]);
+  const [destination, setDestination] = useState<LocationCoordinates>(initialHubs[1]);
   const [pickupNotes, setPickupNotes] = useState<string>('');
+  const [recentChips, setRecentChips] = useState<LocationCoordinates[]>(initialHubs);
 
   const [fareEstimate, setFareEstimate] = useState<{
     distanceKm: number;
@@ -69,14 +71,61 @@ export const PassengerView: React.FC<PassengerViewProps> = ({
   const [loading, setLoading] = useState(false);
   const [driverPos, setDriverPos] = useState<{ lat: number; lng: number } | undefined>();
   const [showSosModal, setShowSosModal] = useState(false);
+  const [showChatModal, setShowChatModal] = useState(false);
+  const [selectedStars, setSelectedStars] = useState(5);
+  const [reviewText, setReviewText] = useState('');
   const [audioPromptSent, setAudioPromptSent] = useState(false);
 
-  // Quick note preset tags
+  // Update chips and default coordinates when city changes
+  const handleCityChange = (newCity: 'Karachi' | 'Islamabad' | 'Rawalpindi' | 'Lahore') => {
+    setSelectedCity(newCity);
+    const hubs = GeocodingService.getPopularHubs(newCity);
+    const savedRecents = GeocodingService.getRecentLocations();
+    const cityRecents = savedRecents.filter((r) => r.landmark?.includes(newCity) || r.address.includes(newCity));
+    const combined = cityRecents.length > 0 ? cityRecents : hubs;
+    setRecentChips(combined);
+    if (hubs.length >= 2) {
+      setPickup(hubs[0]);
+      setDestination(hubs[1]);
+    }
+  };
+
   const notePresets = [t.noteGate, t.noteBakery, t.noteCall, t.noteCorner];
+
+  const getAuthToken = () => {
+    return localStorage.getItem('pakride_token') || `mock-token-${currentUser.id}`;
+  };
+
+  // Locate Me using Device / Browser GPS
+  const handleLocateGps = () => {
+    if (!navigator.geolocation) {
+      alert('Geolocation is not supported by your browser');
+      return;
+    }
+    setIsLocatingGps(true);
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        const lat = Math.round(pos.coords.latitude * 10000) / 10000;
+        const lng = Math.round(pos.coords.longitude * 10000) / 10000;
+        const loc = await GeocodingService.reverseGeocode(lat, lng);
+        setPickup(loc);
+        GeocodingService.saveRecentLocation(loc);
+        setIsLocatingGps(false);
+      },
+      (err) => {
+        console.warn('GPS location error:', err);
+        setIsLocatingGps(false);
+        alert('Could not retrieve GPS location. Please check location permissions.');
+      },
+      { timeout: 10000, enableHighAccuracy: true }
+    );
+  };
 
   // Fetch estimated fare whenever pickup, dest, or category changes
   useEffect(() => {
     if (!pickup || !destination) return;
+    const zoneId = selectedCity === 'Islamabad' ? 'zone-islamabad-central' : 'zone-karachi-jauhar';
+
     fetch(`${apiBaseUrl}/api/rides/calculate-fare`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -84,7 +133,7 @@ export const PassengerView: React.FC<PassengerViewProps> = ({
         category,
         pickup,
         destination,
-        zoneId: 'zone-karachi-jauhar'
+        zoneId
       })
     })
       .then((res) => res.json())
@@ -95,7 +144,7 @@ export const PassengerView: React.FC<PassengerViewProps> = ({
         }
       })
       .catch((err) => console.error('Fare calculation error:', err));
-  }, [category, pickup, destination, apiBaseUrl]);
+  }, [category, pickup, destination, selectedCity, apiBaseUrl]);
 
   // Socket event listeners for real-time ride & offer updates
   useEffect(() => {
@@ -137,7 +186,7 @@ export const PassengerView: React.FC<PassengerViewProps> = ({
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer mock-token-${currentUser.id}`
+          Authorization: `Bearer ${getAuthToken()}`
         },
         body: JSON.stringify({
           category,
@@ -150,6 +199,9 @@ export const PassengerView: React.FC<PassengerViewProps> = ({
       const data = await res.json();
       if (data.ride) {
         setActiveRide(data.ride);
+        // Save pickup and destination to user's recent places
+        GeocodingService.saveRecentLocation(pickup);
+        GeocodingService.saveRecentLocation(destination);
       }
     } catch (err) {
       console.error('Request ride failed:', err);
@@ -166,7 +218,7 @@ export const PassengerView: React.FC<PassengerViewProps> = ({
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer mock-token-${currentUser.id}`
+          Authorization: `Bearer ${getAuthToken()}`
         },
         body: JSON.stringify({ offerId })
       });
@@ -187,7 +239,7 @@ export const PassengerView: React.FC<PassengerViewProps> = ({
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer mock-token-${currentUser.id}`
+          Authorization: `Bearer ${getAuthToken()}`
         },
         body: JSON.stringify({
           newStatus: 'CANCELLED',
@@ -204,12 +256,13 @@ export const PassengerView: React.FC<PassengerViewProps> = ({
   // Generate WhatsApp Safety Share Link
   const handleShareWhatsApp = () => {
     if (!activeRide) return;
-    const fare = Math.round((activeRide.agreedFarePaisa || activeRide.proposedFarePaisa) / 100);
-    const msg = `🛡️ *PakRide Safety Update*\nI am on a ride in Karachi (Gulistan-e-Jauhar Pilot).\n\n🚗 *Driver:* ${activeRide.driverName || 'Assigned Driver'} (${activeRide.driverPhone || 'N/A'})\n🚘 *Vehicle:* ${activeRide.vehicleDetails || 'Standard'}\n📍 *Pickup:* ${activeRide.pickup.address}\n🏁 *Destination:* ${activeRide.destination.address}\n💵 *Agreed Fare:* PKR ${fare}\n🔢 *Status:* ${activeRide.status}`;
-    const url = `https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`;
-    window.open(url, '_blank');
+    const msg = encodeURIComponent(
+      `Assalam-o-Alaikum! I am on a PakRide trip in ${selectedCity}.\nDriver: ${activeRide.driverName || 'Assigned Driver'}\nVehicle: ${activeRide.vehicleDetails || 'PakRide'}\nFare: PKR ${Math.round((activeRide.agreedFarePaisa || activeRide.proposedFarePaisa) / 100)}\nTrack trip safety: https://pakride.pk/track/${activeRide.id}`
+    );
+    window.open(`https://wa.me/?text=${msg}`, '_blank');
   };
 
+  // Quick Simulated Voice Note
   const handleSimulateAudioNote = () => {
     setAudioPromptSent(true);
     setTimeout(() => setAudioPromptSent(false), 4000);
@@ -218,14 +271,36 @@ export const PassengerView: React.FC<PassengerViewProps> = ({
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 pb-12">
       {/* Left Column: Interactive Map */}
-      <div className="lg:col-span-7 h-[420px] lg:h-[720px] sticky top-20">
+      <div className="lg:col-span-7 h-[440px] lg:h-[720px] sticky top-20">
         <MapView
           pickup={pickup}
           destination={destination}
           driverLocation={driverPos}
-          onSelectPickup={(loc) => !activeRide && setPickup(loc)}
-          onSelectDestination={(loc) => !activeRide && setDestination(loc)}
+          onSelectPickup={(loc) => {
+            if (!activeRide) {
+              setPickup(loc);
+              GeocodingService.saveRecentLocation(loc);
+            }
+          }}
+          onSelectDestination={(loc) => {
+            if (!activeRide) {
+              setDestination(loc);
+              GeocodingService.saveRecentLocation(loc);
+            }
+          }}
+          activeCity={selectedCity === 'Islamabad' ? 'Islamabad' : 'Karachi'}
         />
+        <div className="mt-2 flex items-center justify-between text-[11px] text-slate-500 bg-white/90 backdrop-blur px-3 py-1.5 rounded-xl border border-slate-200 shadow-xs">
+          <div className="flex items-center space-x-1.5">
+            <Compass className="w-3.5 h-3.5 text-pakgreen-600" />
+            <span>Click anywhere on the map to set pin location</span>
+          </div>
+          <div className="flex items-center space-x-1 font-semibold">
+            <span className={mapTargetMode === 'pickup' ? 'text-pakgreen-600' : 'text-slate-400'}>🟢 Pickup</span>
+            <span>/</span>
+            <span className={mapTargetMode === 'destination' ? 'text-red-600' : 'text-slate-400'}>🔴 Drop</span>
+          </div>
+        </div>
       </div>
 
       {/* Right Column: Ride Actions & Workflow */}
@@ -233,14 +308,34 @@ export const PassengerView: React.FC<PassengerViewProps> = ({
         {/* CASE 1: No Active Ride - Booking Flow */}
         {!activeRide && (
           <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 space-y-4">
+            {/* Header with City Selector */}
             <div>
-              <h2 className="text-xl font-bold text-charcoal-900 flex items-center justify-between">
-                <span>{t.selectCategory}</span>
-                <span className="text-xs bg-pakgreen-100 text-pakgreen-800 px-2.5 py-1 rounded-full font-semibold">
+              <div className="flex items-center justify-between mb-2">
+                <h2 className="text-xl font-bold text-charcoal-900 flex items-center space-x-2">
+                  <span>{t.selectCategory}</span>
+                </h2>
+                <span className="text-xs bg-pakgreen-100 text-pakgreen-800 px-2.5 py-1 rounded-full font-bold">
                   0% Commission
                 </span>
-              </h2>
-              <p className="text-xs text-slate-500 mt-1">{t.pilotZone}</p>
+              </div>
+
+              {/* City Pill Switcher */}
+              <div className="flex items-center space-x-1 bg-slate-100 p-1 rounded-xl">
+                {(['Karachi', 'Islamabad', 'Rawalpindi', 'Lahore'] as const).map((city) => (
+                  <button
+                    key={city}
+                    type="button"
+                    onClick={() => handleCityChange(city)}
+                    className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition ${
+                      selectedCity === city
+                        ? 'bg-white text-pakgreen-700 shadow-xs'
+                        : 'text-slate-600 hover:text-slate-900'
+                    }`}
+                  >
+                    {city === 'Karachi' ? 'Karachi (Pilot)' : city}
+                  </button>
+                ))}
+              </div>
             </div>
 
             {/* Vehicle Category Selector */}
@@ -288,47 +383,55 @@ export const PassengerView: React.FC<PassengerViewProps> = ({
               </button>
             </div>
 
-            {/* Pickup & Destination Shortcuts */}
+            {/* Dynamic Search Inputs (Fuzzy, Typo-Tolerant Autocomplete) */}
             <div className="space-y-3">
-              <div>
-                <label className="text-xs font-semibold text-slate-600 mb-1 block">
-                  🟢 {t.pickupLocation}
-                </label>
-                <select
-                  value={pickup.address}
-                  onChange={(e) => {
-                    const l = KARACHI_LANDMARKS.find((lm) => lm.name === e.target.value);
-                    if (l) setPickup({ lat: l.lat, lng: l.lng, address: l.name, landmark: l.zone });
-                  }}
-                  className="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-pakgreen-500 outline-none"
-                >
-                  {KARACHI_LANDMARKS.map((lm) => (
-                    <option key={lm.name} value={lm.name}>
-                      {lm.name} ({lm.zone})
-                    </option>
-                  ))}
-                </select>
-              </div>
+              <LocationSearchInput
+                label={t.pickupLocation}
+                iconColor="bg-emerald-500"
+                value={pickup}
+                onChange={(loc) => setPickup(loc)}
+                placeholder={`Search pickup address or typo (e.g. Centuras, F-10, Jauhar)...`}
+                activeCity={selectedCity}
+                showGpsButton={true}
+                onLocateGps={handleLocateGps}
+                isLocating={isLocatingGps}
+              />
 
-              <div>
-                <label className="text-xs font-semibold text-slate-600 mb-1 block">
-                  🔴 {t.destinationLocation}
-                </label>
-                <select
-                  value={destination.address}
-                  onChange={(e) => {
-                    const l = KARACHI_LANDMARKS.find((lm) => lm.name === e.target.value);
-                    if (l) setDestination({ lat: l.lat, lng: l.lng, address: l.name, landmark: l.zone });
-                  }}
-                  className="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-pakgreen-500 outline-none"
-                >
-                  {KARACHI_LANDMARKS.map((lm) => (
-                    <option key={lm.name} value={lm.name}>
-                      {lm.name} ({lm.zone})
-                    </option>
-                  ))}
-                </select>
-              </div>
+              <LocationSearchInput
+                label={t.destinationLocation}
+                iconColor="bg-red-500"
+                value={destination}
+                onChange={(loc) => setDestination(loc)}
+                placeholder={`Search destination in ${selectedCity}...`}
+                activeCity={selectedCity}
+              />
+
+              {/* Recent / Frequent Location Quick Chips */}
+              {recentChips.length > 0 && (
+                <div>
+                  <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1 flex items-center space-x-1">
+                    <Clock className="w-3 h-3 text-slate-400" />
+                    <span>Quick Places in {selectedCity}:</span>
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {recentChips.slice(0, 5).map((hub, idx) => (
+                      <button
+                        key={`${hub.address}-${idx}`}
+                        type="button"
+                        onClick={() => {
+                          setDestination(hub);
+                          GeocodingService.saveRecentLocation(hub);
+                        }}
+                        className="px-2 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-[11px] font-medium transition flex items-center space-x-1 truncate max-w-[180px]"
+                        title={hub.address}
+                      >
+                        <MapPin className="w-3 h-3 text-pakgreen-600 flex-shrink-0" />
+                        <span className="truncate">{hub.address.split(',')[0]}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* Pickup Landmark & Gate Detail Notes */}
               <div>
@@ -447,7 +550,7 @@ export const PassengerView: React.FC<PassengerViewProps> = ({
               <div className="text-center py-8 text-slate-400 text-sm">
                 <Clock className="w-8 h-8 mx-auto mb-2 text-slate-300 animate-spin" />
                 <p>{t.noOffersYet}</p>
-                <p className="text-xs mt-1 text-slate-400">Drivers in Gulistan-e-Jauhar are reviewing your offer...</p>
+                <p className="text-xs mt-1 text-slate-400">Drivers in {selectedCity} are reviewing your offer...</p>
               </div>
             ) : (
               <div className="space-y-3">
@@ -559,9 +662,18 @@ export const PassengerView: React.FC<PassengerViewProps> = ({
                   </div>
                 </div>
                 <div className="flex space-x-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowChatModal(true)}
+                    className="p-2.5 bg-white border border-slate-200 rounded-full text-slate-700 hover:bg-slate-100 shadow-sm"
+                    title="Live Chat with Driver"
+                  >
+                    <MessageSquare className="w-4 h-4 text-pakgreen-600" />
+                  </button>
                   <a
                     href={`tel:${activeRide.driverPhone}`}
                     className="p-2.5 bg-white border border-slate-200 rounded-full text-slate-700 hover:bg-slate-100 shadow-sm"
+                    title="Call Driver"
                   >
                     <Phone className="w-4 h-4 text-pakgreen-600" />
                   </a>
@@ -611,18 +723,44 @@ export const PassengerView: React.FC<PassengerViewProps> = ({
                   </div>
                   <p className="text-xs text-slate-500">{t.rateDriver}</p>
 
-                  <div className="flex space-x-2">
+                  <div className="flex space-x-1.5">
                     {[1, 2, 3, 4, 5].map((star) => (
                       <Star
                         key={star}
-                        className="w-7 h-7 text-amber-400 fill-current cursor-pointer hover:scale-110 transition"
+                        onClick={() => setSelectedStars(star)}
+                        className={`w-7 h-7 cursor-pointer transition ${
+                          star <= selectedStars
+                            ? 'text-amber-400 fill-current hover:scale-110'
+                            : 'text-slate-300'
+                        }`}
                       />
                     ))}
                   </div>
 
+                  <input
+                    type="text"
+                    value={reviewText}
+                    onChange={(e) => setReviewText(e.target.value)}
+                    placeholder="Write a review (e.g. polite driver, AC working, on time)..."
+                    className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-xl outline-none"
+                  />
+
                   <button
                     type="button"
-                    onClick={() => {
+                    onClick={async () => {
+                      try {
+                        await fetch(`${apiBaseUrl}/api/rides/${activeRide.id}/rate`, {
+                          method: 'POST',
+                          headers: {
+                            'Content-Type': 'application/json',
+                            Authorization: `Bearer ${getAuthToken()}`
+                          },
+                          body: JSON.stringify({
+                            rating: selectedStars,
+                            reviewComment: reviewText
+                          })
+                        });
+                      } catch (err) {}
                       setActiveRide(null);
                       setOffers([]);
                     }}
@@ -636,6 +774,20 @@ export const PassengerView: React.FC<PassengerViewProps> = ({
           )}
       </div>
 
+      {/* Live Chat Modal */}
+      {activeRide && (
+        <LiveChatModal
+          isOpen={showChatModal}
+          onClose={() => setShowChatModal(false)}
+          rideId={activeRide.id}
+          currentUser={currentUser}
+          recipientName={activeRide.driverName || 'Driver'}
+          recipientPhone={activeRide.driverPhone}
+          socket={socket}
+          apiBaseUrl={apiBaseUrl}
+        />
+      )}
+
       {/* Emergency SOS Modal */}
       {showSosModal && (
         <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
@@ -645,7 +797,7 @@ export const PassengerView: React.FC<PassengerViewProps> = ({
             </div>
             <h3 className="text-lg font-bold text-center text-charcoal-900">PakRide Safety SOS</h3>
             <p className="text-xs text-center text-slate-600">
-              Emergency assistance is available for rides in Karachi Gulistan-e-Jauhar pilot zone.
+              Emergency assistance is available for rides in {selectedCity}.
             </p>
             <div className="space-y-2">
               <a

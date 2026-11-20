@@ -53,10 +53,14 @@ export const DriverView: React.FC<DriverViewProps> = ({
 
   const isApproved = profile.verificationStatus === 'APPROVED';
 
+  const getAuthToken = () => {
+    return localStorage.getItem('pakride_token') || `mock-token-${currentUser.id}`;
+  };
+
   // Fetch driver earnings
   const fetchEarnings = () => {
     fetch(`${apiBaseUrl}/api/driver/earnings`, {
-      headers: { Authorization: `Bearer mock-token-${currentUser.id}` }
+      headers: { Authorization: `Bearer ${getAuthToken()}` }
     })
       .then((res) => res.json())
       .then((data) => {
@@ -69,7 +73,7 @@ export const DriverView: React.FC<DriverViewProps> = ({
   const fetchFeed = () => {
     if (!profile.isOnline || !isApproved) return;
     fetch(`${apiBaseUrl}/api/rides/driver/feed`, {
-      headers: { Authorization: `Bearer mock-token-${currentUser.id}` }
+      headers: { Authorization: `Bearer ${getAuthToken()}` }
     })
       .then((res) => res.json())
       .then((data) => {
@@ -140,7 +144,7 @@ export const DriverView: React.FC<DriverViewProps> = ({
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer mock-token-${currentUser.id}`
+          Authorization: `Bearer ${getAuthToken()}`
         }
       });
       const data = await res.json();
@@ -160,7 +164,7 @@ export const DriverView: React.FC<DriverViewProps> = ({
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer mock-token-${currentUser.id}`
+          Authorization: `Bearer ${getAuthToken()}`
         },
         body: JSON.stringify({
           counterFarePkr: counterPkr,
@@ -182,7 +186,7 @@ export const DriverView: React.FC<DriverViewProps> = ({
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer mock-token-${currentUser.id}`
+          Authorization: `Bearer ${getAuthToken()}`
         },
         body: JSON.stringify({ newStatus, otp })
       });

@@ -8,6 +8,7 @@ export const translations = {
     switchRole: 'Switch Demo Role',
     langToggle: 'اردو',
     logout: 'Logout',
+    signIn: 'Sign In / Register',
 
     // Roles
     passenger: 'Passenger',
@@ -100,6 +101,7 @@ export const translations = {
     switchRole: 'کردار تبدیل کریں',
     langToggle: 'English',
     logout: 'لاگ آؤٹ',
+    signIn: 'سائن ان / نیا اکاؤنٹ',
 
     // Roles
     passenger: 'مسافر',

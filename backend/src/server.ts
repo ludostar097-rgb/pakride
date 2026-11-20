@@ -9,7 +9,7 @@ import { PricingService } from './services/pricing.js';
 import { RideStateMachine } from './state/stateMachine.js';
 import { LedgerService } from './services/ledger.js';
 import { seedDemoData } from './seed.js';
-import { SOCKET_EVENTS, KARACHI_LANDMARKS } from './shared/constants.js';
+import { SOCKET_EVENTS, KARACHI_LANDMARKS, ISLAMABAD_LANDMARKS } from './shared/constants.js';
 import {
   RideRequest,
   RideOffer,
@@ -160,6 +160,48 @@ app.post('/api/auth/register', async (req, res) => {
   });
 });
 
+// Simulated OTP storage for password reset
+const resetOtpStore: Record<string, { otp: string; expiresAt: number }> = {};
+
+app.post('/api/auth/forgot-password', (req, res) => {
+  const { phone } = req.body;
+  if (!phone) return res.status(400).json({ error: 'Phone number is required' });
+
+  const user = db.getUserByPhone(phone);
+  if (!user) return res.status(404).json({ error: 'No account found with this phone number' });
+
+  // Generate 4-digit reset OTP
+  const otp = '7788'; // Predictable demo code, plus randomized fallback
+  resetOtpStore[phone] = { otp, expiresAt: Date.now() + 10 * 60 * 1000 };
+
+  return res.json({
+    success: true,
+    message: 'Reset OTP sent to your phone (Demo OTP: 7788)',
+    demoOtp: otp
+  });
+});
+
+app.post('/api/auth/reset-password', async (req, res) => {
+  const { phone, otp, newPassword } = req.body;
+  if (!phone || !otp || !newPassword) {
+    return res.status(400).json({ error: 'Phone, OTP, and new password are required' });
+  }
+
+  const record = resetOtpStore[phone];
+  if (!record || record.otp !== otp || Date.now() > record.expiresAt) {
+    return res.status(400).json({ error: 'Invalid or expired OTP code' });
+  }
+
+  const user = db.getUserByPhone(phone);
+  if (!user) return res.status(404).json({ error: 'User not found' });
+
+  user.passwordHash = await AuthService.hashPassword(newPassword);
+  db.saveUser(user);
+  delete resetOtpStore[phone];
+
+  return res.json({ success: true, message: 'Password reset successfully. You can now login.' });
+});
+
 app.get('/api/auth/me', AuthService.requireAuth, (req: AuthenticatedRequest, res) => {
   const user = db.getUser(req.user!.userId);
   if (!user) return res.status(404).json({ error: 'User not found' });
@@ -175,8 +217,47 @@ app.get('/api/zones', (req, res) => {
   const zones = db.getZones();
   return res.json({
     zones,
-    landmarks: KARACHI_LANDMARKS
+    landmarks: KARACHI_LANDMARKS,
+    karachiLandmarks: KARACHI_LANDMARKS,
+    islamabadLandmarks: ISLAMABAD_LANDMARKS
   });
+});
+
+app.post('/api/admin/zones', AuthService.requireAuth, AuthService.requireRole(['ADMIN']), (req, res) => {
+  const { cityName, zoneName, centerLat, centerLng, radiusKm, baseFareCarPaisa, perKmCarPaisa } = req.body;
+  if (!cityName || !zoneName || !centerLat || !centerLng) {
+    return res.status(400).json({ error: 'City, zone name, and center coordinates are required' });
+  }
+
+  const newZone = {
+    id: 'zone-' + cityName.toLowerCase() + '-' + Date.now().toString(36),
+    cityId: 'city-' + cityName.toLowerCase(),
+    cityName,
+    zoneName,
+    isActive: true,
+    centerLat: Number(centerLat),
+    centerLng: Number(centerLng),
+    radiusKm: Number(radiusKm) || 7.0,
+    baseFareCarPaisa: Number(baseFareCarPaisa) || 16000,
+    baseFareMotoPaisa: 6500,
+    baseFareRickshawPaisa: 9500,
+    perKmCarPaisa: Number(perKmCarPaisa) || 4200,
+    perKmMotoPaisa: 1900,
+    perKmRickshawPaisa: 2600
+  };
+
+  db.saveZone(newZone);
+  return res.status(201).json({ zone: newZone });
+});
+
+app.post('/api/admin/zones/:zoneId/toggle', AuthService.requireAuth, AuthService.requireRole(['ADMIN']), (req, res) => {
+  const zoneId = req.params.zoneId as string;
+  const zone = db.getZone(zoneId);
+  if (!zone) return res.status(404).json({ error: 'Zone not found' });
+
+  zone.isActive = !zone.isActive;
+  db.saveZone(zone);
+  return res.json({ zone });
 });
 
 app.post('/api/rides/calculate-fare', (req, res) => {
@@ -439,6 +520,70 @@ app.post('/api/rides/:id/transition', AuthService.requireAuth, (req: Authenticat
   return res.json({ success: true, ride });
 });
 
+// Chat Endpoints
+app.post('/api/rides/:id/chat', AuthService.requireAuth, (req: AuthenticatedRequest, res) => {
+  const rideId = req.params.id as string;
+  const { text } = req.body;
+  if (!text) return res.status(400).json({ error: 'Message text is required' });
+
+  const ride = db.getRide(rideId);
+  if (!ride) return res.status(404).json({ error: 'Ride not found' });
+
+  const msg = {
+    id: 'msg-' + uuidv4().substring(0, 8),
+    rideId,
+    senderId: req.user!.userId,
+    senderName: req.user!.fullName,
+    senderRole: req.user!.role,
+    text,
+    timestamp: new Date().toISOString()
+  };
+
+  if (!ride.chatMessages) ride.chatMessages = [];
+  ride.chatMessages.push(msg);
+  db.saveRide(ride);
+
+  // Broadcast in real-time to both passenger and driver
+  io.to(`user:${ride.passengerId}`).emit('ride_chat_message', { rideId, message: msg });
+  if (ride.driverId) {
+    io.to(`user:${ride.driverId}`).emit('ride_chat_message', { rideId, message: msg });
+  }
+
+  return res.status(201).json({ message: msg });
+});
+
+app.get('/api/rides/:id/chat', AuthService.requireAuth, (req, res) => {
+  const rideId = req.params.id as string;
+  const ride = db.getRide(rideId);
+  if (!ride) return res.status(404).json({ error: 'Ride not found' });
+  return res.json({ messages: ride.chatMessages || [] });
+});
+
+// Rating & Reviews
+app.post('/api/rides/:id/rate', AuthService.requireAuth, (req: AuthenticatedRequest, res) => {
+  const rideId = req.params.id as string;
+  const { rating, reviewComment } = req.body;
+
+  const ride = db.getRide(rideId);
+  if (!ride) return res.status(404).json({ error: 'Ride not found' });
+
+  ride.rating = Number(rating) || 5;
+  ride.reviewComment = reviewComment || '';
+  db.saveRide(ride);
+
+  if (ride.driverId) {
+    const driverProfile = db.getDriverProfile(ride.driverId);
+    if (driverProfile) {
+      const currentTotal = driverProfile.ratingAverage * driverProfile.ratingCount;
+      driverProfile.ratingCount += 1;
+      driverProfile.ratingAverage = Math.round(((currentTotal + ride.rating) / driverProfile.ratingCount) * 10) / 10;
+      db.saveDriverProfile(driverProfile);
+    }
+  }
+
+  return res.json({ success: true, ride });
+});
+
 // ==========================================
 // 6. DRIVER MANAGEMENT & ONLINE STATUS
 // ==========================================
@@ -482,6 +627,29 @@ app.get('/api/driver/earnings', AuthService.requireAuth, (req: AuthenticatedRequ
     totalNetPkr: Math.round(totalNetPaisa / 100),
     history: driverEntries
   });
+});
+
+app.post('/api/driver/vehicle', AuthService.requireAuth, (req: AuthenticatedRequest, res) => {
+  const { category, make, model, year, plateNumber, color } = req.body;
+  const profile = db.getDriverProfile(req.user!.userId);
+  if (!profile) return res.status(404).json({ error: 'Driver profile not found' });
+
+  const vehicle = {
+    id: 'veh-' + uuidv4().substring(0, 8),
+    driverId: req.user!.userId,
+    category: (category || 'CAR') as VehicleCategory,
+    make: make || 'Toyota',
+    model: model || 'Corolla',
+    year: Number(year) || 2021,
+    plateNumber: plateNumber || 'KHI-1234',
+    color: color || 'White'
+  };
+
+  db.saveVehicle(vehicle);
+  profile.vehicle = vehicle;
+  db.saveDriverProfile(profile);
+
+  return res.json({ success: true, profile, vehicle });
 });
 
 // ==========================================

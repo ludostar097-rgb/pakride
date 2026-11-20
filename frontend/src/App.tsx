@@ -9,24 +9,28 @@ import {
   Globe,
   Bell,
   CheckCircle2,
-  AlertCircle
+  AlertCircle,
+  LogIn,
+  LogOut,
+  UserCheck
 } from 'lucide-react';
 import { PassengerView } from './components/PassengerView';
 import { DriverView } from './components/DriverView';
 import { AdminView } from './components/AdminView';
+import { AuthModal } from './components/AuthModal';
 import { translations, Language } from './i18n/translations';
 import { DriverProfile } from './shared/types';
 
 const API_BASE_URL = 'http://localhost:4000';
 
-// Pre-seeded Synthetic Personas for instant zero-friction demonstration
+// Pre-seeded Personas for testing & demonstration
 const DEMO_PERSONAS = [
   {
     id: 'user-passenger-1',
     fullName: 'Ali Khan',
     phone: '03001234567',
     role: 'PASSENGER' as const,
-    label: 'Passenger (Ali)'
+    label: 'Passenger (Ali - Karachi)'
   },
   {
     id: 'user-driver-car-1',
@@ -71,8 +75,13 @@ export const App: React.FC = () => {
   const [driverProfile, setDriverProfile] = useState<DriverProfile | null>(null);
   const [socket, setSocket] = useState<Socket | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [showAuthModal, setShowAuthModal] = useState(false);
 
   const t = translations[lang];
+
+  const getAuthToken = () => {
+    return localStorage.getItem('pakride_token') || `mock-token-${activePersona.id}`;
+  };
 
   // Initialize Socket.io connection
   useEffect(() => {
@@ -107,7 +116,7 @@ export const App: React.FC = () => {
   useEffect(() => {
     if (activePersona.role === 'DRIVER') {
       fetch(`${API_BASE_URL}/api/auth/me`, {
-        headers: { Authorization: `Bearer mock-token-${activePersona.id}` }
+        headers: { Authorization: `Bearer ${getAuthToken()}` }
       })
         .then((res) => res.json())
         .then((data) => {
@@ -130,6 +139,20 @@ export const App: React.FC = () => {
     setLang((prev) => (prev === 'en' ? 'ur' : 'en'));
   };
 
+  const handleAuthSuccess = (data: { user: any; token: string; driverProfile?: any }) => {
+    setActivePersona({
+      id: data.user.id,
+      fullName: data.user.fullName,
+      phone: data.user.phone,
+      role: data.user.role,
+      label: `${data.user.role} (${data.user.fullName})`
+    });
+    if (data.driverProfile) {
+      setDriverProfile(data.driverProfile);
+    }
+    showToast(`Welcome back, ${data.user.fullName}!`);
+  };
+
   return (
     <div
       dir={lang === 'ur' ? 'rtl' : 'ltr'}
@@ -145,7 +168,7 @@ export const App: React.FC = () => {
         </div>
       )}
 
-      {/* Top Demo Bar: Quick Persona Switcher & Language Toggle */}
+      {/* Top Bar: Brand, Switcher, Sign In & Language Toggle */}
       <header className="bg-charcoal-900 text-white sticky top-0 z-40 shadow-md">
         <div className="max-w-7xl mx-auto px-4 py-2.5 flex flex-wrap items-center justify-between gap-3">
           {/* Brand Logo & Name */}
@@ -164,11 +187,8 @@ export const App: React.FC = () => {
             </div>
           </div>
 
-          {/* Quick Role Switcher */}
+          {/* Quick Role Switcher & Auth */}
           <div className="flex items-center space-x-2">
-            <label className="text-[11px] text-slate-300 font-semibold hidden md:inline">
-              {t.switchRole}:
-            </label>
             <select
               value={activePersona.id}
               onChange={(e) => {
@@ -183,6 +203,16 @@ export const App: React.FC = () => {
                 </option>
               ))}
             </select>
+
+            {/* Sign In / Register Button */}
+            <button
+              type="button"
+              onClick={() => setShowAuthModal(true)}
+              className="flex items-center space-x-1 bg-pakgreen-500 hover:bg-pakgreen-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition shadow-xs"
+            >
+              <LogIn className="w-3.5 h-3.5" />
+              <span>{t.signIn || 'Sign In / Up'}</span>
+            </button>
 
             {/* Language Toggle */}
             <button
@@ -251,9 +281,19 @@ export const App: React.FC = () => {
         )}
       </main>
 
+      {/* Auth Modal (Login / Register / Forgot Password) */}
+      <AuthModal
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+        onSuccess={handleAuthSuccess}
+        apiBaseUrl={API_BASE_URL}
+        lang={lang}
+        t={t}
+      />
+
       {/* Footer */}
       <footer className="bg-white border-t border-slate-200 py-3 text-center text-xs text-slate-500">
-        PakRide • Pilot Launch Edition • Gulistan-e-Jauhar, Karachi • Cash-First Model
+        PakRide • Pilot Launch Edition • Karachi (Pilot Zone) & Islamabad Rollout • Cash-First Model
       </footer>
     </div>
   );

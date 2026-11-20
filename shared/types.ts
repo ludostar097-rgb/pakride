@@ -78,6 +78,16 @@ export interface DriverProfile {
   licenseNumber?: string;
 }
 
+export interface ChatMessage {
+  id: string;
+  rideId: string;
+  senderId: string;
+  senderName: string;
+  senderRole: UserRole;
+  text: string;
+  timestamp: string;
+}
+
 export interface RideRequest {
   id: string;
   passengerId: string;
@@ -99,6 +109,9 @@ export interface RideRequest {
   driverPhone?: string;
   driverRating?: number;
   vehicleDetails?: string;
+  chatMessages?: ChatMessage[];
+  rating?: number;
+  reviewComment?: string;
   paymentMethod: PaymentMethod;
   paymentStatus: PaymentStatus;
   cancellationReason?: string;

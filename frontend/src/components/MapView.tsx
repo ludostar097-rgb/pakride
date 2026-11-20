@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
 import { Crosshair, Navigation } from 'lucide-react';
 import { LocationCoordinates } from '../shared/types';
+import { GeocodingService } from '../services/geocoding';
 
 interface MapViewProps {
   pickup?: LocationCoordinates;
@@ -10,6 +11,7 @@ interface MapViewProps {
   onSelectPickup?: (loc: LocationCoordinates) => void;
   onSelectDestination?: (loc: LocationCoordinates) => void;
   mode?: 'pickup' | 'destination' | 'tracking';
+  activeCity?: 'Karachi' | 'Islamabad';
 }
 
 export const MapView: React.FC<MapViewProps> = ({
@@ -18,7 +20,8 @@ export const MapView: React.FC<MapViewProps> = ({
   driverLocation,
   onSelectPickup,
   onSelectDestination,
-  mode = 'pickup'
+  mode = 'pickup',
+  activeCity = 'Karachi'
 }) => {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
@@ -57,21 +60,18 @@ export const MapView: React.FC<MapViewProps> = ({
       fillOpacity: 0.08
     }).addTo(map);
 
-    // Map click handler to place pins
-    map.on('click', (e) => {
+    // Map click handler: places pin and performs live Reverse Geocoding
+    map.on('click', async (e) => {
       const lat = Math.round(e.latlng.lat * 10000) / 10000;
       const lng = Math.round(e.latlng.lng * 10000) / 10000;
-      const customLoc: LocationCoordinates = {
-        lat,
-        lng,
-        address: `Custom Point (${lat.toFixed(3)}, ${lng.toFixed(3)})`,
-        landmark: 'Gulistan-e-Jauhar'
-      };
+
+      // Real Reverse Geocoding to get real street/sector name
+      const realLoc = await GeocodingService.reverseGeocode(lat, lng);
 
       if (mode === 'pickup' && onSelectPickup) {
-        onSelectPickup(customLoc);
+        onSelectPickup(realLoc);
       } else if (mode === 'destination' && onSelectDestination) {
-        onSelectDestination(customLoc);
+        onSelectDestination(realLoc);
       }
     });
 
@@ -82,6 +82,16 @@ export const MapView: React.FC<MapViewProps> = ({
       mapRef.current = null;
     };
   }, []);
+
+  // Pan to Active City if changed
+  useEffect(() => {
+    if (!mapRef.current) return;
+    if (activeCity === 'Islamabad') {
+      mapRef.current.flyTo([33.6844, 73.0479], 14, { duration: 1.5 });
+    } else {
+      mapRef.current.flyTo([24.918, 67.135], 14, { duration: 1.5 });
+    }
+  }, [activeCity]);
 
   // Update Pickup Marker
   useEffect(() => {
@@ -291,7 +301,7 @@ export const MapView: React.FC<MapViewProps> = ({
       {/* Pilot Zone Pill Indicator */}
       <div className="absolute top-3 left-3 z-[400] bg-white/95 backdrop-blur-md px-3 py-1.5 rounded-full shadow-md border border-slate-200 flex items-center space-x-2 text-xs font-semibold text-slate-700">
         <span className="w-2.5 h-2.5 rounded-full bg-pakgreen-500 animate-pulse"></span>
-        <span>Karachi: Gulistan-e-Jauhar Pilot Zone</span>
+        <span>{activeCity === 'Islamabad' ? 'Islamabad: Central & Blue Area Zone' : 'Karachi: Gulistan-e-Jauhar Pilot Zone'}</span>
       </div>
 
       {/* Floating Road Route Stats Banner (When Route is loaded) */}

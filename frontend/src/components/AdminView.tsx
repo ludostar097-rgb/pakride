@@ -12,9 +12,13 @@ import {
   Settings,
   RefreshCw,
   Radar,
-  Radio
+  Radio,
+  MapPin,
+  Plus,
+  Compass,
+  Power
 } from 'lucide-react';
-import { DriverProfile, RideRequest, PaymentLedgerEntry } from '../shared/types';
+import { DriverProfile, RideRequest, PaymentLedgerEntry, CityZone } from '../shared/types';
 import { PILOT_ZONES } from '../shared/constants';
 
 interface AdminViewProps {
@@ -33,38 +37,57 @@ export const AdminView: React.FC<AdminViewProps> = ({
   const [drivers, setDrivers] = useState<any[]>([]);
   const [rides, setRides] = useState<RideRequest[]>([]);
   const [ledger, setLedger] = useState<PaymentLedgerEntry[]>([]);
+  const [zones, setZones] = useState<CityZone[]>(PILOT_ZONES as CityZone[]);
   const [settings, setSettings] = useState<any>({ introductoryCommissionPercent: 0 });
-  const [activeTab, setActiveTab] = useState<'radar' | 'drivers' | 'rides' | 'ledger'>('radar');
+  const [activeTab, setActiveTab] = useState<'radar' | 'drivers' | 'rides' | 'ledger' | 'zones'>('radar');
+  const [radarCity, setRadarCity] = useState<'Karachi' | 'Islamabad' | 'Rawalpindi' | 'Lahore'>('Karachi');
   const [loading, setLoading] = useState(false);
+
+  // New Zone Form state
+  const [showAddZoneModal, setShowAddZoneModal] = useState(false);
+  const [newCityName, setNewCityName] = useState('Islamabad');
+  const [newZoneName, setNewZoneName] = useState('Islamabad West & G Sectors');
+  const [newCenterLat, setNewCenterLat] = useState('33.6844');
+  const [newCenterLng, setNewCenterLng] = useState('73.0479');
+  const [newRadiusKm, setNewRadiusKm] = useState('7.0');
+  const [newBaseFareCar, setNewBaseFareCar] = useState('180');
+  const [newPerKmCar, setNewPerKmCar] = useState('45');
 
   // Map refs for Radar
   const radarMapContainerRef = useRef<HTMLDivElement>(null);
   const radarMapRef = useRef<L.Map | null>(null);
   const driverMarkersMapRef = useRef<Record<string, L.Marker>>({});
 
+  const getAuthToken = () => {
+    return localStorage.getItem('pakride_token') || `mock-token-${currentUser.id}`;
+  };
+
   const fetchAdminData = async () => {
     setLoading(true);
     try {
-      const headers = { Authorization: `Bearer mock-token-${currentUser.id}` };
+      const headers = { Authorization: `Bearer ${getAuthToken()}` };
 
-      const [dRes, rRes, lRes, sRes] = await Promise.all([
+      const [dRes, rRes, lRes, sRes, zRes] = await Promise.all([
         fetch(`${apiBaseUrl}/api/admin/drivers`, { headers }),
         fetch(`${apiBaseUrl}/api/admin/rides`, { headers }),
         fetch(`${apiBaseUrl}/api/admin/ledger`, { headers }),
-        fetch(`${apiBaseUrl}/api/admin/settings`, { headers })
+        fetch(`${apiBaseUrl}/api/admin/settings`, { headers }),
+        fetch(`${apiBaseUrl}/api/zones`)
       ]);
 
-      const [dData, rData, lData, sData] = await Promise.all([
+      const [dData, rData, lData, sData, zData] = await Promise.all([
         dRes.json(),
         rRes.json(),
         lRes.json(),
-        sRes.json()
+        sRes.json(),
+        zRes.json()
       ]);
 
       if (dData.drivers) setDrivers(dData.drivers);
       if (rData.rides) setRides(rData.rides);
       if (lData.ledger) setLedger(lData.ledger);
       if (sData.settings) setSettings(sData.settings);
+      if (zData.zones) setZones(zData.zones);
     } catch (err) {
       console.error('Error fetching admin data:', err);
     } finally {
@@ -91,23 +114,23 @@ export const AdminView: React.FC<AdminViewProps> = ({
         maxZoom: 19
       }).addTo(map);
 
-      // Pilot Zone Circle
-      L.circle(jauhar, {
-        radius: 4000,
-        color: '#00a859',
-        weight: 2,
-        dashArray: '6, 6',
-        fillColor: '#00a859',
-        fillOpacity: 0.08
-      }).addTo(map);
-
       radarMapRef.current = map;
     }
 
-    // Plot Drivers on Radar Map
     const map = radarMapRef.current;
     if (map) {
-      // Clear old driver markers
+      // Pan radar map according to selected city
+      if (radarCity === 'Islamabad') {
+        map.flyTo([33.6844, 73.0479], 13);
+      } else if (radarCity === 'Rawalpindi') {
+        map.flyTo([33.5651, 73.0169], 13);
+      } else if (radarCity === 'Lahore') {
+        map.flyTo([31.5204, 74.3587], 13);
+      } else {
+        map.flyTo([24.918, 67.135], 14);
+      }
+
+      // Plot Drivers on Radar Map
       Object.values(driverMarkersMapRef.current).forEach((m) => m.remove());
       driverMarkersMapRef.current = {};
 
@@ -122,33 +145,77 @@ export const AdminView: React.FC<AdminViewProps> = ({
             iconAnchor: [17, 17]
           });
 
-          const marker = L.marker([d.currentLat, d.currentLng], { icon: customIcon })
-            .bindPopup(`<b>${d.fullName}</b><br/>${d.vehicle?.make} ${d.vehicle?.model} (${d.vehicle?.plateNumber})<br/>Status: ${d.isOnline ? '🟢 Online' : '⚪ Offline'}`)
-            .addTo(map);
-
+          const marker = L.marker([d.currentLat, d.currentLng], { icon: customIcon }).addTo(map);
+          marker.bindPopup(`<b>${d.fullName}</b><br>${d.vehicle?.make || 'Vehicle'} (${d.vehicle?.category || 'CAR'})<br>${d.isOnline ? '🟢 Online' : '⚪ Offline'}`);
           driverMarkersMapRef.current[d.userId] = marker;
         }
       });
     }
-  }, [activeTab, drivers]);
+  }, [activeTab, drivers, radarCity]);
 
-  // Handle Driver Approval / Rejection
-  const handleApproveDriver = async (userId: string, status: 'APPROVED' | 'REJECTED') => {
+  // Driver Document Approval Action
+  const handleApproveDriver = async (userId: string, newStatus: 'APPROVED' | 'REJECTED') => {
     try {
-      await fetch(`${apiBaseUrl}/api/admin/drivers/${userId}/approve`, {
+      const res = await fetch(`${apiBaseUrl}/api/admin/drivers/${userId}/approve`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer mock-token-${currentUser.id}`
+          Authorization: `Bearer ${getAuthToken()}`
         },
-        body: JSON.stringify({
-          status,
-          reason: `Reviewed and ${status.toLowerCase()} by Admin ${currentUser.fullName}`
-        })
+        body: JSON.stringify({ status: newStatus })
       });
-      fetchAdminData();
+      const data = await res.json();
+      if (data.success) {
+        fetchAdminData();
+      }
     } catch (err) {
       console.error('Driver approval error:', err);
+    }
+  };
+
+  // Toggle Zone Active Status
+  const handleToggleZone = async (zoneId: string) => {
+    try {
+      const res = await fetch(`${apiBaseUrl}/api/admin/zones/${zoneId}/toggle`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${getAuthToken()}`
+        }
+      });
+      if (res.ok) {
+        fetchAdminData();
+      }
+    } catch (err) {
+      console.error('Zone toggle error:', err);
+    }
+  };
+
+  // Create New City/Zone
+  const handleCreateZone = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const res = await fetch(`${apiBaseUrl}/api/admin/zones`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${getAuthToken()}`
+        },
+        body: JSON.stringify({
+          cityName: newCityName,
+          zoneName: newZoneName,
+          centerLat: parseFloat(newCenterLat),
+          centerLng: parseFloat(newCenterLng),
+          radiusKm: parseFloat(newRadiusKm),
+          baseFareCarPaisa: Math.round(parseFloat(newBaseFareCar) * 100),
+          perKmCarPaisa: Math.round(parseFloat(newPerKmCar) * 100)
+        })
+      });
+      if (res.ok) {
+        setShowAddZoneModal(false);
+        fetchAdminData();
+      }
+    } catch (err) {
+      console.error('Create zone error:', err);
     }
   };
 
@@ -162,7 +229,7 @@ export const AdminView: React.FC<AdminViewProps> = ({
             <span>{t.adminDashboard}</span>
           </h2>
           <p className="text-xs text-slate-500 mt-1">
-            Karachi East (Gulistan-e-Jauhar Pilot Zone) • Platform Rate: {settings.introductoryCommissionPercent}%
+            Multi-City Control Hub • Karachi Pilot & Islamabad Readiness • Platform Rate: {settings.introductoryCommissionPercent}%
           </p>
         </div>
 
@@ -203,11 +270,11 @@ export const AdminView: React.FC<AdminViewProps> = ({
         </div>
 
         <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-          <div className="text-xs text-slate-400 font-semibold uppercase">Platform Fee</div>
+          <div className="text-xs text-slate-400 font-semibold uppercase">Active Zones</div>
           <div className="text-2xl font-bold text-slate-700 mt-1">
-            {settings.introductoryCommissionPercent}%
+            {zones.filter((z) => z.isActive).length} / {zones.length}
           </div>
-          <div className="text-[11px] text-purple-600 mt-1 font-semibold">Introductory 0% Rate</div>
+          <div className="text-[11px] text-purple-600 mt-1 font-semibold">Controlled Rollout</div>
         </div>
       </div>
 
@@ -223,6 +290,18 @@ export const AdminView: React.FC<AdminViewProps> = ({
         >
           <Radio className="w-4 h-4 text-pakgreen-400 animate-pulse" />
           <span>{t.radarTab}</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('zones')}
+          className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center space-x-2 ${
+            activeTab === 'zones'
+              ? 'bg-charcoal-900 text-white'
+              : 'bg-white text-slate-600 hover:bg-slate-100'
+          }`}
+        >
+          <Compass className="w-4 h-4 text-emerald-400" />
+          <span>Cities & Zones</span>
         </button>
 
         <button
@@ -265,14 +344,27 @@ export const AdminView: React.FC<AdminViewProps> = ({
       {/* 4. Tab 0: City Radar Live Map View */}
       {activeTab === 'radar' && (
         <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 space-y-3">
-          <div className="flex justify-between items-center">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
             <h3 className="font-bold text-sm text-charcoal-900 flex items-center space-x-2">
               <span className="w-2.5 h-2.5 rounded-full bg-pakgreen-500 animate-ping"></span>
               <span>{t.radarTitle}</span>
             </h3>
-            <span className="text-xs text-slate-500">
-              Live Fleet: {drivers.filter((d) => d.isOnline).length} Active Online
-            </span>
+
+            {/* City Radar Switcher */}
+            <div className="flex items-center space-x-1.5 bg-slate-100 p-1 rounded-xl">
+              {(['Karachi', 'Islamabad', 'Rawalpindi', 'Lahore'] as const).map((city) => (
+                <button
+                  key={city}
+                  type="button"
+                  onClick={() => setRadarCity(city)}
+                  className={`px-2.5 py-1 text-xs font-bold rounded-lg transition ${
+                    radarCity === city ? 'bg-white text-pakgreen-700 shadow-xs' : 'text-slate-500'
+                  }`}
+                >
+                  {city}
+                </button>
+              ))}
+            </div>
           </div>
 
           <div className="w-full h-[480px] rounded-xl overflow-hidden border border-slate-200 relative">
@@ -290,7 +382,86 @@ export const AdminView: React.FC<AdminViewProps> = ({
         </div>
       )}
 
-      {/* 5. Tab 1: Driver Verification Queue */}
+      {/* 5. Tab: Cities & Zones Management */}
+      {activeTab === 'zones' && (
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden space-y-4 p-5">
+          <div className="flex justify-between items-center">
+            <div>
+              <h3 className="font-bold text-base text-charcoal-900">Operational Cities & Pilot Zones</h3>
+              <p className="text-xs text-slate-500">
+                Blueprint Rule: Activate one compact, operationally manageable zone at a time.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowAddZoneModal(true)}
+              className="flex items-center space-x-1 px-3.5 py-2 bg-pakgreen-500 hover:bg-pakgreen-600 text-white rounded-xl text-xs font-bold shadow-xs transition"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>Add Zone</span>
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {zones.map((zone) => (
+              <div
+                key={zone.id}
+                className={`p-4 rounded-xl border-2 transition ${
+                  zone.isActive ? 'border-emerald-300 bg-emerald-50/20' : 'border-slate-200 bg-slate-50/50'
+                }`}
+              >
+                <div className="flex justify-between items-start">
+                  <div>
+                    <div className="flex items-center space-x-2">
+                      <span className="font-bold text-sm text-charcoal-900">{zone.cityName}</span>
+                      <span className="text-xs text-slate-500">• {zone.zoneName}</span>
+                    </div>
+                    <div className="text-[11px] text-slate-400 mt-0.5">
+                      Center: ({zone.centerLat}, {zone.centerLng}) • Radius: {zone.radiusKm} km
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => handleToggleZone(zone.id)}
+                    className={`px-3 py-1 rounded-full text-xs font-bold transition flex items-center space-x-1 ${
+                      zone.isActive
+                        ? 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200'
+                        : 'bg-slate-200 text-slate-600 hover:bg-slate-300'
+                    }`}
+                  >
+                    <Power className="w-3 h-3" />
+                    <span>{zone.isActive ? 'Active' : 'Inactive'}</span>
+                  </button>
+                </div>
+
+                <div className="mt-3 pt-3 border-t border-slate-200/60 grid grid-cols-3 gap-2 text-center text-xs">
+                  <div className="bg-white p-2 rounded-lg border border-slate-200">
+                    <span className="text-[10px] text-slate-400 block">Car Base / Km</span>
+                    <span className="font-bold text-slate-700">
+                      PKR {Math.round(zone.baseFareCarPaisa / 100)} / {Math.round(zone.perKmCarPaisa / 100)}
+                    </span>
+                  </div>
+                  <div className="bg-white p-2 rounded-lg border border-slate-200">
+                    <span className="text-[10px] text-slate-400 block">Bike Base / Km</span>
+                    <span className="font-bold text-slate-700">
+                      PKR {Math.round(zone.baseFareMotoPaisa / 100)} / {Math.round(zone.perKmMotoPaisa / 100)}
+                    </span>
+                  </div>
+                  <div className="bg-white p-2 rounded-lg border border-slate-200">
+                    <span className="text-[10px] text-slate-400 block">Rickshaw Base / Km</span>
+                    <span className="font-bold text-slate-700">
+                      PKR {Math.round(zone.baseFareRickshawPaisa / 100)} / {Math.round(zone.perKmRickshawPaisa / 100)}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* 6. Tab 1: Driver Verification Queue */}
       {activeTab === 'drivers' && (
         <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
           <div className="p-4 border-b border-slate-200 bg-slate-50 font-bold text-sm text-charcoal-900">
@@ -352,7 +523,7 @@ export const AdminView: React.FC<AdminViewProps> = ({
         </div>
       )}
 
-      {/* 6. Tab 2: Dispatches & Ride Monitor */}
+      {/* 7. Tab 2: Dispatches & Ride Monitor */}
       {activeTab === 'rides' && (
         <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
           <div className="p-4 border-b border-slate-200 bg-slate-50 font-bold text-sm text-charcoal-900">
@@ -407,7 +578,7 @@ export const AdminView: React.FC<AdminViewProps> = ({
         </div>
       )}
 
-      {/* 7. Tab 3: Financial Cash Ledger */}
+      {/* 8. Tab 3: Financial Cash Ledger */}
       {activeTab === 'ledger' && (
         <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
           <div className="p-4 border-b border-slate-200 bg-slate-50 font-bold text-sm text-charcoal-900 flex justify-between items-center">
@@ -462,6 +633,119 @@ export const AdminView: React.FC<AdminViewProps> = ({
                 )}
               </tbody>
             </table>
+          </div>
+        </div>
+      )}
+
+      {/* Add Zone Modal */}
+      {showAddZoneModal && (
+        <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl">
+            <h3 className="text-lg font-bold text-charcoal-900 flex items-center space-x-2">
+              <Compass className="w-5 h-5 text-pakgreen-600" />
+              <span>Add Operational City / Zone</span>
+            </h3>
+
+            <form onSubmit={handleCreateZone} className="space-y-3 text-xs">
+              <div>
+                <label className="font-semibold text-slate-700 block mb-1">City Name</label>
+                <input
+                  type="text"
+                  required
+                  value={newCityName}
+                  onChange={(e) => setNewCityName(e.target.value)}
+                  placeholder="e.g. Islamabad, Rawalpindi, Lahore"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-xl outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="font-semibold text-slate-700 block mb-1">Zone Name</label>
+                <input
+                  type="text"
+                  required
+                  value={newZoneName}
+                  onChange={(e) => setNewZoneName(e.target.value)}
+                  placeholder="e.g. Blue Area & F Sectors"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-xl outline-none"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="font-semibold text-slate-700 block mb-1">Center Lat</label>
+                  <input
+                    type="number"
+                    step="0.0001"
+                    required
+                    value={newCenterLat}
+                    onChange={(e) => setNewCenterLat(e.target.value)}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-xl outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="font-semibold text-slate-700 block mb-1">Center Lng</label>
+                  <input
+                    type="number"
+                    step="0.0001"
+                    required
+                    value={newCenterLng}
+                    onChange={(e) => setNewCenterLng(e.target.value)}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-xl outline-none"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-2">
+                <div>
+                  <label className="font-semibold text-slate-700 block mb-1">Radius (Km)</label>
+                  <input
+                    type="number"
+                    step="0.5"
+                    required
+                    value={newRadiusKm}
+                    onChange={(e) => setNewRadiusKm(e.target.value)}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-xl outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="font-semibold text-slate-700 block mb-1">Base Car (PKR)</label>
+                  <input
+                    type="number"
+                    required
+                    value={newBaseFareCar}
+                    onChange={(e) => setNewBaseFareCar(e.target.value)}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-xl outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="font-semibold text-slate-700 block mb-1">Per Km (PKR)</label>
+                  <input
+                    type="number"
+                    required
+                    value={newPerKmCar}
+                    onChange={(e) => setNewPerKmCar(e.target.value)}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-xl outline-none"
+                  />
+                </div>
+              </div>
+
+              <div className="flex space-x-2 pt-2">
+                <button
+                  type="submit"
+                  className="flex-1 bg-pakgreen-500 hover:bg-pakgreen-600 text-white font-bold py-2.5 rounded-xl transition"
+                >
+                  Create & Activate Zone
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowAddZoneModal(false)}
+                  className="border border-slate-300 text-slate-600 px-4 py-2.5 rounded-xl font-semibold"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

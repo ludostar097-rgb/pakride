@@ -29,7 +29,7 @@ export const SOCKET_EVENTS = {
 export const paisaToPkr = (paisa: number): number => Math.round(paisa / 100);
 export const pkrToPaisa = (pkr: number): number => Math.round(pkr * 100);
 
-// Karachi Gulistan-e-Jauhar Pilot Zone Coordinates & Landmarks
+// Karachi & Islamabad Pilot Zones
 export const PILOT_ZONES = [
   {
     id: 'zone-karachi-jauhar',
@@ -46,7 +46,34 @@ export const PILOT_ZONES = [
     perKmCarPaisa: 4000,     // PKR 40 / km
     perKmMotoPaisa: 1800,    // PKR 18 / km
     perKmRickshawPaisa: 2500 // PKR 25 / km
+  },
+  {
+    id: 'zone-islamabad-central',
+    cityId: 'city-islamabad',
+    cityName: 'Islamabad',
+    zoneName: 'Islamabad Central & Blue Area',
+    isActive: true,
+    centerLat: 33.6844,
+    centerLng: 73.0479,
+    radiusKm: 8.0,
+    baseFareCarPaisa: 18000, // PKR 180
+    baseFareMotoPaisa: 7000,  // PKR 70
+    baseFareRickshawPaisa: 10000, // PKR 100
+    perKmCarPaisa: 4500,     // PKR 45 / km
+    perKmMotoPaisa: 2000,    // PKR 20 / km
+    perKmRickshawPaisa: 2800 // PKR 28 / km
   }
+];
+
+export const ISLAMABAD_LANDMARKS = [
+  { name: 'Centaurus Mall, Jinnah Ave', lat: 33.7077, lng: 73.0501, zone: 'Islamabad F-8' },
+  { name: 'Blue Area (Saudi Pak Tower)', lat: 33.7145, lng: 73.0673, zone: 'Blue Area' },
+  { name: 'F-6 Super Market', lat: 33.7297, lng: 73.0784, zone: 'Islamabad F-6' },
+  { name: 'F-10 Markaz', lat: 33.6925, lng: 73.0118, zone: 'Islamabad F-10' },
+  { name: 'G-9 Karachi Company', lat: 33.6894, lng: 73.0305, zone: 'Islamabad G-9' },
+  { name: 'I-8 Markaz', lat: 33.6685, lng: 73.0760, zone: 'Islamabad I-8' },
+  { name: 'Faisal Mosque Main Gate', lat: 33.7296, lng: 73.0372, zone: 'Margalla Foothills' },
+  { name: 'Islamabad International Airport (IIAP)', lat: 33.5605, lng: 72.8517, zone: 'Islamabad West' }
 ];
 
 export const KARACHI_LANDMARKS = [
