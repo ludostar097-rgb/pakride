@@ -47,22 +47,26 @@ export const PassengerView: React.FC<PassengerViewProps> = ({
   t,
   apiBaseUrl
 }) => {
-  const [selectedCity, setSelectedCity] = useState<'Karachi' | 'Islamabad' | 'Rawalpindi' | 'Lahore'>('Karachi');
+  const [detectedCity, setDetectedCity] = useState<string>('Islamabad & Rawalpindi');
   const [category, setCategory] = useState<VehicleCategory>('CAR');
   const [mapTargetMode, setMapTargetMode] = useState<'pickup' | 'destination'>('pickup');
   const [isLocatingGps, setIsLocatingGps] = useState(false);
 
-  // Initialize with dynamic popular hubs for the initial city
-  const initialHubs = GeocodingService.getPopularHubs('Karachi');
-  const [pickup, setPickup] = useState<LocationCoordinates>(initialHubs[0]);
-  const [destination, setDestination] = useState<LocationCoordinates>(initialHubs[1]);
+  // Initialize with dynamic popular hubs or saved user history
+  const savedRecents = GeocodingService.getRecentLocations();
+  const defaultHubs = GeocodingService.getPopularHubsForLocation();
+  const [pickup, setPickup] = useState<LocationCoordinates>(savedRecents[0] || defaultHubs[0]);
+  const [destination, setDestination] = useState<LocationCoordinates>(savedRecents[1] || defaultHubs[1]);
   const [pickupNotes, setPickupNotes] = useState<string>('');
-  const [recentChips, setRecentChips] = useState<LocationCoordinates[]>(initialHubs);
+  const [recentChips, setRecentChips] = useState<LocationCoordinates[]>(
+    savedRecents.length > 0 ? savedRecents : defaultHubs
+  );
 
   const [fareEstimate, setFareEstimate] = useState<{
     distanceKm: number;
     estimatedMinutes: number;
     suggestedFarePkr: number;
+    zoneName?: string;
   } | null>(null);
 
   const [proposedFarePkr, setProposedFarePkr] = useState<number>(250);
@@ -76,27 +80,45 @@ export const PassengerView: React.FC<PassengerViewProps> = ({
   const [reviewText, setReviewText] = useState('');
   const [audioPromptSent, setAudioPromptSent] = useState(false);
 
-  // Update chips and default coordinates when city changes
-  const handleCityChange = (newCity: 'Karachi' | 'Islamabad' | 'Rawalpindi' | 'Lahore') => {
-    setSelectedCity(newCity);
-    const hubs = GeocodingService.getPopularHubs(newCity);
-    const savedRecents = GeocodingService.getRecentLocations();
-    const cityRecents = savedRecents.filter((r) => r.landmark?.includes(newCity) || r.address.includes(newCity));
-    const combined = cityRecents.length > 0 ? cityRecents : hubs;
-    setRecentChips(combined);
-    if (hubs.length >= 2) {
-      setPickup(hubs[0]);
-      setDestination(hubs[1]);
-    }
-  };
-
   const notePresets = [t.noteGate, t.noteBakery, t.noteCall, t.noteCorner];
 
   const getAuthToken = () => {
     return localStorage.getItem('pakride_token') || `mock-token-${currentUser.id}`;
   };
 
-  // Locate Me using Device / Browser GPS
+  // Automatically detect GPS location on app launch (Zero-effort passenger onboarding)
+  useEffect(() => {
+    if (navigator.geolocation) {
+      setIsLocatingGps(true);
+      navigator.geolocation.getCurrentPosition(
+        async (pos) => {
+          const lat = Math.round(pos.coords.latitude * 10000) / 10000;
+          const lng = Math.round(pos.coords.longitude * 10000) / 10000;
+          try {
+            const loc = await GeocodingService.reverseGeocode(lat, lng);
+            setPickup(loc);
+            GeocodingService.saveRecentLocation(loc);
+            const hubs = GeocodingService.getPopularHubsForLocation({ lat, lng });
+            setRecentChips(hubs);
+            if (lat >= 33.0) setDetectedCity('Islamabad / Rawalpindi');
+            else if (lat >= 31.0) setDetectedCity('Lahore');
+            else setDetectedCity('Karachi');
+          } catch (e) {
+            console.warn('Auto reverse-geocoding error:', e);
+          } finally {
+            setIsLocatingGps(false);
+          }
+        },
+        (err) => {
+          console.log('GPS auto-locate permission notice:', err.message);
+          setIsLocatingGps(false);
+        },
+        { timeout: 8000, enableHighAccuracy: true }
+      );
+    }
+  }, []);
+
+  // Locate Me manual trigger using Device / Browser GPS
   const handleLocateGps = () => {
     if (!navigator.geolocation) {
       alert('Geolocation is not supported by your browser');
@@ -110,6 +132,11 @@ export const PassengerView: React.FC<PassengerViewProps> = ({
         const loc = await GeocodingService.reverseGeocode(lat, lng);
         setPickup(loc);
         GeocodingService.saveRecentLocation(loc);
+        const hubs = GeocodingService.getPopularHubsForLocation({ lat, lng });
+        setRecentChips(hubs);
+        if (lat >= 33.0) setDetectedCity('Islamabad / Rawalpindi');
+        else if (lat >= 31.0) setDetectedCity('Lahore');
+        else setDetectedCity('Karachi');
         setIsLocatingGps(false);
       },
       (err) => {
@@ -121,10 +148,9 @@ export const PassengerView: React.FC<PassengerViewProps> = ({
     );
   };
 
-  // Fetch estimated fare whenever pickup, dest, or category changes
+  // Fetch estimated fare whenever pickup, dest, or category changes (Auto-detects active operational zone)
   useEffect(() => {
     if (!pickup || !destination) return;
-    const zoneId = selectedCity === 'Islamabad' ? 'zone-islamabad-central' : 'zone-karachi-jauhar';
 
     fetch(`${apiBaseUrl}/api/rides/calculate-fare`, {
       method: 'POST',
@@ -132,8 +158,7 @@ export const PassengerView: React.FC<PassengerViewProps> = ({
       body: JSON.stringify({
         category,
         pickup,
-        destination,
-        zoneId
+        destination
       })
     })
       .then((res) => res.json())
@@ -141,10 +166,13 @@ export const PassengerView: React.FC<PassengerViewProps> = ({
         if (data.suggestedFarePkr) {
           setFareEstimate(data);
           setProposedFarePkr(data.suggestedFarePkr);
+          if (data.zoneName) {
+            setDetectedCity(data.zoneName);
+          }
         }
       })
       .catch((err) => console.error('Fare calculation error:', err));
-  }, [category, pickup, destination, selectedCity, apiBaseUrl]);
+  }, [category, pickup, destination, apiBaseUrl]);
 
   // Socket event listeners for real-time ride & offer updates
   useEffect(() => {
@@ -257,7 +285,7 @@ export const PassengerView: React.FC<PassengerViewProps> = ({
   const handleShareWhatsApp = () => {
     if (!activeRide) return;
     const msg = encodeURIComponent(
-      `Assalam-o-Alaikum! I am on a PakRide trip in ${selectedCity}.\nDriver: ${activeRide.driverName || 'Assigned Driver'}\nVehicle: ${activeRide.vehicleDetails || 'PakRide'}\nFare: PKR ${Math.round((activeRide.agreedFarePaisa || activeRide.proposedFarePaisa) / 100)}\nTrack trip safety: https://pakride.pk/track/${activeRide.id}`
+      `Assalam-o-Alaikum! I am on a PakRide trip in ${detectedCity}.\nDriver: ${activeRide.driverName || 'Assigned Driver'}\nVehicle: ${activeRide.vehicleDetails || 'PakRide'}\nFare: PKR ${Math.round((activeRide.agreedFarePaisa || activeRide.proposedFarePaisa) / 100)}\nTrack trip safety: https://pakride.pk/track/${activeRide.id}`
     );
     window.open(`https://wa.me/?text=${msg}`, '_blank');
   };
@@ -288,7 +316,7 @@ export const PassengerView: React.FC<PassengerViewProps> = ({
               GeocodingService.saveRecentLocation(loc);
             }
           }}
-          activeCity={selectedCity === 'Islamabad' ? 'Islamabad' : 'Karachi'}
+          zoneName={detectedCity}
         />
         <div className="mt-2 flex items-center justify-between text-[11px] text-slate-500 bg-white/90 backdrop-blur px-3 py-1.5 rounded-xl border border-slate-200 shadow-xs">
           <div className="flex items-center space-x-1.5">
@@ -308,7 +336,7 @@ export const PassengerView: React.FC<PassengerViewProps> = ({
         {/* CASE 1: No Active Ride - Booking Flow */}
         {!activeRide && (
           <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 space-y-4">
-            {/* Header with City Selector */}
+            {/* Clean Header: Vehicle Category & GPS Location Status (No manual city tabs) */}
             <div>
               <div className="flex items-center justify-between mb-2">
                 <h2 className="text-xl font-bold text-charcoal-900 flex items-center space-x-2">
@@ -319,22 +347,23 @@ export const PassengerView: React.FC<PassengerViewProps> = ({
                 </span>
               </div>
 
-              {/* City Pill Switcher */}
-              <div className="flex items-center space-x-1 bg-slate-100 p-1 rounded-xl">
-                {(['Karachi', 'Islamabad', 'Rawalpindi', 'Lahore'] as const).map((city) => (
-                  <button
-                    key={city}
-                    type="button"
-                    onClick={() => handleCityChange(city)}
-                    className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition ${
-                      selectedCity === city
-                        ? 'bg-white text-pakgreen-700 shadow-xs'
-                        : 'text-slate-600 hover:text-slate-900'
-                    }`}
-                  >
-                    {city === 'Karachi' ? 'Karachi (Pilot)' : city}
-                  </button>
-                ))}
+              {/* Automatic Location / Zone Status Banner */}
+              <div className="flex items-center justify-between bg-slate-50 border border-slate-200 px-3 py-2 rounded-xl text-xs">
+                <div className="flex items-center space-x-2 truncate pr-2">
+                  <span className="w-2.5 h-2.5 rounded-full bg-pakgreen-500 animate-pulse flex-shrink-0"></span>
+                  <span className="text-slate-700 font-semibold truncate">
+                    📍 {pickup?.address ? pickup.address.split(',')[0] : 'Current Location'}
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleLocateGps}
+                  disabled={isLocatingGps}
+                  className="text-pakgreen-700 hover:text-pakgreen-800 font-bold text-[11px] flex items-center space-x-1 flex-shrink-0 bg-white border border-slate-200 px-2.5 py-1 rounded-lg shadow-2xs hover:bg-slate-50 transition"
+                >
+                  <Navigation className={`w-3 h-3 ${isLocatingGps ? 'animate-spin' : ''}`} />
+                  <span>{isLocatingGps ? 'Locating...' : 'Locate Me'}</span>
+                </button>
               </div>
             </div>
 
@@ -390,8 +419,8 @@ export const PassengerView: React.FC<PassengerViewProps> = ({
                 iconColor="bg-emerald-500"
                 value={pickup}
                 onChange={(loc) => setPickup(loc)}
-                placeholder={`Search pickup address or typo (e.g. Centuras, F-10, Jauhar)...`}
-                activeCity={selectedCity}
+                placeholder="Where should we pick you up? (or tap Locate Me)..."
+                userLocation={pickup ? { lat: pickup.lat, lng: pickup.lng } : undefined}
                 showGpsButton={true}
                 onLocateGps={handleLocateGps}
                 isLocating={isLocatingGps}
@@ -402,8 +431,8 @@ export const PassengerView: React.FC<PassengerViewProps> = ({
                 iconColor="bg-red-500"
                 value={destination}
                 onChange={(loc) => setDestination(loc)}
-                placeholder={`Search destination in ${selectedCity}...`}
-                activeCity={selectedCity}
+                placeholder="Where to? (e.g. Centaurus, Airport, F-10, DHA...)"
+                userLocation={pickup ? { lat: pickup.lat, lng: pickup.lng } : undefined}
               />
 
               {/* Recent / Frequent Location Quick Chips */}
@@ -411,7 +440,7 @@ export const PassengerView: React.FC<PassengerViewProps> = ({
                 <div>
                   <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1 flex items-center space-x-1">
                     <Clock className="w-3 h-3 text-slate-400" />
-                    <span>Quick Places in {selectedCity}:</span>
+                    <span>Quick Places:</span>
                   </div>
                   <div className="flex flex-wrap gap-1.5">
                     {recentChips.slice(0, 5).map((hub, idx) => (
@@ -550,7 +579,7 @@ export const PassengerView: React.FC<PassengerViewProps> = ({
               <div className="text-center py-8 text-slate-400 text-sm">
                 <Clock className="w-8 h-8 mx-auto mb-2 text-slate-300 animate-spin" />
                 <p>{t.noOffersYet}</p>
-                <p className="text-xs mt-1 text-slate-400">Drivers in {selectedCity} are reviewing your offer...</p>
+                <p className="text-xs mt-1 text-slate-400">Drivers nearby are reviewing your offer...</p>
               </div>
             ) : (
               <div className="space-y-3">
@@ -797,7 +826,7 @@ export const PassengerView: React.FC<PassengerViewProps> = ({
             </div>
             <h3 className="text-lg font-bold text-center text-charcoal-900">PakRide Safety SOS</h3>
             <p className="text-xs text-center text-slate-600">
-              Emergency assistance is available for rides in {selectedCity}.
+              Emergency assistance is available 24/7 across Pakistan (Police Madadgar 15).
             </p>
             <div className="space-y-2">
               <a

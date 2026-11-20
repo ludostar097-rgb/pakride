@@ -84,11 +84,11 @@ export class GeocodingService {
   }
 
   /**
-   * Intelligent Search with Fuzzy Matching, Typo Tolerance, and City Biasing
+   * Intelligent Search with Fuzzy Matching, Typo Tolerance, and Dynamic Location Biasing
    */
   public static async searchAddressWithFuzzy(
     query: string,
-    activeCity: string = 'Karachi'
+    userLocation?: { lat: number; lng: number }
   ): Promise<SearchResult> {
     if (!query || query.trim().length < 2) {
       return { locations: [], source: 'photon' };
@@ -96,13 +96,15 @@ export class GeocodingService {
 
     const { corrected, wasCorrected } = this.correctQuery(query);
     const searchTarget = wasCorrected ? corrected : query.trim();
-    const cityCenter = CITY_CENTROIDS[activeCity] || CITY_CENTROIDS.Karachi;
 
-    // 1. Try Photon (Elasticsearch based, fuzzy enabled, biased to city center)
+    // 1. Try Photon (Elasticsearch based, fuzzy enabled, biased to user location if available)
     try {
+      const biasParams = userLocation
+        ? `&lat=${userLocation.lat}&lon=${userLocation.lng}`
+        : '';
       const photonUrl = `https://photon.komoot.io/api/?q=${encodeURIComponent(
-        searchTarget + ' ' + activeCity + ' Pakistan'
-      )}&lat=${cityCenter.lat}&lon=${cityCenter.lng}&limit=6`;
+        searchTarget + ' Pakistan'
+      )}${biasParams}&limit=6`;
 
       const res = await fetch(photonUrl);
       if (res.ok) {
@@ -111,14 +113,14 @@ export class GeocodingService {
           const locations: LocationCoordinates[] = data.features.map((f: any) => {
             const props = f.properties || {};
             const name = props.name || props.street || props.district || props.city || searchTarget;
-            const context = [props.street, props.district || props.suburb, props.city || activeCity]
+            const context = [props.street, props.district || props.suburb, props.city, props.state]
               .filter(Boolean)
               .join(', ');
             return {
               lat: f.geometry.coordinates[1],
               lng: f.geometry.coordinates[0],
               address: name + (context ? ` (${context})` : ''),
-              landmark: props.city || activeCity
+              landmark: props.city || props.district || 'Pakistan'
             };
           });
 
@@ -136,7 +138,7 @@ export class GeocodingService {
     // 2. Fallback to OpenStreetMap Nominatim with Pakistan filter
     try {
       const nomUrl = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
-        searchTarget + ', ' + activeCity + ', Pakistan'
+        searchTarget + ', Pakistan'
       )}&countrycodes=pk&limit=6`;
 
       const res = await fetch(nomUrl, {
@@ -153,7 +155,7 @@ export class GeocodingService {
               lat: parseFloat(item.lat),
               lng: parseFloat(item.lon),
               address: shortName,
-              landmark: parts[1]?.trim() || activeCity
+              landmark: parts[1]?.trim() || 'Pakistan'
             };
           });
 
@@ -221,7 +223,7 @@ export class GeocodingService {
    * Retrieve Initial Popular Hubs when user has no recent history
    */
   public static getPopularHubs(cityName: string): LocationCoordinates[] {
-    if (cityName === 'Islamabad') {
+    if (cityName === 'Islamabad' || cityName === 'Rawalpindi') {
       return [
         { lat: 33.7077, lng: 73.0501, address: 'The Centaurus Mall, Jinnah Ave', landmark: 'F-8' },
         { lat: 33.7296, lng: 73.0372, address: 'Faisal Mosque Main Gate', landmark: 'Margalla Foothills' },
@@ -229,6 +231,15 @@ export class GeocodingService {
         { lat: 33.6925, lng: 73.0118, address: 'F-10 Markaz', landmark: 'F-10' },
         { lat: 33.6894, lng: 73.0305, address: 'G-9 Karachi Company', landmark: 'G-9' },
         { lat: 33.6685, lng: 73.0760, address: 'I-8 Markaz', landmark: 'I-8' }
+      ];
+    }
+    if (cityName === 'Lahore') {
+      return [
+        { lat: 31.5126, lng: 74.3436, address: 'Liberty Market, Gulberg III', landmark: 'Gulberg' },
+        { lat: 31.5085, lng: 74.3541, address: 'MM Alam Road, Gulberg', landmark: 'MM Alam' },
+        { lat: 31.4707, lng: 74.4108, address: 'DHA Phase 5 Commercial', landmark: 'DHA' },
+        { lat: 31.5204, lng: 74.3587, address: 'Mall of Lahore, Cantt', landmark: 'Cantt' },
+        { lat: 31.5882, lng: 74.3105, address: 'Badshahi Mosque, Old City', landmark: 'Walled City' }
       ];
     }
     // Default Karachi
@@ -239,6 +250,30 @@ export class GeocodingService {
       { lat: 24.8293, lng: 67.0336, address: 'Clifton (Teen Talwar)', landmark: 'Clifton' },
       { lat: 24.9395, lng: 67.1172, address: 'Karachi University (Silver Jubilee)', landmark: 'University Rd' }
     ];
+  }
+
+  /**
+   * Retrieve intelligent location-biased popular hubs
+   */
+  public static getPopularHubsForLocation(loc?: { lat: number; lng: number }): LocationCoordinates[] {
+    if (!loc) {
+      // General cross-city popular hubs
+      return [
+        { lat: 33.7077, lng: 73.0501, address: 'The Centaurus Mall, Islamabad', landmark: 'Islamabad F-8' },
+        { lat: 24.9213, lng: 67.1355, address: 'Jauhar Chowrangi, Karachi', landmark: 'Karachi Jauhar' },
+        { lat: 31.5126, lng: 74.3436, address: 'Liberty Market, Gulberg, Lahore', landmark: 'Lahore Gulberg' },
+        { lat: 33.7145, lng: 73.0673, address: 'Blue Area, Islamabad', landmark: 'Islamabad Central' },
+        { lat: 24.8293, lng: 67.0336, address: 'Clifton (Teen Talwar), Karachi', landmark: 'Karachi Clifton' }
+      ];
+    }
+
+    if (loc.lat >= 33.0) {
+      return this.getPopularHubs('Islamabad');
+    } else if (loc.lat >= 30.5) {
+      return this.getPopularHubs('Lahore');
+    } else {
+      return this.getPopularHubs('Karachi');
+    }
   }
 
   /**

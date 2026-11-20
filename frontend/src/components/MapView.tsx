@@ -11,7 +11,8 @@ interface MapViewProps {
   onSelectPickup?: (loc: LocationCoordinates) => void;
   onSelectDestination?: (loc: LocationCoordinates) => void;
   mode?: 'pickup' | 'destination' | 'tracking';
-  activeCity?: 'Karachi' | 'Islamabad';
+  activeCity?: string;
+  zoneName?: string;
 }
 
 export const MapView: React.FC<MapViewProps> = ({
@@ -21,7 +22,8 @@ export const MapView: React.FC<MapViewProps> = ({
   onSelectPickup,
   onSelectDestination,
   mode = 'pickup',
-  activeCity = 'Karachi'
+  activeCity,
+  zoneName
 }) => {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
@@ -38,26 +40,18 @@ export const MapView: React.FC<MapViewProps> = ({
   useEffect(() => {
     if (!mapContainerRef.current || mapRef.current) return;
 
-    // Karachi Gulistan-e-Jauhar coordinates
-    const jauharCenter: [number, number] = [24.918, 67.135];
+    // Center initially on pickup coordinates if available, or Islamabad / Karachi centroid
+    const initialCenter: [number, number] = pickup
+      ? [pickup.lat, pickup.lng]
+      : [33.6844, 73.0479]; // Default Islamabad / Pakistan central
     const map = L.map(mapContainerRef.current, {
       zoomControl: true,
       attributionControl: false
-    }).setView(jauharCenter, 14);
+    }).setView(initialCenter, 13);
 
     // Free OpenStreetMap vector/raster tiles
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19
-    }).addTo(map);
-
-    // Pilot Zone Green Boundary Circle (Gulistan-e-Jauhar ~4.5km radius)
-    L.circle(jauharCenter, {
-      radius: 4000,
-      color: '#00a859',
-      weight: 2,
-      dashArray: '6, 6',
-      fillColor: '#00a859',
-      fillOpacity: 0.08
     }).addTo(map);
 
     // Map click handler: places pin and performs live Reverse Geocoding
@@ -83,15 +77,13 @@ export const MapView: React.FC<MapViewProps> = ({
     };
   }, []);
 
-  // Pan to Active City if changed
+  // Pan smoothly to user's Pickup Location whenever set or updated
   useEffect(() => {
-    if (!mapRef.current) return;
-    if (activeCity === 'Islamabad') {
-      mapRef.current.flyTo([33.6844, 73.0479], 14, { duration: 1.5 });
-    } else {
-      mapRef.current.flyTo([24.918, 67.135], 14, { duration: 1.5 });
+    if (!mapRef.current || !pickup) return;
+    if (!destination) {
+      mapRef.current.flyTo([pickup.lat, pickup.lng], 15, { duration: 1.2 });
     }
-  }, [activeCity]);
+  }, [pickup?.lat, pickup?.lng, destination]);
 
   // Update Pickup Marker
   useEffect(() => {
@@ -264,31 +256,27 @@ export const MapView: React.FC<MapViewProps> = ({
     }
     setLocating(true);
     navigator.geolocation.getCurrentPosition(
-      (pos) => {
+      async (pos) => {
         setLocating(false);
         const lat = Math.round(pos.coords.latitude * 10000) / 10000;
         const lng = Math.round(pos.coords.longitude * 10000) / 10000;
-        const myLoc: LocationCoordinates = {
-          lat,
-          lng,
-          address: `My GPS Location (${lat.toFixed(3)}, ${lng.toFixed(3)})`,
-          landmark: 'Current GPS'
-        };
-
-        if (mapRef.current) {
-          mapRef.current.setView([lat, lng], 15);
-        }
-        if (onSelectPickup) {
-          onSelectPickup(myLoc);
+        try {
+          const myLoc = await GeocodingService.reverseGeocode(lat, lng);
+          if (mapRef.current) {
+            mapRef.current.setView([lat, lng], 15);
+          }
+          if (onSelectPickup) {
+            onSelectPickup(myLoc);
+          }
+        } catch (e) {
+          if (mapRef.current) {
+            mapRef.current.setView([lat, lng], 15);
+          }
         }
       },
       (err) => {
         setLocating(false);
         console.warn('Geolocation error:', err.message);
-        // Center on Karachi Gulistan-e-Jauhar default
-        if (mapRef.current) {
-          mapRef.current.setView([24.918, 67.135], 14);
-        }
       },
       { timeout: 8000 }
     );
@@ -298,10 +286,10 @@ export const MapView: React.FC<MapViewProps> = ({
     <div className="relative w-full h-full min-h-[300px] overflow-hidden rounded-2xl border border-slate-200 shadow-inner">
       <div ref={mapContainerRef} className="w-full h-full z-0" />
 
-      {/* Pilot Zone Pill Indicator */}
+      {/* Dynamic Zone / GPS Pill Indicator */}
       <div className="absolute top-3 left-3 z-[400] bg-white/95 backdrop-blur-md px-3 py-1.5 rounded-full shadow-md border border-slate-200 flex items-center space-x-2 text-xs font-semibold text-slate-700">
         <span className="w-2.5 h-2.5 rounded-full bg-pakgreen-500 animate-pulse"></span>
-        <span>{activeCity === 'Islamabad' ? 'Islamabad: Central & Blue Area Zone' : 'Karachi: Gulistan-e-Jauhar Pilot Zone'}</span>
+        <span>{zoneName ? `Zone: ${zoneName}` : activeCity ? `${activeCity} Zone` : 'GPS Live Routing'}</span>
       </div>
 
       {/* Floating Road Route Stats Banner (When Route is loaded) */}

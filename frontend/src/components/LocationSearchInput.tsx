@@ -9,7 +9,7 @@ interface LocationSearchInputProps {
   value: LocationCoordinates;
   onChange: (loc: LocationCoordinates) => void;
   placeholder: string;
-  activeCity: string;
+  userLocation?: { lat: number; lng: number };
   showGpsButton?: boolean;
   onLocateGps?: () => void;
   isLocating?: boolean;
@@ -21,7 +21,7 @@ export const LocationSearchInput: React.FC<LocationSearchInputProps> = ({
   value,
   onChange,
   placeholder,
-  activeCity,
+  userLocation,
   showGpsButton = false,
   onLocateGps,
   isLocating = false
@@ -40,15 +40,15 @@ export const LocationSearchInput: React.FC<LocationSearchInputProps> = ({
     setQuery(value.address || '');
   }, [value.address]);
 
-  // Load recents & popular hubs on mount or city change
+  // Load recents & popular hubs on mount
   useEffect(() => {
     const saved = GeocodingService.getRecentLocations();
     if (saved.length > 0) {
       setRecents(saved);
     } else {
-      setRecents(GeocodingService.getPopularHubs(activeCity));
+      setRecents(GeocodingService.getPopularHubsForLocation(userLocation));
     }
-  }, [activeCity]);
+  }, [userLocation]);
 
   // Click outside to close dropdown
   useEffect(() => {
@@ -74,14 +74,14 @@ export const LocationSearchInput: React.FC<LocationSearchInputProps> = ({
 
     const timer = setTimeout(async () => {
       setSearching(true);
-      const res = await GeocodingService.searchAddressWithFuzzy(query, activeCity);
+      const res = await GeocodingService.searchAddressWithFuzzy(query, userLocation);
       setResults(res.locations);
       setDidYouMean(res.didYouMean);
       setSearching(false);
     }, 280);
 
     return () => clearTimeout(timer);
-  }, [query, activeCity, isOpen]);
+  }, [query, userLocation, isOpen]);
 
   const handleSelectLocation = (loc: LocationCoordinates) => {
     setQuery(loc.address);
@@ -93,7 +93,7 @@ export const LocationSearchInput: React.FC<LocationSearchInputProps> = ({
   const handleApplyDidYouMean = async (correctedQuery: string) => {
     setQuery(correctedQuery);
     setSearching(true);
-    const res = await GeocodingService.searchAddressWithFuzzy(correctedQuery, activeCity);
+    const res = await GeocodingService.searchAddressWithFuzzy(correctedQuery, userLocation);
     setResults(res.locations);
     setDidYouMean(undefined);
     setSearching(false);
@@ -194,7 +194,7 @@ export const LocationSearchInput: React.FC<LocationSearchInputProps> = ({
           {searching && (
             <div className="px-4 py-3 text-xs text-slate-500 flex items-center space-x-2">
               <div className="w-3.5 h-3.5 border-2 border-pakgreen-500 border-t-transparent rounded-full animate-spin" />
-              <span>Searching places across {activeCity}...</span>
+              <span>Searching places nearby...</span>
             </div>
           )}
 
@@ -235,7 +235,7 @@ export const LocationSearchInput: React.FC<LocationSearchInputProps> = ({
             <div className="py-1">
               <div className="px-3.5 py-1.5 text-[10px] font-bold tracking-wider text-slate-400 uppercase flex items-center space-x-1">
                 <Clock className="w-3 h-3" />
-                <span>Recent & Suggested Places in {activeCity}</span>
+                <span>Recent & Suggested Places</span>
               </div>
               {recents.map((loc, idx) => (
                 <button

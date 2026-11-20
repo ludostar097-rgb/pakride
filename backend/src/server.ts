@@ -279,10 +279,14 @@ app.post('/api/rides/calculate-fare', (req, res) => {
     destination.lng
   );
 
+  // Automatically detect operational zone from pickup coordinates
+  const matchedZone = PricingService.findMatchingZone(pickup.lat, pickup.lng);
+  const activeZoneId = zoneId || matchedZone?.id || 'zone-karachi-jauhar';
+
   const suggestedFarePaisa = PricingService.calculateSuggestedFarePaisa(
     category,
     distanceKm,
-    zoneId || 'zone-karachi-jauhar'
+    activeZoneId
   );
 
   const estimatedMinutes = Math.max(Math.round(distanceKm * 3.5), 5);
@@ -293,7 +297,8 @@ app.post('/api/rides/calculate-fare', (req, res) => {
     suggestedFarePaisa,
     suggestedFarePkr: Math.round(suggestedFarePaisa / 100),
     currency: 'PKR',
-    category
+    category,
+    detectedZone: matchedZone ? { id: matchedZone.id, cityName: matchedZone.cityName, zoneName: matchedZone.zoneName } : undefined
   });
 });
 
@@ -315,10 +320,14 @@ app.post('/api/rides/request', AuthService.requireAuth, (req: AuthenticatedReque
     destination.lng
   );
 
+  // Automatically detect operational zone from pickup coordinates
+  const matchedZone = PricingService.findMatchingZone(pickup.lat, pickup.lng);
+  const activeZoneId = zoneId || matchedZone?.id || 'zone-karachi-jauhar';
+
   const suggestedFarePaisa = PricingService.calculateSuggestedFarePaisa(
     category,
     distanceKm,
-    zoneId || 'zone-karachi-jauhar'
+    activeZoneId
   );
 
   const proposedFarePaisa = Math.round(Number(proposedFarePkr) * 100);

@@ -6,8 +6,8 @@
       "fullName": "Ali Khan",
       "role": "PASSENGER",
       "languagePreference": "en",
-      "createdAt": "2026-11-20T11:19:29.947Z",
-      "passwordHash": "$2b$10$SwQnzNPragLqM9m3ftUiCOACg8J17k1uApX9HuiAJnRcZ0OYKCMvm"
+      "createdAt": "2026-11-20T16:24:21.700Z",
+      "passwordHash": "$2b$10$lTg6Qm7KA.RPhYz2GmZk9OGljQgcEHeEZo1rIBpeP9l.YroJwhbce"
     },
     "user-driver-car-1": {
       "id": "user-driver-car-1",
@@ -15,8 +15,8 @@
       "fullName": "Tariq Mehmood",
       "role": "DRIVER",
       "languagePreference": "ur",
-      "createdAt": "2026-11-20T11:19:29.949Z",
-      "passwordHash": "$2b$10$SwQnzNPragLqM9m3ftUiCOACg8J17k1uApX9HuiAJnRcZ0OYKCMvm"
+      "createdAt": "2026-11-20T16:24:21.702Z",
+      "passwordHash": "$2b$10$lTg6Qm7KA.RPhYz2GmZk9OGljQgcEHeEZo1rIBpeP9l.YroJwhbce"
     },
     "user-driver-moto-1": {
       "id": "user-driver-moto-1",
@@ -24,8 +24,8 @@
       "fullName": "Kamran Iqbal",
       "role": "DRIVER",
       "languagePreference": "ur",
-      "createdAt": "2026-11-20T11:19:29.952Z",
-      "passwordHash": "$2b$10$SwQnzNPragLqM9m3ftUiCOACg8J17k1uApX9HuiAJnRcZ0OYKCMvm"
+      "createdAt": "2026-11-20T16:24:21.707Z",
+      "passwordHash": "$2b$10$lTg6Qm7KA.RPhYz2GmZk9OGljQgcEHeEZo1rIBpeP9l.YroJwhbce"
     },
     "user-driver-rick-1": {
       "id": "user-driver-rick-1",
@@ -33,8 +33,8 @@
       "fullName": "Zubair Ahmed",
       "role": "DRIVER",
       "languagePreference": "ur",
-      "createdAt": "2026-11-20T11:19:29.975Z",
-      "passwordHash": "$2b$10$SwQnzNPragLqM9m3ftUiCOACg8J17k1uApX9HuiAJnRcZ0OYKCMvm"
+      "createdAt": "2026-11-20T16:24:21.714Z",
+      "passwordHash": "$2b$10$lTg6Qm7KA.RPhYz2GmZk9OGljQgcEHeEZo1rIBpeP9l.YroJwhbce"
     },
     "user-driver-pending-1": {
       "id": "user-driver-pending-1",
@@ -42,8 +42,8 @@
       "fullName": "Usman Farooq",
       "role": "DRIVER",
       "languagePreference": "en",
-      "createdAt": "2026-11-20T11:19:29.979Z",
-      "passwordHash": "$2b$10$SwQnzNPragLqM9m3ftUiCOACg8J17k1uApX9HuiAJnRcZ0OYKCMvm"
+      "createdAt": "2026-11-20T16:24:21.721Z",
+      "passwordHash": "$2b$10$lTg6Qm7KA.RPhYz2GmZk9OGljQgcEHeEZo1rIBpeP9l.YroJwhbce"
     },
     "user-admin-1": {
       "id": "user-admin-1",
@@ -51,8 +51,8 @@
       "fullName": "Ahmad Hassan",
       "role": "ADMIN",
       "languagePreference": "en",
-      "createdAt": "2026-11-20T11:19:29.983Z",
-      "passwordHash": "$2b$10$SwQnzNPragLqM9m3ftUiCOACg8J17k1uApX9HuiAJnRcZ0OYKCMvm"
+      "createdAt": "2026-11-20T16:24:21.725Z",
+      "passwordHash": "$2b$10$lTg6Qm7KA.RPhYz2GmZk9OGljQgcEHeEZo1rIBpeP9l.YroJwhbce"
     },
     "user-manager-1": {
       "id": "user-manager-1",
@@ -60,8 +60,8 @@
       "fullName": "Karachi Ops Lead",
       "role": "CITY_MANAGER",
       "languagePreference": "en",
-      "createdAt": "2026-11-20T11:19:29.984Z",
-      "passwordHash": "$2b$10$SwQnzNPragLqM9m3ftUiCOACg8J17k1uApX9HuiAJnRcZ0OYKCMvm"
+      "createdAt": "2026-11-20T16:24:21.728Z",
+      "passwordHash": "$2b$10$lTg6Qm7KA.RPhYz2GmZk9OGljQgcEHeEZo1rIBpeP9l.YroJwhbce"
     },
     "user-isb-passenger-1795151092007": {
       "id": "user-isb-passenger-1795151092007",
@@ -278,6 +278,24 @@
       "languagePreference": "en",
       "createdAt": "2026-11-20T13:58:57.794Z",
       "passwordHash": "$2b$10$ILbLItulfmkIQPda1HiNjOmR5cuSsHU7/qH6bYBr/UHzWYMRkNjy."
+    },
+    "user-794ea8f4": {
+      "id": "user-794ea8f4",
+      "phone": "03007443615",
+      "fullName": "Zainab Bibi",
+      "role": "PASSENGER",
+      "languagePreference": "en",
+      "createdAt": "2026-11-20T16:47:50.632Z",
+      "passwordHash": "$2b$10$Bxw8FV4UMXHQexD9r4iSteoHgpGY5fijQuO8JP1VWguoXGVac8peu"
+    },
+    "user-69be033a": {
+      "id": "user-69be033a",
+      "phone": "03112875347",
+      "fullName": "Rashid Minhas",
+      "role": "DRIVER",
+      "languagePreference": "en",
+      "createdAt": "2026-11-20T16:47:50.947Z",
+      "passwordHash": "$2b$10$bCjGliS49gFfSvgLipC3EO3jalso54Nxav1khKAnzYa4nhjRO7k.K"
     }
   },
   "driverProfiles": {
@@ -638,6 +656,28 @@
         "plateNumber": "ISB-8899",
         "color": "White"
       }
+    },
+    "user-69be033a": {
+      "id": "prof-8915381a",
+      "userId": "user-69be033a",
+      "verificationStatus": "APPROVED",
+      "isOnline": true,
+      "activeCityId": "city-karachi",
+      "activeZoneId": "zone-karachi-jauhar",
+      "ratingAverage": 5,
+      "ratingCount": 1,
+      "cnicNumber": "42201-0000000-1",
+      "licenseNumber": "KHI-DL-00000",
+      "vehicle": {
+        "id": "veh-fddf7ae0",
+        "driverId": "user-69be033a",
+        "category": "CAR",
+        "make": "Suzuki",
+        "model": "WagonR",
+        "year": 2023,
+        "plateNumber": "ISB-8899",
+        "color": "White"
+      }
     }
   },
   "vehicles": {
@@ -724,6 +764,16 @@
     "veh-915202a6": {
       "id": "veh-915202a6",
       "driverId": "user-cc80971d",
+      "category": "CAR",
+      "make": "Suzuki",
+      "model": "WagonR",
+      "year": 2023,
+      "plateNumber": "ISB-8899",
+      "color": "White"
+    },
+    "veh-fddf7ae0": {
+      "id": "veh-fddf7ae0",
+      "driverId": "user-69be033a",
       "category": "CAR",
       "make": "Suzuki",
       "model": "WagonR",
@@ -1319,6 +1369,53 @@
       ],
       "rating": 5,
       "reviewComment": "Best ride experience, very punctual!"
+    },
+    "ride-f6cdf50d": {
+      "id": "ride-f6cdf50d",
+      "passengerId": "user-794ea8f4",
+      "passengerName": "Zainab Bibi",
+      "passengerPhone": "03007443615",
+      "category": "CAR",
+      "pickup": {
+        "lat": 33.7077,
+        "lng": 73.0501,
+        "address": "The Centaurus Mall, Jinnah Ave, Islamabad"
+      },
+      "destination": {
+        "lat": 33.7296,
+        "lng": 73.0372,
+        "address": "Faisal Mosque Main Gate, Islamabad"
+      },
+      "pickupNotes": "Centaurus Gate 2, near food court exit",
+      "distanceKm": 3.7,
+      "estimatedMinutes": 13,
+      "suggestedFarePaisa": 34500,
+      "proposedFarePaisa": 34500,
+      "status": "COMPLETED",
+      "paymentMethod": "CASH",
+      "paymentStatus": "PAID",
+      "createdAt": "2026-11-20T16:47:52.529Z",
+      "updatedAt": "2026-11-20T16:47:52.646Z",
+      "driverId": "user-69be033a",
+      "driverName": "Rashid Minhas",
+      "driverPhone": "03112875347",
+      "driverRating": 5,
+      "vehicleDetails": "White Suzuki WagonR (ISB-8899)",
+      "agreedFarePaisa": 34500,
+      "verificationOtp": "7136",
+      "chatMessages": [
+        {
+          "id": "msg-0acf790b",
+          "rideId": "ride-f6cdf50d",
+          "senderId": "user-794ea8f4",
+          "senderName": "Zainab Bibi",
+          "senderRole": "PASSENGER",
+          "text": "Salam driver bhai, I am at Gate 2 in blue shirt.",
+          "timestamp": "2026-11-20T16:47:52.587Z"
+        }
+      ],
+      "rating": 5,
+      "reviewComment": "Best ride experience, very punctual!"
     }
   },
   "offers": {
@@ -1531,6 +1628,20 @@
       "status": "ACCEPTED",
       "createdAt": "2026-11-20T13:58:58.332Z",
       "expiresAt": "2026-11-20T14:03:58.332Z"
+    },
+    "off-6bcd8d12": {
+      "id": "off-6bcd8d12",
+      "rideId": "ride-f6cdf50d",
+      "driverId": "user-69be033a",
+      "driverName": "Rashid Minhas",
+      "driverPhone": "03112875347",
+      "driverRating": 5,
+      "driverVehicle": "White Suzuki WagonR (ISB-8899)",
+      "counterFarePaisa": 34500,
+      "etaMinutes": 3,
+      "status": "ACCEPTED",
+      "createdAt": "2026-11-20T16:47:52.557Z",
+      "expiresAt": "2026-11-20T16:52:52.557Z"
     }
   },
   "ledger": {
@@ -1624,6 +1735,19 @@
       "status": "PAID",
       "reconciledAt": "2026-11-20T13:58:58.418Z",
       "createdAt": "2026-11-20T13:58:58.418Z"
+    },
+    "ledg-qtfgx59": {
+      "id": "ledg-qtfgx59",
+      "rideId": "ride-f6cdf50d",
+      "driverId": "user-69be033a",
+      "passengerId": "user-794ea8f4",
+      "method": "CASH",
+      "grossAmountPaisa": 34500,
+      "platformCommissionPaisa": 0,
+      "driverNetPaisa": 34500,
+      "status": "PAID",
+      "reconciledAt": "2026-11-20T16:47:52.655Z",
+      "createdAt": "2026-11-20T16:47:52.655Z"
     }
   },
   "complaints": {},
@@ -2231,6 +2355,79 @@
       },
       "id": "audit-u6j2evb",
       "timestamp": "2026-11-20T13:58:58.421Z"
+    },
+    {
+      "eventType": "DRIVER_VERIFICATION_STATUS_CHANGED",
+      "actorId": "user-admin-1",
+      "actorRole": "ADMIN",
+      "payload": {
+        "targetDriverId": "user-69be033a",
+        "newStatus": "APPROVED"
+      },
+      "id": "audit-tkyjbqx",
+      "timestamp": "2026-11-20T16:47:52.405Z"
+    },
+    {
+      "rideId": "ride-f6cdf50d",
+      "eventType": "RIDE_STATUS_TRANSITION",
+      "actorId": "user-794ea8f4",
+      "actorRole": "PASSENGER",
+      "payload": {
+        "from": "REQUESTED",
+        "to": "OFFERS_OPEN"
+      },
+      "id": "audit-63v7be3",
+      "timestamp": "2026-11-20T16:47:52.537Z"
+    },
+    {
+      "rideId": "ride-f6cdf50d",
+      "eventType": "RIDE_STATUS_TRANSITION",
+      "actorId": "user-69be033a",
+      "actorRole": "DRIVER",
+      "payload": {
+        "from": "DRIVER_SELECTED",
+        "to": "EN_ROUTE"
+      },
+      "id": "audit-d7usqnh",
+      "timestamp": "2026-11-20T16:47:52.620Z"
+    },
+    {
+      "rideId": "ride-f6cdf50d",
+      "eventType": "RIDE_STATUS_TRANSITION",
+      "actorId": "user-69be033a",
+      "actorRole": "DRIVER",
+      "payload": {
+        "from": "EN_ROUTE",
+        "to": "IN_PROGRESS"
+      },
+      "id": "audit-c0r7p8z",
+      "timestamp": "2026-11-20T16:47:52.631Z"
+    },
+    {
+      "rideId": "ride-f6cdf50d",
+      "eventType": "RIDE_STATUS_TRANSITION",
+      "actorId": "user-69be033a",
+      "actorRole": "DRIVER",
+      "payload": {
+        "from": "IN_PROGRESS",
+        "to": "COMPLETED"
+      },
+      "id": "audit-gcwbpff",
+      "timestamp": "2026-11-20T16:47:52.648Z"
+    },
+    {
+      "rideId": "ride-f6cdf50d",
+      "eventType": "PAYMENT_RECORDED",
+      "actorId": "user-69be033a",
+      "actorRole": "SYSTEM",
+      "payload": {
+        "ledgerId": "ledg-qtfgx59",
+        "grossPaisa": 34500,
+        "commissionPaisa": 0,
+        "driverNetPaisa": 34500
+      },
+      "id": "audit-kwkeisb",
+      "timestamp": "2026-11-20T16:47:52.661Z"
     }
   ],
   "settings": {

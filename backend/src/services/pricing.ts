@@ -1,7 +1,34 @@
-import { VehicleCategory } from '../shared/types.js';
+import { VehicleCategory, CityZone } from '../shared/types.js';
 import { db } from '../db/store.js';
 
 export class PricingService {
+  /**
+   * Automatically detect matching operational zone from GPS coordinates
+   */
+  public static findMatchingZone(lat: number, lng: number): CityZone | null {
+    const zones = db.getZones();
+    // 1. Find active zone containing coordinates within radius
+    for (const zone of zones) {
+      if (!zone.isActive) continue;
+      const dist = this.calculateDistanceKm(lat, lng, zone.centerLat, zone.centerLng);
+      if (dist <= zone.radiusKm) {
+        return zone;
+      }
+    }
+    // 2. Fallback: find nearest active zone in Pakistan
+    let nearest: CityZone | null = null;
+    let minDist = Infinity;
+    for (const zone of zones) {
+      if (!zone.isActive) continue;
+      const dist = this.calculateDistanceKm(lat, lng, zone.centerLat, zone.centerLng);
+      if (dist < minDist) {
+        minDist = dist;
+        nearest = zone;
+      }
+    }
+    return nearest;
+  }
+
   /**
    * Calculate suggested fare in integer minor units (PKR paisa)
    * Formula: baseFare + (perKmRate * distanceKm)
