@@ -1,0 +1,234 @@
+{
+  "users": {
+    "user-passenger-1": {
+      "id": "user-passenger-1",
+      "phone": "03001234567",
+      "fullName": "Ali Khan",
+      "role": "PASSENGER",
+      "languagePreference": "en",
+      "createdAt": "2026-11-20T01:50:23.186Z",
+      "passwordHash": "$2b$10$V0xuSJIyEEEvGs4yphuuLe.TqoinZp9vVHyCbKuyomKszsGtD5OkK"
+    },
+    "user-driver-car-1": {
+      "id": "user-driver-car-1",
+      "phone": "03007654321",
+      "fullName": "Tariq Mehmood",
+      "role": "DRIVER",
+      "languagePreference": "ur",
+      "createdAt": "2026-11-20T01:50:23.189Z",
+      "passwordHash": "$2b$10$V0xuSJIyEEEvGs4yphuuLe.TqoinZp9vVHyCbKuyomKszsGtD5OkK"
+    },
+    "user-driver-moto-1": {
+      "id": "user-driver-moto-1",
+      "phone": "03112233445",
+      "fullName": "Kamran Iqbal",
+      "role": "DRIVER",
+      "languagePreference": "ur",
+      "createdAt": "2026-11-20T01:50:23.192Z",
+      "passwordHash": "$2b$10$V0xuSJIyEEEvGs4yphuuLe.TqoinZp9vVHyCbKuyomKszsGtD5OkK"
+    },
+    "user-driver-rick-1": {
+      "id": "user-driver-rick-1",
+      "phone": "03229988776",
+      "fullName": "Zubair Ahmed",
+      "role": "DRIVER",
+      "languagePreference": "ur",
+      "createdAt": "2026-11-20T01:50:23.195Z",
+      "passwordHash": "$2b$10$V0xuSJIyEEEvGs4yphuuLe.TqoinZp9vVHyCbKuyomKszsGtD5OkK"
+    },
+    "user-driver-pending-1": {
+      "id": "user-driver-pending-1",
+      "phone": "03335555555",
+      "fullName": "Usman Farooq",
+      "role": "DRIVER",
+      "languagePreference": "en",
+      "createdAt": "2026-11-20T01:50:23.199Z",
+      "passwordHash": "$2b$10$V0xuSJIyEEEvGs4yphuuLe.TqoinZp9vVHyCbKuyomKszsGtD5OkK"
+    },
+    "user-admin-1": {
+      "id": "user-admin-1",
+      "phone": "03009999999",
+      "fullName": "Ahmad Hassan",
+      "role": "ADMIN",
+      "languagePreference": "en",
+      "createdAt": "2026-11-20T01:50:23.202Z",
+      "passwordHash": "$2b$10$V0xuSJIyEEEvGs4yphuuLe.TqoinZp9vVHyCbKuyomKszsGtD5OkK"
+    },
+    "user-manager-1": {
+      "id": "user-manager-1",
+      "phone": "03008888888",
+      "fullName": "Karachi Ops Lead",
+      "role": "CITY_MANAGER",
+      "languagePreference": "en",
+      "createdAt": "2026-11-20T01:50:23.203Z",
+      "passwordHash": "$2b$10$V0xuSJIyEEEvGs4yphuuLe.TqoinZp9vVHyCbKuyomKszsGtD5OkK"
+    }
+  },
+  "driverProfiles": {
+    "user-driver-car-1": {
+      "id": "prof-driver-car-1",
+      "userId": "user-driver-car-1",
+      "verificationStatus": "APPROVED",
+      "isOnline": true,
+      "activeCityId": "city-karachi",
+      "activeZoneId": "zone-karachi-jauhar",
+      "currentLat": 24.919,
+      "currentLng": 67.136,
+      "ratingAverage": 4.9,
+      "ratingCount": 38,
+      "cnicNumber": "42201-1234567-1",
+      "licenseNumber": "KHI-DL-99482",
+      "vehicle": {
+        "id": "veh-car-1",
+        "driverId": "user-driver-car-1",
+        "category": "CAR",
+        "make": "Toyota",
+        "model": "Corolla GLi",
+        "year": 2021,
+        "plateNumber": "KHI-8291",
+        "color": "White"
+      }
+    },
+    "user-driver-moto-1": {
+      "id": "prof-driver-moto-1",
+      "userId": "user-driver-moto-1",
+      "verificationStatus": "APPROVED",
+      "isOnline": true,
+      "activeCityId": "city-karachi",
+      "activeZoneId": "zone-karachi-jauhar",
+      "currentLat": 24.914,
+      "currentLng": 67.131,
+      "ratingAverage": 4.8,
+      "ratingCount": 52,
+      "cnicNumber": "42101-7654321-3",
+      "licenseNumber": "KHI-DL-11842",
+      "vehicle": {
+        "id": "veh-moto-1",
+        "driverId": "user-driver-moto-1",
+        "category": "MOTORCYCLE",
+        "make": "Honda",
+        "model": "CD 70",
+        "year": 2023,
+        "plateNumber": "KHI-4412",
+        "color": "Red"
+      }
+    },
+    "user-driver-rick-1": {
+      "id": "prof-driver-rick-1",
+      "userId": "user-driver-rick-1",
+      "verificationStatus": "APPROVED",
+      "isOnline": true,
+      "activeCityId": "city-karachi",
+      "activeZoneId": "zone-karachi-jauhar",
+      "currentLat": 24.925,
+      "currentLng": 67.139,
+      "ratingAverage": 4.7,
+      "ratingCount": 29,
+      "cnicNumber": "42201-9876543-5",
+      "licenseNumber": "KHI-DL-43091",
+      "vehicle": {
+        "id": "veh-rick-1",
+        "driverId": "user-driver-rick-1",
+        "category": "RICKSHAW",
+        "make": "Sazgar",
+        "model": "4-Stroke CNG",
+        "year": 2022,
+        "plateNumber": "KHI-9931",
+        "color": "Green"
+      }
+    },
+    "user-driver-pending-1": {
+      "id": "prof-driver-pending",
+      "userId": "user-driver-pending-1",
+      "verificationStatus": "UNDER_REVIEW",
+      "isOnline": false,
+      "activeCityId": "city-karachi",
+      "activeZoneId": "zone-karachi-jauhar",
+      "ratingAverage": 0,
+      "ratingCount": 0,
+      "cnicNumber": "42301-4433221-7",
+      "licenseNumber": "KHI-DL-88219",
+      "vehicle": {
+        "id": "veh-car-pending",
+        "driverId": "user-driver-pending-1",
+        "category": "CAR",
+        "make": "Suzuki",
+        "model": "Alto VXR",
+        "year": 2022,
+        "plateNumber": "KHI-3012",
+        "color": "Silver"
+      }
+    }
+  },
+  "vehicles": {
+    "veh-car-1": {
+      "id": "veh-car-1",
+      "driverId": "user-driver-car-1",
+      "category": "CAR",
+      "make": "Toyota",
+      "model": "Corolla GLi",
+      "year": 2021,
+      "plateNumber": "KHI-8291",
+      "color": "White"
+    },
+    "veh-moto-1": {
+      "id": "veh-moto-1",
+      "driverId": "user-driver-moto-1",
+      "category": "MOTORCYCLE",
+      "make": "Honda",
+      "model": "CD 70",
+      "year": 2023,
+      "plateNumber": "KHI-4412",
+      "color": "Red"
+    },
+    "veh-rick-1": {
+      "id": "veh-rick-1",
+      "driverId": "user-driver-rick-1",
+      "category": "RICKSHAW",
+      "make": "Sazgar",
+      "model": "4-Stroke CNG",
+      "year": 2022,
+      "plateNumber": "KHI-9931",
+      "color": "Green"
+    },
+    "veh-car-pending": {
+      "id": "veh-car-pending",
+      "driverId": "user-driver-pending-1",
+      "category": "CAR",
+      "make": "Suzuki",
+      "model": "Alto VXR",
+      "year": 2022,
+      "plateNumber": "KHI-3012",
+      "color": "Silver"
+    }
+  },
+  "rides": {},
+  "offers": {},
+  "ledger": {},
+  "complaints": {},
+  "zones": {
+    "zone-karachi-jauhar": {
+      "id": "zone-karachi-jauhar",
+      "cityId": "city-karachi",
+      "cityName": "Karachi",
+      "zoneName": "Gulistan-e-Jauhar",
+      "isActive": true,
+      "centerLat": 24.918,
+      "centerLng": 67.135,
+      "radiusKm": 6.5,
+      "baseFareCarPaisa": 15000,
+      "baseFareMotoPaisa": 6000,
+      "baseFareRickshawPaisa": 9000,
+      "perKmCarPaisa": 4000,
+      "perKmMotoPaisa": 1800,
+      "perKmRickshawPaisa": 2500
+    }
+  },
+  "auditEvents": [],
+  "settings": {
+    "introductoryCommissionPercent": 0,
+    "pilotZoneActive": true,
+    "activeCity": "Karachi",
+    "maintenanceMode": false
+  }
+}
