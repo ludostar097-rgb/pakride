@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import L from 'leaflet';
 import {
   ShieldCheck,
   Users,
@@ -9,9 +10,12 @@ import {
   CheckCircle,
   XCircle,
   Settings,
-  RefreshCw
+  RefreshCw,
+  Radar,
+  Radio
 } from 'lucide-react';
 import { DriverProfile, RideRequest, PaymentLedgerEntry } from '../shared/types';
+import { PILOT_ZONES } from '../shared/constants';
 
 interface AdminViewProps {
   currentUser: { id: string; fullName: string; phone: string; role: string };
@@ -30,8 +34,13 @@ export const AdminView: React.FC<AdminViewProps> = ({
   const [rides, setRides] = useState<RideRequest[]>([]);
   const [ledger, setLedger] = useState<PaymentLedgerEntry[]>([]);
   const [settings, setSettings] = useState<any>({ introductoryCommissionPercent: 0 });
-  const [activeTab, setActiveTab] = useState<'drivers' | 'rides' | 'ledger' | 'settings'>('drivers');
+  const [activeTab, setActiveTab] = useState<'radar' | 'drivers' | 'rides' | 'ledger'>('radar');
   const [loading, setLoading] = useState(false);
+
+  // Map refs for Radar
+  const radarMapContainerRef = useRef<HTMLDivElement>(null);
+  const radarMapRef = useRef<L.Map | null>(null);
+  const driverMarkersMapRef = useRef<Record<string, L.Marker>>({});
 
   const fetchAdminData = async () => {
     setLoading(true);
@@ -66,6 +75,62 @@ export const AdminView: React.FC<AdminViewProps> = ({
   useEffect(() => {
     fetchAdminData();
   }, [currentUser.id]);
+
+  // Initialize Radar Map when tab is 'radar'
+  useEffect(() => {
+    if (activeTab !== 'radar' || !radarMapContainerRef.current) return;
+
+    if (!radarMapRef.current) {
+      const jauhar = [24.918, 67.135] as [number, number];
+      const map = L.map(radarMapContainerRef.current, {
+        zoomControl: true,
+        attributionControl: false
+      }).setView(jauhar, 14);
+
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19
+      }).addTo(map);
+
+      // Pilot Zone Circle
+      L.circle(jauhar, {
+        radius: 4000,
+        color: '#00a859',
+        weight: 2,
+        dashArray: '6, 6',
+        fillColor: '#00a859',
+        fillOpacity: 0.08
+      }).addTo(map);
+
+      radarMapRef.current = map;
+    }
+
+    // Plot Drivers on Radar Map
+    const map = radarMapRef.current;
+    if (map) {
+      // Clear old driver markers
+      Object.values(driverMarkersMapRef.current).forEach((m) => m.remove());
+      driverMarkersMapRef.current = {};
+
+      drivers.forEach((d) => {
+        if (d.currentLat && d.currentLng) {
+          const iconChar = d.vehicle?.category === 'MOTORCYCLE' ? '🏍️' : d.vehicle?.category === 'RICKSHAW' ? '🛺' : '🚗';
+          const iconColor = d.isOnline ? '#00a859' : '#94a3b8';
+          const customIcon = L.divIcon({
+            className: 'admin-radar-pin',
+            html: `<div style="background-color: white; border: 3px solid ${iconColor}; width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 16px; box-shadow: 0 4px 6px rgba(0,0,0,0.3);">${iconChar}</div>`,
+            iconSize: [34, 34],
+            iconAnchor: [17, 17]
+          });
+
+          const marker = L.marker([d.currentLat, d.currentLng], { icon: customIcon })
+            .bindPopup(`<b>${d.fullName}</b><br/>${d.vehicle?.make} ${d.vehicle?.model} (${d.vehicle?.plateNumber})<br/>Status: ${d.isOnline ? '🟢 Online' : '⚪ Offline'}`)
+            .addTo(map);
+
+          driverMarkersMapRef.current[d.userId] = marker;
+        }
+      });
+    }
+  }, [activeTab, drivers]);
 
   // Handle Driver Approval / Rejection
   const handleApproveDriver = async (userId: string, status: 'APPROVED' | 'REJECTED') => {
@@ -116,7 +181,7 @@ export const AdminView: React.FC<AdminViewProps> = ({
         <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
           <div className="text-xs text-slate-400 font-semibold uppercase">Total Drivers</div>
           <div className="text-2xl font-bold text-charcoal-900 mt-1">{drivers.length}</div>
-          <div className="text-[11px] text-green-600 mt-1">
+          <div className="text-[11px] text-green-600 mt-1 font-semibold">
             {drivers.filter((d) => d.verificationStatus === 'APPROVED').length} Approved
           </div>
         </div>
@@ -142,12 +207,24 @@ export const AdminView: React.FC<AdminViewProps> = ({
           <div className="text-2xl font-bold text-slate-700 mt-1">
             {settings.introductoryCommissionPercent}%
           </div>
-          <div className="text-[11px] text-purple-600 mt-1">Introductory 0% Rate</div>
+          <div className="text-[11px] text-purple-600 mt-1 font-semibold">Introductory 0% Rate</div>
         </div>
       </div>
 
       {/* 3. Navigation Tabs */}
-      <div className="flex space-x-2 border-b border-slate-200 pb-2">
+      <div className="flex space-x-2 border-b border-slate-200 pb-2 overflow-x-auto">
+        <button
+          onClick={() => setActiveTab('radar')}
+          className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center space-x-2 ${
+            activeTab === 'radar'
+              ? 'bg-charcoal-900 text-white'
+              : 'bg-white text-slate-600 hover:bg-slate-100'
+          }`}
+        >
+          <Radio className="w-4 h-4 text-pakgreen-400 animate-pulse" />
+          <span>{t.radarTab}</span>
+        </button>
+
         <button
           onClick={() => setActiveTab('drivers')}
           className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center space-x-2 ${
@@ -185,7 +262,35 @@ export const AdminView: React.FC<AdminViewProps> = ({
         </button>
       </div>
 
-      {/* 4. Tab 1: Driver Verification Queue */}
+      {/* 4. Tab 0: City Radar Live Map View */}
+      {activeTab === 'radar' && (
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 space-y-3">
+          <div className="flex justify-between items-center">
+            <h3 className="font-bold text-sm text-charcoal-900 flex items-center space-x-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-pakgreen-500 animate-ping"></span>
+              <span>{t.radarTitle}</span>
+            </h3>
+            <span className="text-xs text-slate-500">
+              Live Fleet: {drivers.filter((d) => d.isOnline).length} Active Online
+            </span>
+          </div>
+
+          <div className="w-full h-[480px] rounded-xl overflow-hidden border border-slate-200 relative">
+            <div ref={radarMapContainerRef} className="w-full h-full" />
+            <div className="absolute bottom-3 left-3 z-[400] bg-white/95 backdrop-blur-md p-2.5 rounded-xl shadow-md border border-slate-200 text-[11px] space-y-1">
+              <div className="font-bold text-slate-800">Fleet Indicators:</div>
+              <div className="flex items-center space-x-2">
+                <span>🚗 Car</span>
+                <span>🏍️ Bike</span>
+                <span>🛺 Rickshaw</span>
+              </div>
+              <div className="text-[10px] text-slate-500">🟢 Online • ⚪ Offline</div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 5. Tab 1: Driver Verification Queue */}
       {activeTab === 'drivers' && (
         <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
           <div className="p-4 border-b border-slate-200 bg-slate-50 font-bold text-sm text-charcoal-900">
@@ -247,7 +352,7 @@ export const AdminView: React.FC<AdminViewProps> = ({
         </div>
       )}
 
-      {/* 5. Tab 2: Dispatches & Ride Monitor */}
+      {/* 6. Tab 2: Dispatches & Ride Monitor */}
       {activeTab === 'rides' && (
         <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
           <div className="p-4 border-b border-slate-200 bg-slate-50 font-bold text-sm text-charcoal-900">
@@ -269,10 +374,20 @@ export const AdminView: React.FC<AdminViewProps> = ({
                       <span className="text-xs font-bold text-pakgreen-600">
                         PKR {Math.round((ride.agreedFarePaisa || ride.proposedFarePaisa) / 100)}
                       </span>
+                      {ride.verificationOtp && (
+                        <span className="text-[10px] bg-amber-100 text-amber-800 px-2 py-0.5 rounded font-mono font-bold">
+                          PIN: {ride.verificationOtp}
+                        </span>
+                      )}
                     </div>
                     <div className="text-xs text-slate-600 mt-1">
                       Passenger: {ride.passengerName} • 🟢 {ride.pickup.address} $\rightarrow$ 🔴 {ride.destination.address}
                     </div>
+                    {ride.pickupNotes && (
+                      <div className="text-[11px] text-amber-700 mt-0.5">
+                        📌 Gate Note: {ride.pickupNotes}
+                      </div>
+                    )}
                     {ride.driverName && (
                       <div className="text-[11px] text-slate-500 mt-0.5">
                         Driver Assigned: {ride.driverName} ({ride.vehicleDetails})
@@ -292,7 +407,7 @@ export const AdminView: React.FC<AdminViewProps> = ({
         </div>
       )}
 
-      {/* 6. Tab 3: Financial Cash Ledger */}
+      {/* 7. Tab 3: Financial Cash Ledger */}
       {activeTab === 'ledger' && (
         <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
           <div className="p-4 border-b border-slate-200 bg-slate-50 font-bold text-sm text-charcoal-900 flex justify-between items-center">

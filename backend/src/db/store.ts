@@ -212,6 +212,7 @@ class DatabaseStore {
     ride.driverRating = offer.driverRating;
     ride.vehicleDetails = offer.driverVehicle;
     ride.agreedFarePaisa = offer.counterFarePaisa;
+    ride.verificationOtp = Math.floor(1000 + Math.random() * 9000).toString(); // 4-digit PIN
     ride.updatedAt = new Date().toISOString();
 
     // Mark winning offer as accepted

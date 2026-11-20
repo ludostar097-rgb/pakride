@@ -10,7 +10,12 @@ import {
   AlertTriangle,
   Phone,
   ShieldAlert,
-  ArrowRight
+  ArrowRight,
+  Share2,
+  KeyRound,
+  MessageSquare,
+  Volume2,
+  Check
 } from 'lucide-react';
 import {
   VehicleCategory,
@@ -50,6 +55,7 @@ export const PassengerView: React.FC<PassengerViewProps> = ({
     address: KARACHI_LANDMARKS[4].name,
     landmark: KARACHI_LANDMARKS[4].zone
   });
+  const [pickupNotes, setPickupNotes] = useState<string>('');
 
   const [fareEstimate, setFareEstimate] = useState<{
     distanceKm: number;
@@ -63,7 +69,10 @@ export const PassengerView: React.FC<PassengerViewProps> = ({
   const [loading, setLoading] = useState(false);
   const [driverPos, setDriverPos] = useState<{ lat: number; lng: number } | undefined>();
   const [showSosModal, setShowSosModal] = useState(false);
-  const [ratingSubmitted, setRatingSubmitted] = useState(false);
+  const [audioPromptSent, setAudioPromptSent] = useState(false);
+
+  // Quick note preset tags
+  const notePresets = [t.noteGate, t.noteBakery, t.noteCall, t.noteCorner];
 
   // Fetch estimated fare whenever pickup, dest, or category changes
   useEffect(() => {
@@ -94,7 +103,6 @@ export const PassengerView: React.FC<PassengerViewProps> = ({
 
     socket.emit('join_user_room', currentUser.id);
 
-    // Listen for new counteroffers from drivers
     socket.on('new_offer_received', (data: { rideId: string; offer: RideOffer }) => {
       setOffers((prev) => {
         const exists = prev.some((o) => o.id === data.offer.id);
@@ -103,12 +111,10 @@ export const PassengerView: React.FC<PassengerViewProps> = ({
       });
     });
 
-    // Listen for ride status transitions
     socket.on('ride_status_changed', (data: { ride: RideRequest }) => {
       setActiveRide(data.ride);
     });
 
-    // Listen for driver live GPS updates
     socket.on('driver_position_broadcast', (data: { driverId: string; lat: number; lng: number }) => {
       if (activeRide && activeRide.driverId === data.driverId) {
         setDriverPos({ lat: data.lat, lng: data.lng });
@@ -137,7 +143,8 @@ export const PassengerView: React.FC<PassengerViewProps> = ({
           category,
           pickup,
           destination,
-          proposedFarePkr
+          proposedFarePkr,
+          pickupNotes: pickupNotes.trim() || undefined
         })
       });
       const data = await res.json();
@@ -194,10 +201,24 @@ export const PassengerView: React.FC<PassengerViewProps> = ({
     }
   };
 
+  // Generate WhatsApp Safety Share Link
+  const handleShareWhatsApp = () => {
+    if (!activeRide) return;
+    const fare = Math.round((activeRide.agreedFarePaisa || activeRide.proposedFarePaisa) / 100);
+    const msg = `🛡️ *PakRide Safety Update*\nI am on a ride in Karachi (Gulistan-e-Jauhar Pilot).\n\n🚗 *Driver:* ${activeRide.driverName || 'Assigned Driver'} (${activeRide.driverPhone || 'N/A'})\n🚘 *Vehicle:* ${activeRide.vehicleDetails || 'Standard'}\n📍 *Pickup:* ${activeRide.pickup.address}\n🏁 *Destination:* ${activeRide.destination.address}\n💵 *Agreed Fare:* PKR ${fare}\n🔢 *Status:* ${activeRide.status}`;
+    const url = `https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`;
+    window.open(url, '_blank');
+  };
+
+  const handleSimulateAudioNote = () => {
+    setAudioPromptSent(true);
+    setTimeout(() => setAudioPromptSent(false), 4000);
+  };
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 pb-12">
       {/* Left Column: Interactive Map */}
-      <div className="lg:col-span-7 h-[420px] lg:h-[680px] sticky top-20">
+      <div className="lg:col-span-7 h-[420px] lg:h-[720px] sticky top-20">
         <MapView
           pickup={pickup}
           destination={destination}
@@ -211,7 +232,7 @@ export const PassengerView: React.FC<PassengerViewProps> = ({
       <div className="lg:col-span-5 space-y-4">
         {/* CASE 1: No Active Ride - Booking Flow */}
         {!activeRide && (
-          <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 space-y-5">
+          <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 space-y-4">
             <div>
               <h2 className="text-xl font-bold text-charcoal-900 flex items-center justify-between">
                 <span>{t.selectCategory}</span>
@@ -308,6 +329,32 @@ export const PassengerView: React.FC<PassengerViewProps> = ({
                   ))}
                 </select>
               </div>
+
+              {/* Pickup Landmark & Gate Detail Notes */}
+              <div>
+                <label className="text-xs font-semibold text-slate-600 mb-1 block flex items-center space-x-1">
+                  <span>📌 {t.pickupNotesLabel}</span>
+                </label>
+                <input
+                  type="text"
+                  value={pickupNotes}
+                  onChange={(e) => setPickupNotes(e.target.value)}
+                  placeholder={t.pickupNotesPlaceholder}
+                  className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-pakgreen-500 outline-none"
+                />
+                <div className="flex flex-wrap gap-1.5 mt-1.5">
+                  {notePresets.map((tag) => (
+                    <button
+                      key={tag}
+                      type="button"
+                      onClick={() => setPickupNotes((prev) => (prev ? `${prev}, ${tag}` : tag))}
+                      className="px-2 py-0.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-md text-[10px] font-medium transition"
+                    >
+                      + {tag}
+                    </button>
+                  ))}
+                </div>
+              </div>
             </div>
 
             {/* Estimated Stats */}
@@ -380,15 +427,19 @@ export const PassengerView: React.FC<PassengerViewProps> = ({
               </button>
             </div>
 
-            <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 flex justify-between items-center text-xs">
-              <div>
-                <span className="text-slate-400 block">{t.yourOffer}</span>
-                <span className="font-bold text-slate-800 text-sm">PKR {Math.round(activeRide.proposedFarePaisa / 100)}</span>
+            {/* Ride Details Summary */}
+            <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-1.5 text-xs">
+              <div className="flex justify-between items-center">
+                <span className="text-slate-400">{t.yourOffer}</span>
+                <span className="font-bold text-slate-800 text-sm">
+                  PKR {Math.round(activeRide.proposedFarePaisa / 100)} ({activeRide.category})
+                </span>
               </div>
-              <div className="text-right">
-                <span className="text-slate-400 block">{t.distance}</span>
-                <span className="font-bold text-slate-800 text-sm">{activeRide.distanceKm} km</span>
-              </div>
+              {activeRide.pickupNotes && (
+                <div className="text-[11px] text-slate-600 bg-white p-2 rounded border border-slate-200">
+                  📌 <span className="font-semibold">Note:</span> {activeRide.pickupNotes}
+                </div>
+              )}
             </div>
 
             {/* Offers List */}
@@ -408,9 +459,14 @@ export const PassengerView: React.FC<PassengerViewProps> = ({
                   return (
                     <div
                       key={offer.id}
-                      className="p-4 rounded-xl border-2 border-slate-200 hover:border-pakgreen-500 bg-white transition space-y-2"
+                      className="p-4 rounded-xl border-2 border-slate-200 hover:border-pakgreen-500 bg-white transition space-y-2 relative overflow-hidden"
                     >
-                      <div className="flex justify-between items-start">
+                      {/* Urgency countdown indicator */}
+                      <div className="absolute top-0 left-0 right-0 h-1 bg-slate-100">
+                        <div className="h-full bg-pakgreen-500 w-3/4 animate-pulse"></div>
+                      </div>
+
+                      <div className="flex justify-between items-start pt-1">
                         <div>
                           <div className="font-bold text-charcoal-900 text-sm">{offer.driverName}</div>
                           <div className="text-xs text-slate-500">{offer.driverVehicle}</div>
@@ -476,7 +532,23 @@ export const PassengerView: React.FC<PassengerViewProps> = ({
                 </button>
               </div>
 
-              {/* Driver Card */}
+              {/* 4-DIGIT RIDE VERIFICATION PIN (Safety Feature) */}
+              {activeRide.status !== 'COMPLETED' && (
+                <div className="p-4 bg-amber-50 rounded-xl border border-amber-200 flex items-center justify-between">
+                  <div>
+                    <div className="flex items-center space-x-1.5 text-xs font-bold text-amber-900">
+                      <KeyRound className="w-4 h-4 text-amber-600" />
+                      <span>{t.otpPinTitle}</span>
+                    </div>
+                    <div className="text-[11px] text-amber-700 mt-0.5">{t.otpPinSub}</div>
+                  </div>
+                  <div className="text-2xl font-mono font-extrabold text-charcoal-900 tracking-widest bg-white px-3 py-1.5 rounded-lg border border-amber-300 shadow-inner">
+                    {activeRide.verificationOtp || '4821'}
+                  </div>
+                </div>
+              )}
+
+              {/* Driver Details Card */}
               <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 flex items-center justify-between">
                 <div>
                   <div className="font-bold text-sm text-charcoal-900">{activeRide.driverName}</div>
@@ -495,6 +567,26 @@ export const PassengerView: React.FC<PassengerViewProps> = ({
                   </a>
                 </div>
               </div>
+
+              {/* WhatsApp Share Button */}
+              <button
+                type="button"
+                onClick={handleShareWhatsApp}
+                className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 px-3 rounded-xl text-xs flex items-center justify-center space-x-2 shadow-sm transition"
+              >
+                <Share2 className="w-4 h-4" />
+                <span>{t.shareWhatsApp}</span>
+              </button>
+
+              {/* Quick Simulated Voice Note */}
+              <button
+                type="button"
+                onClick={handleSimulateAudioNote}
+                className="w-full border border-slate-300 hover:bg-slate-50 text-slate-700 font-semibold py-2 rounded-xl text-xs flex items-center justify-center space-x-2 transition"
+              >
+                <Volume2 className="w-4 h-4 text-pakgreen-600" />
+                <span>{audioPromptSent ? t.audioSimulatedMsg : t.quickAudioPrompt}</span>
+              </button>
 
               {/* Payment Summary */}
               <div className="p-4 bg-pakgreen-50 rounded-xl border border-pakgreen-200 flex justify-between items-center">

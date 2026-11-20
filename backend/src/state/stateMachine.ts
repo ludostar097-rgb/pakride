@@ -30,7 +30,8 @@ export class RideStateMachine {
     newStatus: RideStatus,
     actorId: string,
     actorRole: UserRole,
-    reason?: string
+    reason?: string,
+    otp?: string
   ): { success: boolean; error?: string } {
     const ride = db.getRide(rideId);
     if (!ride) {
@@ -54,6 +55,12 @@ export class RideStateMachine {
       }
       if (actorRole === 'DRIVER' && ride.driverId !== actorId) {
         return { success: false, error: 'You are not the assigned driver for this ride' };
+      }
+      // Verify OTP PIN on trip start
+      if (newStatus === 'IN_PROGRESS' && actorRole === 'DRIVER' && ride.verificationOtp) {
+        if (!otp || otp.trim() !== ride.verificationOtp.trim()) {
+          return { success: false, error: 'Incorrect 4-digit Ride PIN. Please ask passenger for the PIN.' };
+        }
       }
     }
 

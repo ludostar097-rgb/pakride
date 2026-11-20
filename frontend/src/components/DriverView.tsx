@@ -8,9 +8,9 @@ import {
   ArrowRight,
   CheckCircle,
   TrendingUp,
-  Car,
-  Bike,
-  Navigation
+  KeyRound,
+  Sparkles,
+  Zap
 } from 'lucide-react';
 import { RideRequest, DriverProfile } from '../shared/types';
 import { Socket } from 'socket.io-client';
@@ -36,6 +36,9 @@ export const DriverView: React.FC<DriverViewProps> = ({
   const [availableRides, setAvailableRides] = useState<RideRequest[]>([]);
   const [activeTrip, setActiveTrip] = useState<RideRequest | null>(null);
   const [counterValues, setCounterValues] = useState<Record<string, number>>({});
+  const [showPinModal, setShowPinModal] = useState(false);
+  const [inputPin, setInputPin] = useState('');
+  const [pinError, setPinError] = useState<string | null>(null);
   const [earnings, setEarnings] = useState<{
     completedTripsCount: number;
     totalGrossPkr: number;
@@ -85,7 +88,6 @@ export const DriverView: React.FC<DriverViewProps> = ({
     if (!socket) return;
     socket.emit('join_user_room', currentUser.id);
 
-    // Listen for new incoming ride requests
     socket.on('new_ride_available', (newRide: RideRequest) => {
       if (profile.isOnline && isApproved) {
         setAvailableRides((prev) => {
@@ -95,23 +97,20 @@ export const DriverView: React.FC<DriverViewProps> = ({
       }
     });
 
-    // Listen for offer accepted notification
     socket.on('offer_accepted_notify', (data: { ride: RideRequest }) => {
       setActiveTrip(data.ride);
       setAvailableRides((prev) => prev.filter((r) => r.id !== data.ride.id));
     });
 
-    // Listen for ride status changed
     socket.on('ride_status_changed', (data: { ride: RideRequest }) => {
       if (activeTrip && activeTrip.id === data.ride.id) {
         setActiveTrip(data.ride);
       }
     });
 
-    // Broadcast GPS simulation periodically if online and driving
+    // Periodic GPS simulation for Gulistan-e-Jauhar
     const interval = setInterval(() => {
       if (profile.isOnline && isApproved) {
-        // Minor jitter for live GPS tracking simulation in Gulistan-e-Jauhar
         const deltaLat = (Math.random() - 0.5) * 0.001;
         const deltaLng = (Math.random() - 0.5) * 0.001;
         const lat = (profile.currentLat || 24.918) + deltaLat;
@@ -168,15 +167,16 @@ export const DriverView: React.FC<DriverViewProps> = ({
           etaMinutes: 4
         })
       });
-      alert('Offer submitted to passenger! Waiting for passenger selection.');
+      alert(`Offer of PKR ${counterPkr} submitted! Waiting for passenger confirmation.`);
     } catch (err) {
       console.error('Submit offer error:', err);
     }
   };
 
   // Progress Trip Workflow
-  const handleTripTransition = async (newStatus: 'EN_ROUTE' | 'IN_PROGRESS' | 'COMPLETED') => {
+  const handleTripTransition = async (newStatus: 'EN_ROUTE' | 'IN_PROGRESS' | 'COMPLETED', otp?: string) => {
     if (!activeTrip) return;
+    setPinError(null);
     try {
       const res = await fetch(`${apiBaseUrl}/api/rides/${activeTrip.id}/transition`, {
         method: 'POST',
@@ -184,21 +184,30 @@ export const DriverView: React.FC<DriverViewProps> = ({
           'Content-Type': 'application/json',
           Authorization: `Bearer mock-token-${currentUser.id}`
         },
-        body: JSON.stringify({ newStatus })
+        body: JSON.stringify({ newStatus, otp })
       });
       const data = await res.json();
+      if (!res.ok || data.error) {
+        setPinError(data.error || 'Failed to update trip');
+        return;
+      }
       if (data.ride) {
         if (newStatus === 'COMPLETED') {
           setActiveTrip(null);
           fetchEarnings();
         } else {
           setActiveTrip(data.ride);
+          setShowPinModal(false);
+          setInputPin('');
         }
       }
     } catch (err) {
       console.error('Trip transition error:', err);
     }
   };
+
+  // Estimated 20% platform commission saved vs competitors
+  const commissionSavedPkr = Math.round(earnings.totalGrossPkr * 0.20);
 
   return (
     <div className="max-w-3xl mx-auto space-y-6 pb-12">
@@ -252,9 +261,9 @@ export const DriverView: React.FC<DriverViewProps> = ({
         )}
       </div>
 
-      {/* 2. Driver Earnings Card (0% Commission Model) */}
-      <div className="bg-gradient-to-r from-pakgreen-700 to-pakgreen-900 rounded-2xl p-5 text-white shadow-md">
-        <div className="flex justify-between items-center mb-3">
+      {/* 2. Driver Earnings & 0% Commission Savings Tracker */}
+      <div className="bg-gradient-to-r from-pakgreen-700 via-pakgreen-800 to-charcoal-900 rounded-2xl p-5 text-white shadow-lg space-y-4">
+        <div className="flex justify-between items-center">
           <div className="flex items-center space-x-2">
             <TrendingUp className="w-5 h-5 text-pakgreen-300" />
             <h3 className="text-sm font-semibold text-pakgreen-100">{t.driverEarnings}</h3>
@@ -267,12 +276,21 @@ export const DriverView: React.FC<DriverViewProps> = ({
         <div className="grid grid-cols-2 gap-4">
           <div>
             <div className="text-3xl font-extrabold">PKR {earnings.totalNetPkr}</div>
-            <div className="text-xs text-pakgreen-200 mt-0.5">Total Net Cash Earned</div>
+            <div className="text-xs text-pakgreen-200 mt-0.5">Total Net Cash in Pocket</div>
           </div>
           <div className="text-right">
             <div className="text-2xl font-bold">{earnings.completedTripsCount}</div>
             <div className="text-xs text-pakgreen-200 mt-0.5">{t.tripsCompleted}</div>
           </div>
+        </div>
+
+        {/* Commission Savings Callout */}
+        <div className="pt-3 border-t border-white/10 flex items-center justify-between text-xs">
+          <div className="flex items-center space-x-1.5 text-amber-300 font-bold">
+            <Sparkles className="w-4 h-4" />
+            <span>{t.savingsTitle}: PKR {commissionSavedPkr}</span>
+          </div>
+          <span className="text-[10px] text-slate-300">{t.savingsSubtitle}</span>
         </div>
       </div>
 
@@ -292,6 +310,11 @@ export const DriverView: React.FC<DriverViewProps> = ({
             <div className="font-bold text-sm text-charcoal-900">Passenger: {activeTrip.passengerName}</div>
             <div className="text-xs text-slate-600">🟢 Pickup: {activeTrip.pickup.address}</div>
             <div className="text-xs text-slate-600">🔴 Destination: {activeTrip.destination.address}</div>
+            {activeTrip.pickupNotes && (
+              <div className="text-xs text-amber-800 bg-amber-50 p-2 rounded border border-amber-200">
+                📌 <span className="font-bold">Passenger Gate Note:</span> {activeTrip.pickupNotes}
+              </div>
+            )}
           </div>
 
           {/* Workflow Action Buttons */}
@@ -309,10 +332,11 @@ export const DriverView: React.FC<DriverViewProps> = ({
             {activeTrip.status === 'EN_ROUTE' && (
               <button
                 type="button"
-                onClick={() => handleTripTransition('IN_PROGRESS')}
-                className="w-full bg-pakgreen-500 hover:bg-pakgreen-600 text-white font-bold py-3 rounded-xl text-sm shadow-md transition"
+                onClick={() => setShowPinModal(true)}
+                className="w-full bg-pakgreen-500 hover:bg-pakgreen-600 text-white font-bold py-3 rounded-xl text-sm shadow-md transition flex items-center justify-center space-x-2"
               >
-                {t.startTrip}
+                <KeyRound className="w-4 h-4" />
+                <span>{t.startTrip}</span>
               </button>
             )}
 
@@ -330,7 +354,60 @@ export const DriverView: React.FC<DriverViewProps> = ({
         </div>
       )}
 
-      {/* 4. LIVE REQUEST FEED */}
+      {/* 4. PIN VERIFICATION MODAL */}
+      {showPinModal && (
+        <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-sm w-full p-6 space-y-4 shadow-2xl">
+            <div className="w-12 h-12 bg-pakgreen-100 rounded-full flex items-center justify-center mx-auto text-pakgreen-600">
+              <KeyRound className="w-6 h-6" />
+            </div>
+            <h3 className="text-lg font-bold text-center text-charcoal-900">{t.enterPinPrompt}</h3>
+            <p className="text-xs text-center text-slate-500">
+              Ask passenger for their 4-digit security PIN displayed on their screen.
+            </p>
+
+            {pinError && (
+              <div className="p-2.5 bg-red-50 border border-red-200 rounded-lg text-xs text-red-600 text-center font-semibold">
+                {pinError}
+              </div>
+            )}
+
+            <div>
+              <input
+                type="text"
+                maxLength={4}
+                value={inputPin}
+                onChange={(e) => setInputPin(e.target.value)}
+                placeholder="4-digit PIN"
+                className="w-full text-center text-2xl font-mono font-extrabold tracking-widest py-2.5 border-2 border-slate-300 focus:border-pakgreen-500 rounded-xl outline-none"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <button
+                type="button"
+                disabled={inputPin.length < 4}
+                onClick={() => handleTripTransition('IN_PROGRESS', inputPin)}
+                className="w-full bg-pakgreen-500 hover:bg-pakgreen-600 text-white font-bold py-2.5 rounded-xl text-sm shadow-md transition disabled:opacity-50"
+              >
+                {t.pinSubmit}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowPinModal(false);
+                  setPinError(null);
+                }}
+                className="w-full border border-slate-300 text-slate-700 font-semibold py-2 rounded-xl text-xs"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 5. LIVE REQUEST FEED */}
       {!activeTrip && (
         <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 space-y-4">
           <div className="flex justify-between items-center">
@@ -373,6 +450,11 @@ export const DriverView: React.FC<DriverViewProps> = ({
                         <div className="font-bold text-sm text-charcoal-900 mt-0.5">
                           🔴 {ride.destination.address}
                         </div>
+                        {ride.pickupNotes && (
+                          <div className="text-xs text-amber-800 bg-amber-50 px-2 py-1 rounded mt-1.5 border border-amber-200 inline-block">
+                            📌 {ride.pickupNotes}
+                          </div>
+                        )}
                       </div>
 
                       <div className="text-right">
@@ -383,30 +465,33 @@ export const DriverView: React.FC<DriverViewProps> = ({
                       </div>
                     </div>
 
-                    {/* Counteroffer Slider / Input */}
-                    <div className="bg-slate-50 p-3 rounded-lg flex items-center justify-between gap-2">
+                    {/* Counteroffer Controls with 1-Tap Quick Increment Pills */}
+                    <div className="bg-slate-50 p-3 rounded-lg flex flex-wrap items-center justify-between gap-2">
                       <div className="flex items-center space-x-1.5">
                         <button
                           type="button"
-                          onClick={() =>
-                            setCounterValues({ ...counterValues, [ride.id]: passengerFare + 50 })
-                          }
-                          className="px-2 py-1 bg-white border border-slate-300 hover:bg-slate-100 rounded text-xs font-semibold text-slate-700"
+                          onClick={() => handleSubmitOffer(ride.id, passengerFare + 20)}
+                          className="px-2.5 py-1 bg-white border border-slate-300 hover:border-pakgreen-500 rounded text-xs font-bold text-pakgreen-700 shadow-sm"
                         >
-                          +50
+                          +20 PKR
                         </button>
                         <button
                           type="button"
-                          onClick={() =>
-                            setCounterValues({ ...counterValues, [ride.id]: passengerFare + 100 })
-                          }
-                          className="px-2 py-1 bg-white border border-slate-300 hover:bg-slate-100 rounded text-xs font-semibold text-slate-700"
+                          onClick={() => handleSubmitOffer(ride.id, passengerFare + 50)}
+                          className="px-2.5 py-1 bg-white border border-slate-300 hover:border-pakgreen-500 rounded text-xs font-bold text-pakgreen-700 shadow-sm"
                         >
-                          +100
+                          +50 PKR
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleSubmitOffer(ride.id, passengerFare + 100)}
+                          className="px-2.5 py-1 bg-white border border-slate-300 hover:border-pakgreen-500 rounded text-xs font-bold text-pakgreen-700 shadow-sm"
+                        >
+                          +100 PKR
                         </button>
                       </div>
 
-                      <div className="flex items-center space-x-2">
+                      <div className="flex items-center space-x-1.5">
                         <span className="text-xs font-semibold text-slate-600">PKR</span>
                         <input
                           type="number"

@@ -221,7 +221,7 @@ app.post('/api/rides/calculate-fare', (req, res) => {
 // ==========================================
 
 app.post('/api/rides/request', AuthService.requireAuth, (req: AuthenticatedRequest, res) => {
-  const { category, pickup, destination, proposedFarePkr, zoneId } = req.body;
+  const { category, pickup, destination, proposedFarePkr, zoneId, pickupNotes } = req.body;
 
   if (!category || !pickup || !destination || !proposedFarePkr) {
     return res.status(400).json({ error: 'Missing required ride fields' });
@@ -250,6 +250,7 @@ app.post('/api/rides/request', AuthService.requireAuth, (req: AuthenticatedReque
     category,
     pickup,
     destination,
+    pickupNotes: pickupNotes || undefined,
     distanceKm,
     estimatedMinutes: Math.max(Math.round(distanceKm * 3.5), 5),
     suggestedFarePaisa,
@@ -407,14 +408,15 @@ app.post('/api/rides/:id/select-offer', AuthService.requireAuth, (req: Authentic
 
 app.post('/api/rides/:id/transition', AuthService.requireAuth, (req: AuthenticatedRequest, res) => {
   const rideId = req.params.id as string;
-  const { newStatus, reason } = req.body;
+  const { newStatus, reason, otp } = req.body;
 
   const result = RideStateMachine.transition(
     rideId,
     newStatus,
     req.user!.userId,
     req.user!.role,
-    reason
+    reason,
+    otp
   );
 
   if (!result.success) {

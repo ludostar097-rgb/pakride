@@ -86,11 +86,13 @@ export interface RideRequest {
   category: VehicleCategory;
   pickup: LocationCoordinates;
   destination: LocationCoordinates;
+  pickupNotes?: string;
   distanceKm: number;
   estimatedMinutes: number;
   suggestedFarePaisa: number; // in integer minor units (PKR Paisa: 100 paisa = 1 PKR)
   proposedFarePaisa: number;
   agreedFarePaisa?: number;
+  verificationOtp?: string; // 4-digit security PIN to start trip
   status: RideStatus;
   driverId?: string;
   driverName?: string;
