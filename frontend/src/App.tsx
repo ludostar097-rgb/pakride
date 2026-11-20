@@ -12,59 +12,61 @@ import {
   AlertCircle,
   LogIn,
   LogOut,
-  UserCheck
+  UserCheck,
+  ShieldAlert
 } from 'lucide-react';
 import { PassengerView } from './components/PassengerView';
 import { DriverView } from './components/DriverView';
 import { AdminView } from './components/AdminView';
 import { AuthModal } from './components/AuthModal';
 import { translations, Language } from './i18n/translations';
-import { DriverProfile } from './shared/types';
+import { DriverProfile, UserRole } from './shared/types';
 
-const API_BASE_URL = 'http://localhost:4000';
+// Environment-aware API URL (Vercel Cloud or Localhost)
+const API_BASE_URL = (import.meta as any).env?.VITE_API_BASE_URL || 'http://localhost:4000';
 
-// Pre-seeded Personas for testing & demonstration
+// Pre-seeded Personas for testing & instant demonstration
 const DEMO_PERSONAS = [
   {
     id: 'user-passenger-1',
     fullName: 'Ali Khan',
     phone: '03001234567',
-    role: 'PASSENGER' as const,
-    label: 'Passenger (Ali - Karachi)'
+    role: 'PASSENGER' as UserRole,
+    label: 'Passenger (Ali)'
   },
   {
     id: 'user-driver-car-1',
     fullName: 'Tariq Mehmood',
     phone: '03007654321',
-    role: 'DRIVER' as const,
+    role: 'DRIVER' as UserRole,
     label: 'Driver: Car (Tariq)'
   },
   {
     id: 'user-driver-moto-1',
     fullName: 'Kamran Iqbal',
     phone: '03112233445',
-    role: 'DRIVER' as const,
+    role: 'DRIVER' as UserRole,
     label: 'Driver: Bike (Kamran)'
   },
   {
     id: 'user-driver-rick-1',
     fullName: 'Zubair Ahmed',
     phone: '03229988776',
-    role: 'DRIVER' as const,
+    role: 'DRIVER' as UserRole,
     label: 'Driver: Rickshaw (Zubair)'
   },
   {
     id: 'user-driver-pending-1',
     fullName: 'Usman Farooq',
     phone: '03335555555',
-    role: 'DRIVER' as const,
+    role: 'DRIVER' as UserRole,
     label: 'Driver: Unapproved (Usman)'
   },
   {
     id: 'user-admin-1',
     fullName: 'Ahmad Hassan',
     phone: '03009999999',
-    role: 'ADMIN' as const,
+    role: 'ADMIN' as UserRole,
     label: 'Admin Console (Ahmad)'
   }
 ];
@@ -76,6 +78,7 @@ export const App: React.FC = () => {
   const [socket, setSocket] = useState<Socket | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [isCustomAuth, setIsCustomAuth] = useState(false);
 
   const t = translations[lang];
 
@@ -128,7 +131,7 @@ export const App: React.FC = () => {
     } else {
       setDriverProfile(null);
     }
-  }, [activePersona.id]);
+  }, [activePersona.id, activePersona.role]);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -140,6 +143,7 @@ export const App: React.FC = () => {
   };
 
   const handleAuthSuccess = (data: { user: any; token: string; driverProfile?: any }) => {
+    setIsCustomAuth(true);
     setActivePersona({
       id: data.user.id,
       fullName: data.user.fullName,
@@ -150,7 +154,26 @@ export const App: React.FC = () => {
     if (data.driverProfile) {
       setDriverProfile(data.driverProfile);
     }
-    showToast(`Welcome back, ${data.user.fullName}!`);
+    showToast(`Welcome, ${data.user.fullName}! Logged in as ${data.user.role}.`);
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('pakride_token');
+    setIsCustomAuth(false);
+    setActivePersona(DEMO_PERSONAS[0]);
+    setDriverProfile(null);
+    showToast('Logged out successfully.');
+  };
+
+  // Switch between 3 Core Applications
+  const switchAppMode = (targetRole: 'PASSENGER' | 'DRIVER' | 'ADMIN') => {
+    if (targetRole === 'PASSENGER') {
+      setActivePersona(DEMO_PERSONAS[0]);
+    } else if (targetRole === 'DRIVER') {
+      setActivePersona(DEMO_PERSONAS[1]); // Default to Car Driver Tariq
+    } else if (targetRole === 'ADMIN') {
+      setActivePersona(DEMO_PERSONAS[5]); // Admin Ahmad
+    }
   };
 
   return (
@@ -168,10 +191,10 @@ export const App: React.FC = () => {
         </div>
       )}
 
-      {/* Top Bar: Brand, Switcher, Sign In & Language Toggle */}
+      {/* Top Header Navigation */}
       <header className="bg-charcoal-900 text-white sticky top-0 z-40 shadow-md">
         <div className="max-w-7xl mx-auto px-4 py-2.5 flex flex-wrap items-center justify-between gap-3">
-          {/* Brand Logo & Name */}
+          {/* Brand Logo & Tagline */}
           <div className="flex items-center space-x-3">
             <div className="w-8 h-8 rounded-lg bg-pakgreen-500 flex items-center justify-center font-extrabold text-white text-base shadow-sm">
               PR
@@ -187,32 +210,92 @@ export const App: React.FC = () => {
             </div>
           </div>
 
-          {/* Quick Role Switcher & Auth */}
-          <div className="flex items-center space-x-2">
-            <select
-              value={activePersona.id}
-              onChange={(e) => {
-                const found = DEMO_PERSONAS.find((p) => p.id === e.target.value);
-                if (found) setActivePersona(found);
-              }}
-              className="bg-charcoal-800 text-xs text-white border border-charcoal-700 rounded-lg px-2.5 py-1.5 focus:ring-2 focus:ring-pakgreen-500 outline-none font-medium"
-            >
-              {DEMO_PERSONAS.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.label}
-                </option>
-              ))}
-            </select>
-
-            {/* Sign In / Register Button */}
+          {/* 3 App Switching Segmented Tabs */}
+          <div className="flex items-center bg-charcoal-800 p-1 rounded-xl border border-charcoal-700">
             <button
               type="button"
-              onClick={() => setShowAuthModal(true)}
-              className="flex items-center space-x-1 bg-pakgreen-500 hover:bg-pakgreen-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition shadow-xs"
+              onClick={() => switchAppMode('PASSENGER')}
+              className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition ${
+                activePersona.role === 'PASSENGER'
+                  ? 'bg-pakgreen-500 text-white shadow-xs'
+                  : 'text-slate-300 hover:text-white'
+              }`}
             >
-              <LogIn className="w-3.5 h-3.5" />
-              <span>{t.signIn || 'Sign In / Up'}</span>
+              <Car className="w-3.5 h-3.5" />
+              <span>{lang === 'ur' ? 'مسافر ایپ' : 'Passenger App'}</span>
             </button>
+
+            <button
+              type="button"
+              onClick={() => switchAppMode('DRIVER')}
+              className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition ${
+                activePersona.role === 'DRIVER'
+                  ? 'bg-pakgreen-500 text-white shadow-xs'
+                  : 'text-slate-300 hover:text-white'
+              }`}
+            >
+              <Navigation className="w-3.5 h-3.5" />
+              <span>{lang === 'ur' ? 'ڈرائیور ایپ' : 'Driver App'}</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => switchAppMode('ADMIN')}
+              className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition ${
+                activePersona.role === 'ADMIN'
+                  ? 'bg-pakgreen-500 text-white shadow-xs'
+                  : 'text-slate-300 hover:text-white'
+              }`}
+            >
+              <Shield className="w-3.5 h-3.5" />
+              <span>{lang === 'ur' ? 'ایڈمن کنٹرول' : 'Admin Console'}</span>
+            </button>
+          </div>
+
+          {/* User Status / Persona Switcher / Auth Buttons */}
+          <div className="flex items-center space-x-2">
+            {!isCustomAuth ? (
+              <>
+                <select
+                  value={activePersona.id}
+                  onChange={(e) => {
+                    const found = DEMO_PERSONAS.find((p) => p.id === e.target.value);
+                    if (found) setActivePersona(found);
+                  }}
+                  className="bg-charcoal-800 text-xs text-white border border-charcoal-700 rounded-lg px-2.5 py-1.5 focus:ring-2 focus:ring-pakgreen-500 outline-none font-medium hidden sm:block"
+                >
+                  {DEMO_PERSONAS.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.label}
+                    </option>
+                  ))}
+                </select>
+
+                <button
+                  type="button"
+                  onClick={() => setShowAuthModal(true)}
+                  className="flex items-center space-x-1 bg-pakgreen-500 hover:bg-pakgreen-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition shadow-xs"
+                >
+                  <LogIn className="w-3.5 h-3.5" />
+                  <span>{t.signIn || 'Sign In / Up'}</span>
+                </button>
+              </>
+            ) : (
+              <div className="flex items-center space-x-2 bg-charcoal-800 px-3 py-1 rounded-xl border border-charcoal-700">
+                <div className="text-left text-xs">
+                  <div className="font-bold text-white truncate max-w-[120px]">{activePersona.fullName}</div>
+                  <div className="text-[10px] text-pakgreen-400 font-semibold">{activePersona.role}</div>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  className="p-1.5 hover:bg-charcoal-700 text-red-400 rounded-lg transition"
+                  title="Logout"
+                >
+                  <LogOut className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            )}
 
             {/* Language Toggle */}
             <button
@@ -293,7 +376,7 @@ export const App: React.FC = () => {
 
       {/* Footer */}
       <footer className="bg-white border-t border-slate-200 py-3 text-center text-xs text-slate-500">
-        PakRide • Pilot Launch Edition • Karachi (Pilot Zone) & Islamabad Rollout • Cash-First Model
+        PakRide • Pilot Launch Edition • Karachi (Gulistan-e-Jauhar Pilot Zone) & Islamabad Multi-City Rollout • Cash-First Model
       </footer>
     </div>
   );
