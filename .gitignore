@@ -9,6 +9,10 @@ build/
 *.db-journal
 backend/prisma/*.db
 backend/prisma/*.db-journal
-android/
+# Android build outputs
+frontend/android/.gradle/
+frontend/android/app/build/
+frontend/android/build/
+frontend/android/.idea/
 .vscode/
 .idea/

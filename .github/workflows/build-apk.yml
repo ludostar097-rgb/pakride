@@ -39,6 +39,9 @@ jobs:
         working-directory: ./frontend
         run: |
           npm run build
+          if [ ! -d "android" ]; then
+            npx cap add android
+          fi
           npx cap sync android
 
       - name: Grant Execute Permission for Gradlew
