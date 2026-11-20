@@ -8,7 +8,9 @@
     "build": "tsc",
     "start": "node dist/server.js",
     "seed": "tsx src/seed.ts",
-    "test": "tsx src/tests/e2e.test.ts && tsx src/tests/security_and_persistence.test.ts && tsx src/tests/multicity_and_auth.test.ts"
+    "test": "tsx src/tests/e2e.test.ts && tsx src/tests/security_and_persistence.test.ts && tsx src/tests/multicity_and_auth.test.ts",
+    "test:live": "tsx src/tests/live_system_audit.test.ts",
+    "test:all": "npm test && npm run test:live"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",

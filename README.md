@@ -1,68 +1,169 @@
 # 🚗 PakRide (پاک رائڈ)
-### End-to-End Pakistani Ride-Hailing Platform with Live Fare Bidding & Zero Commission
+### Enterprise-Grade Pakistani Ride-Hailing Platform with Real-Time Bidding & 0% Commission
 
-PakRide is a two-sided mobility marketplace engineered for Pakistan. Passengers propose fares, drivers accept or counteroffer in real-time, and trips are completed with an introductory **0% platform commission** cash-first model.
+PakRide is a modern two-sided ride-hailing marketplace engineered specifically for the Pakistani operating landscape. Passengers propose fares, drivers accept or counteroffer in real time, and trips are settled through an introductory **0% platform commission** cash-first model.
 
----
-
-## 🌟 Key Features
-
-1. **Real-Time Bidding & Atomic Assignment:**
-   * Passenger proposes a fare in PKR.
-   * Online drivers in the zone receive instant alerts and can accept or submit counteroffers.
-   * Passenger selects the best driver; competing offers are atomically rejected.
-2. **Server-Enforced Ride State Machine:**
-   * `REQUESTED` $\rightarrow$ `OFFERS_OPEN` $\rightarrow$ `DRIVER_SELECTED` $\rightarrow$ `EN_ROUTE` $\rightarrow$ `IN_PROGRESS` $\rightarrow$ `COMPLETED` / `CANCELLED`.
-3. **Cash-First Financial Ledger:**
-   * Stored in **integer minor units (PKR paisa: 1 PKR = 100 paisa)** to prevent floating-point calculation errors.
-   * Automatic net driver earnings reconciliation at 0% introductory commission.
-4. **Bilingual Urdu & English UX:**
-   * Full Right-to-Left (RTL) typography with instant one-click toggle.
-5. **Karachi Pilot Zone (Gulistan-e-Jauhar):**
-   * Pre-configured zone boundary and coordinate anchors for major landmarks (Jauhar Chowrangi, Kamran Chowrangi, Millennium Mall, Airport, Darul Sehat Hospital, etc.).
-6. **Mobile APK via Capacitor & GitHub Actions:**
-   * Native Android wrapper pre-configured with AndroidManifest permissions.
-   * Automated `.github/workflows/build-apk.yml` builds ready-to-install debug `.apk` on every push.
+Built with clean modular architecture, full bilingual Urdu (RTL) / English typography, integer minor unit financial precision, dynamic typo-tolerant geocoding, multi-city scalability (Karachi Pilot, Islamabad, Rawalpindi, Lahore), and native Android APK compilation.
 
 ---
 
-## 👥 Pre-Seeded Demonstration Personas
+## 🌟 Executive Highlights & Core Value Propositions
 
-| Role | Name | Phone | Details |
-| :--- | :--- | :--- | :--- |
-| **Passenger** | Ali Khan | `03001234567` | Requests rides, proposes fares, compares driver offers. |
-| **Driver (Car)** | Tariq Mehmood | `03007654321` | Toyota Corolla White (`KHI-8291`), Approved & Online. |
-| **Driver (Bike)** | Kamran Iqbal | `03112233445` | Honda CD70 Red (`KHI-4412`), Approved & Online. |
-| **Driver (Rickshaw)** | Zubair Ahmed | `03229988776` | Sazgar CNG Green (`KHI-9931`), Approved & Online. |
-| **Unapproved Driver** | Usman Farooq | `03335555555` | Suzuki Alto (`KHI-3012`), Under Review (cannot go online). |
-| **Admin** | Ahmad Hassan | `03009999999` | Super Admin: document review, active ride monitor, ledger. |
+| Feature | Engineering Standard | Commercial Benefit |
+| :--- | :--- | :--- |
+| **Real-Time Fare Bidding** | Passenger proposes fare; drivers accept or counterbid via WebSockets. | Higher conversion, transparent pricing, eliminates algorithmic surge resentment. |
+| **0% Platform Commission** | Centralized server setting (`introductoryCommissionPercent: 0`). | Rapid driver acquisition; beats competitor 20–28% deductions. |
+| **Integer Paisa Financial Ledger** | All finances stored as integer minor units ($1\text{ PKR} = 100\text{ Paisa}$). | Zero floating-point rounding errors; auditable cash reconciliation. |
+| **Typo-Tolerant Address Search** | Photon (OSM + Elasticsearch) with Pakistani phonetic auto-correction. | Handles Pakistani transliteration (`centuras`, `jauhr`, `sadar`, `masjd`). |
+| **Server-Controlled State Machine** | Strict atomic state transitions with tamper-proof audit trails. | Eliminates double-booking and invalid trip sequences. |
+| **4-Digit Safety PIN Verification** | Server-generated verification code required to begin trips. | Prevents driver impersonation and fraudulent ride starts. |
+| **Multi-City & Zone Scalability** | Dynamic database-driven city and zone registry with GPS geofencing. | Controlled expansion: activate one verified zone at a time per blueprint. |
+| **Bilingual Urdu RTL / English** | 1-Click dynamic layout switch (`dir="rtl"`) with native Urdu typography. | 100% accessible to non-English literate drivers and riders. |
+| **Turnkey Android APK & Vercel** | Pre-configured Capacitor 7 bridge + GitHub Actions CI/CD. | Ready to install on Android devices or deploy to cloud in minutes. |
 
 ---
 
-## 🚀 Quick Start (Local Development)
+## 📱 The 3 Integrated Applications
+
+PakRide provides three complete, fully functional applications switchable via the top navigation bar with zero dummy placeholder screens:
+
+```
+┌────────────────────────────────────────────────────────────────────────────────────────┐
+│  PR PakRide   [ 🚗 Passenger App ]  [ 🚕 Driver App ]  [ 🛡️ Admin Console ]  [ Sign In / Up ] [ اردو ] │
+└────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+### 1. 🚗 Passenger App
+- **Multi-City Hubs:** Switch between Karachi (Pilot), Islamabad, Rawalpindi, and Lahore.
+- **3 Vehicle Categories:** Car (4 seats), Motorcycle (1 rider), Rickshaw (3 seats).
+- **Typo-Tolerant Search Bar:** Live address suggestions with "Did you mean: ...?" correction banner.
+- **Interactive Leaflet Map:** Tap anywhere on the map to reverse-geocode real street addresses dynamically.
+- **Recent Places:** 1-tap quick access chips for frequent destinations.
+- **Gate & Pickup Notes:** Quick tag chips (`+ Main Gate`, `+ Near Bakery`, `+ Call when arrived`).
+- **Safety Suite:** 4-digit ride verification PIN, direct Madadgar 15 Police SOS, WhatsApp family trip share, and simulated voice updates.
+- **Real-Time In-Ride Chat:** Bidirectional messaging with driver during active trips.
+- **Trip Review:** 5-star rating and comment submission updating driver's public rating.
+
+### 2. 🚕 Driver App
+- **Online/Offline Availability:** 1-tap toggle with instant dispatch broadcast.
+- **KYC Verification Gate:** Unapproved or suspended drivers are strictly barred from going online.
+- **Live Requests Radar:** Real-time feed of open passenger rides in the driver's active zone.
+- **One-Thumb Quick Bidding:** Accept proposed fare or counteroffer via `+20`, `+50`, `+100` PKR pills.
+- **PIN Verification Modal:** Driver must enter passenger's 4-digit PIN to begin trip.
+- **0% Commission Savings Counter:** Tracks daily earnings and money kept in pocket vs 20% competitor fee.
+- **Vehicle Manager:** Switch or update vehicle details (Car, Bike, Rickshaw) on the fly.
+
+### 3. 🛡️ Admin Control Centre
+- **City Radar (Live Map):** Visual Leaflet map showing active fleet pins across Karachi, Islamabad, Rawalpindi, and Lahore.
+- **Cities & Zones Management:** 1-tap toggle to activate/pause zones; modal to add new cities and zones with GPS center coordinates, radius, and category tariffs.
+- **Driver Verification Queue:** Inspect driver CNIC, driving license, and vehicle registration; 1-click Approve or Suspend.
+- **Live Dispatch Monitor:** Real-time table of every active ride across the network.
+- **Financial Cash Reconciliation Ledger:** Auditable minor-unit ledger tracking gross fares, 0% platform fee, and driver net payouts.
+
+### 4. 🔐 Unified Auth & Security
+- Complete phone + password registration, bcrypt hash verification, and cryptographic JWT tokens saved in `localStorage`.
+- Forgot password workflow with 4-digit verification OTP.
+
+---
+
+## 🧪 Comprehensive Automated Testing (30/30 Tests Passed)
+
+PakRide includes 4 comprehensive automated test suites covering every layer of the platform:
+
+```bash
+# Run unit & state machine tests (CI friendly)
+cd backend && npm test
+
+# Run live server integration audit
+cd backend && npm run test:live
+
+# Run all 30 tests
+cd backend && npm run test:all
+```
+
+| Suite | Tests | Description | Status |
+| :--- | :---: | :--- | :---: |
+| **`e2e.test.ts`** | 8 | Core ride lifecycle, gate notes, atomic driver lock, PIN verification, 0% commission ledger, driver approval gate. | ✅ PASS |
+| **`security_and_persistence.test.ts`** | 6 | JWT tampering rejection, role privilege isolation, state machine transition legality, double-booking prevention, PIN brute force defense. | ✅ PASS |
+| **`multicity_and_auth.test.ts`** | 6 | Islamabad user registration, dynamic zone creation/toggle, Islamabad fare calculation, in-ride chat, 5-star review submission. | ✅ PASS |
+| **`live_system_audit.test.ts`** | 10 | Live full-stack execution against running servers on ports 4000 & 3000 (real JWT tokens, password reset OTP, WebSockets, etc.). | ✅ PASS |
+
+---
+
+## 🏗️ Architecture & Technology Stack
+
+```
+Frontend (React 18 + Vite 6 + Tailwind CSS + Leaflet + Lucide + Socket.io)
+   │
+   ├── Native Bridge (Capacitor 7 Android Wrapper)
+   │
+Backend API Gateway (Node.js 20+ + TypeScript + Express + Socket.io)
+   │
+   ├── Core State Machine (Server-enforced ride lifecycle transitions)
+   ├── Financial Ledger (Integer paisa minor units: 100 paisa = 1 PKR)
+   ├── Dynamic Geocoding (Photon + OpenStreetMap Nominatim + OSRM Road Router)
+   └── Atomic Persistence (Thread-safe JSON Store / PostgreSQL Schema Ready)
+```
+
+---
+
+## 🚀 Local Development Quickstart
 
 ### 1. Start the Backend API & Real-Time Engine
 ```bash
 cd backend
+npm install
 npm run dev
-# Server runs on http://localhost:4000
+# Server running on http://localhost:4000
 ```
 
 ### 2. Start the Frontend Application
 ```bash
 cd frontend
+npm install
 npm run dev
-# Vite runs on http://localhost:3000
+# Vite application running on http://localhost:3000
 ```
 
 ---
 
-## 📱 Generating the Android APK
+## ☁️ Deployment Guide
 
-1. Push this repository to GitHub:
-   ```bash
-   gh auth login -h github.com
-   gh repo create ab069/pakride --private --source=. --remote=origin --push
+### Deploying Frontend to Vercel
+1. Go to [vercel.com](https://vercel.com) and click **"Add New Project"**.
+2. Select your repository: **`ab069/pakride`**.
+3. Set **Root Directory** to `frontend` (or keep root; both `vercel.json` files are configured).
+4. Add environment variable:
+   ```env
+   VITE_API_BASE_URL=https://your-backend-url.onrender.com
    ```
-2. The GitHub Action workflow (`.github/workflows/build-apk.yml`) will automatically trigger.
-3. Go to the **Actions** tab on your GitHub repository, click on the latest build, and download the compiled **`PakRide-Debug-APK`** directly to your phone!
+5. Click **Deploy**.
+
+### Building the Android APK
+1. **GitHub Actions (Automated Cloud Build):**
+   - Workflow `.github/workflows/build-apk.yml` automatically compiles the web bundle and builds the APK via Gradle (Java 21).
+   - Download `PakRide-Debug-APK` directly from the [Actions tab](https://github.com/ab069/pakride/actions).
+2. **Android Studio (Local Build):**
+   - Open `frontend/android` in Android Studio.
+   - Select **Build $\rightarrow$ Build Bundle(s) / APK(s) $\rightarrow$ Build APK(s)**.
+
+---
+
+## 👥 Pre-Seeded Demonstration Personas
+
+| Role | Name | Phone | Password | Details |
+| :--- | :--- | :--- | :--- | :--- |
+| **Passenger** | Ali Khan | `03001234567` | `pakride123` | Requests rides, proposes fares, compares driver offers. |
+| **Driver (Car)** | Tariq Mehmood | `03007654321` | `pakride123` | Toyota Corolla White (`KHI-8291`), Approved & Online. |
+| **Driver (Bike)** | Kamran Iqbal | `03112233445` | `pakride123` | Honda CD70 Red (`KHI-4412`), Approved & Online. |
+| **Driver (Rickshaw)** | Zubair Ahmed | `03229988776` | `pakride123` | Sazgar CNG Green (`KHI-9931`), Approved & Online. |
+| **Driver (Pending)** | Usman Farooq | `03335555555` | `pakride123` | Suzuki Alto (`KHI-3012`), Under Review (cannot go online). |
+| **Admin** | Ahmad Hassan | `03009999999` | `pakride123` | Super Admin: document review, active ride radar, ledger. |
+
+---
+
+## 📄 Key Documentation Links
+
+- [SPECIFICATIONS.md](file:///c:/Users/abdullah/Documents/ahmadhassan/SPECIFICATIONS.md) — Comprehensive functional, technical, and regulatory specs.
+- [ARCHITECTURE.md](file:///c:/Users/abdullah/Documents/ahmadhassan/ARCHITECTURE.md) — System architecture diagrams, state machine, and data flow.
+- [AUDIT_BUGS_AND_ROADMAP.md](file:///c:/Users/abdullah/Documents/ahmadhassan/AUDIT_BUGS_AND_ROADMAP.md) — Anti-shortcut audit, resolved gaps, and test matrix.
