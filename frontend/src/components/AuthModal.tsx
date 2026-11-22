@@ -58,6 +58,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       if (data.token) {
         localStorage.setItem('pakride_token', data.token);
       }
+      if (data.user) {
+        localStorage.setItem('pakride_user', JSON.stringify(data.user));
+      }
       onSuccess(data);
       onClose();
     } catch (err: any) {
@@ -98,6 +101,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       if (!res.ok) throw new Error(data.error || 'Failed to create account');
       if (data.token) {
         localStorage.setItem('pakride_token', data.token);
+      }
+      if (data.user) {
+        localStorage.setItem('pakride_user', JSON.stringify(data.user));
       }
       onSuccess(data);
       onClose();

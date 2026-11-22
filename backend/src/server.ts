@@ -515,7 +515,8 @@ app.post('/api/rides/:id/select-offer', AuthService.requireAuth, (req: Authentic
 
 app.post('/api/rides/:id/transition', AuthService.requireAuth, (req: AuthenticatedRequest, res) => {
   const rideId = req.params.id as string;
-  const { newStatus, reason, otp } = req.body;
+  const { newStatus, reason, otp, verificationOtp } = req.body;
+  const pinToVerify = otp || verificationOtp;
 
   const result = RideStateMachine.transition(
     rideId,
@@ -523,7 +524,7 @@ app.post('/api/rides/:id/transition', AuthService.requireAuth, (req: Authenticat
     req.user!.userId,
     req.user!.role,
     reason,
-    otp
+    pinToVerify
   );
 
   if (!result.success) {

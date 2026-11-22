@@ -12,8 +12,8 @@ export async function seedDemoData() {
     db.saveZone(zone);
   }
 
-  // 2. Seed Passenger
-  const passenger = {
+  // 2. Seed Passenger 1 (Ali Khan) & Passenger 2 (Zainab Bibi)
+  const passenger1 = {
     id: 'user-passenger-1',
     phone: '03001234567',
     fullName: 'Ali Khan',
@@ -22,7 +22,18 @@ export async function seedDemoData() {
     createdAt: new Date().toISOString(),
     passwordHash
   };
-  db.saveUser(passenger);
+  db.saveUser(passenger1);
+
+  const passenger2 = {
+    id: 'user-passenger-2',
+    phone: '03007443615',
+    fullName: 'Zainab Bibi',
+    role: 'PASSENGER' as const,
+    languagePreference: 'ur' as const,
+    createdAt: new Date().toISOString(),
+    passwordHash
+  };
+  db.saveUser(passenger2);
 
   // 3. Seed Driver 1 (Car - Approved & Online)
   const driver1User = {
