@@ -131,7 +131,7 @@ npm run dev
 
 ### Deploying Frontend to Vercel
 1. Go to [vercel.com](https://vercel.com) and click **"Add New Project"**.
-2. Select your repository: **`ab069/pakride`**.
+2. Select your repository: **`ludostar097-rgb/pakride`**.
 3. Set **Root Directory** to `frontend` (or keep root; both `vercel.json` files are configured).
 4. Add environment variable:
    ```env
@@ -142,7 +142,7 @@ npm run dev
 ### Building the Android APK
 1. **GitHub Actions (Automated Cloud Build):**
    - Workflow `.github/workflows/build-apk.yml` automatically compiles the web bundle and builds the APK via Gradle (Java 21).
-   - Download `PakRide-Debug-APK` directly from the [Actions tab](https://github.com/ab069/pakride/actions).
+   - Download `PakRide-Debug-APK` directly from the [Actions tab](https://github.com/ludostar097-rgb/pakride/actions).
 2. **Android Studio (Local Build):**
    - Open `frontend/android` in Android Studio.
    - Select **Build $\rightarrow$ Build Bundle(s) / APK(s) $\rightarrow$ Build APK(s)**.
