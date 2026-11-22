@@ -299,7 +299,7 @@ export const PassengerView: React.FC<PassengerViewProps> = ({
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 pb-12">
       {/* Left Column: Interactive Map */}
-      <div className="lg:col-span-7 h-[440px] lg:h-[720px] sticky top-20">
+      <div className="lg:col-span-7 h-[360px] sm:h-[440px] lg:h-[720px] relative lg:sticky lg:top-20">
         <MapView
           pickup={pickup}
           destination={destination}
