@@ -30,7 +30,8 @@ const io = new SocketIOServer(server, {
 const PORT = process.env.PORT || 4000;
 
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Request logger
 app.use((req, res, next) => {
@@ -128,29 +129,37 @@ app.post('/api/auth/register', async (req, res) => {
 
   let driverProfile = undefined;
   if (role === 'DRIVER') {
-    const vehicle = {
-      id: 'veh-' + uuidv4().substring(0, 8),
-      driverId: newUser.id,
-      category: (vehicleDetails?.category || 'CAR') as VehicleCategory,
-      make: vehicleDetails?.make || 'Toyota',
-      model: vehicleDetails?.model || 'Corolla',
-      year: vehicleDetails?.year || 2020,
-      plateNumber: vehicleDetails?.plateNumber || 'KHI-0000',
-      color: vehicleDetails?.color || 'White'
-    };
-    db.saveVehicle(vehicle);
+    let vehicle = undefined;
+    const hasVehicleInfo = vehicleDetails && vehicleDetails.plateNumber && vehicleDetails.plateNumber.trim() !== '';
+
+    if (hasVehicleInfo) {
+      vehicle = {
+        id: 'veh-' + uuidv4().substring(0, 8),
+        driverId: newUser.id,
+        category: (vehicleDetails?.category || 'MOTORCYCLE') as VehicleCategory,
+        make: vehicleDetails?.make || 'Honda',
+        model: vehicleDetails?.model || 'CD 70',
+        year: vehicleDetails?.year || 2022,
+        plateNumber: vehicleDetails?.plateNumber,
+        color: vehicleDetails?.color || 'Black'
+      };
+      db.saveVehicle(vehicle);
+    }
 
     driverProfile = {
       id: 'prof-' + uuidv4().substring(0, 8),
       userId: newUser.id,
-      verificationStatus: 'UNDER_REVIEW' as const,
+      verificationStatus: hasVehicleInfo ? ('UNDER_REVIEW' as const) : ('PENDING_DOCUMENTS' as const),
       isOnline: false,
       activeCityId: 'city-karachi',
       activeZoneId: 'zone-karachi-jauhar',
       ratingAverage: 5.0,
       ratingCount: 0,
-      cnicNumber: vehicleDetails?.cnicNumber || '42201-0000000-1',
-      licenseNumber: vehicleDetails?.licenseNumber || 'KHI-DL-00000',
+      cnicNumber: vehicleDetails?.cnicNumber || '',
+      licenseNumber: vehicleDetails?.licenseNumber || '',
+      profilePhotoUrl: vehicleDetails?.profilePhotoUrl || '',
+      vehicleDocUrl: vehicleDetails?.vehicleDocUrl || '',
+      cnicDocUrl: vehicleDetails?.cnicDocUrl || '',
       vehicle
     };
     db.saveDriverProfile(driverProfile);
@@ -657,23 +666,50 @@ app.get('/api/driver/earnings', AuthService.requireAuth, (req: AuthenticatedRequ
 });
 
 app.post('/api/driver/vehicle', AuthService.requireAuth, (req: AuthenticatedRequest, res) => {
-  const { category, make, model, year, plateNumber, color } = req.body;
+  const {
+    category,
+    make,
+    model,
+    year,
+    plateNumber,
+    color,
+    cnicNumber,
+    licenseNumber,
+    profilePhotoUrl,
+    vehicleDocUrl,
+    cnicDocUrl
+  } = req.body;
+
   const profile = db.getDriverProfile(req.user!.userId);
   if (!profile) return res.status(404).json({ error: 'Driver profile not found' });
 
+  const existingVehicle = profile.vehicle || db.getVehicleByDriver(req.user!.userId);
+
   const vehicle = {
-    id: 'veh-' + uuidv4().substring(0, 8),
+    id: existingVehicle?.id || ('veh-' + uuidv4().substring(0, 8)),
     driverId: req.user!.userId,
-    category: (category || 'CAR') as VehicleCategory,
-    make: make || 'Toyota',
-    model: model || 'Corolla',
-    year: Number(year) || 2021,
-    plateNumber: plateNumber || 'KHI-1234',
-    color: color || 'White'
+    category: (category || existingVehicle?.category || 'MOTORCYCLE') as VehicleCategory,
+    make: make || existingVehicle?.make || 'Honda',
+    model: model || existingVehicle?.model || 'CD 70',
+    year: Number(year) || existingVehicle?.year || 2022,
+    plateNumber: plateNumber || existingVehicle?.plateNumber || 'KHI-0000',
+    color: color || existingVehicle?.color || 'Black'
   };
 
   db.saveVehicle(vehicle);
   profile.vehicle = vehicle;
+
+  if (cnicNumber !== undefined) profile.cnicNumber = cnicNumber;
+  if (licenseNumber !== undefined) profile.licenseNumber = licenseNumber;
+  if (profilePhotoUrl !== undefined) profile.profilePhotoUrl = profilePhotoUrl;
+  if (vehicleDocUrl !== undefined) profile.vehicleDocUrl = vehicleDocUrl;
+  if (cnicDocUrl !== undefined) profile.cnicDocUrl = cnicDocUrl;
+
+  // If status is PENDING_DOCUMENTS, transition to UNDER_REVIEW
+  if (profile.verificationStatus === 'PENDING_DOCUMENTS') {
+    profile.verificationStatus = 'UNDER_REVIEW';
+  }
+
   db.saveDriverProfile(profile);
 
   return res.json({ success: true, profile, vehicle });

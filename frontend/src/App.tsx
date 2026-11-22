@@ -408,13 +408,13 @@ export const App: React.FC = () => {
               driverProfile || {
                 id: `prof-${currentUser.id}`,
                 userId: currentUser.id,
-                verificationStatus: 'APPROVED',
-                isOnline: true,
+                verificationStatus: currentUser.id.startsWith('user-driver') ? 'APPROVED' : 'PENDING_DOCUMENTS',
+                isOnline: currentUser.id.startsWith('user-driver'),
                 activeCityId: 'city-karachi',
                 activeZoneId: 'zone-karachi-jauhar',
                 ratingAverage: 4.9,
                 ratingCount: 38,
-                vehicle: {
+                vehicle: currentUser.id.startsWith('user-driver') ? {
                   id: `veh-${currentUser.id}`,
                   driverId: currentUser.id,
                   category: currentUser.id.includes('moto') ? 'MOTORCYCLE' : currentUser.id.includes('rick') ? 'RICKSHAW' : 'CAR',
@@ -423,7 +423,7 @@ export const App: React.FC = () => {
                   year: 2022,
                   plateNumber: 'ISB-4921',
                   color: 'White'
-                }
+                } : undefined
               }
             }
             lang={lang}

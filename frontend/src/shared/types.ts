@@ -76,6 +76,9 @@ export interface DriverProfile {
   vehicle?: Vehicle;
   cnicNumber?: string;
   licenseNumber?: string;
+  profilePhotoUrl?: string;
+  vehicleDocUrl?: string;
+  cnicDocUrl?: string;
 }
 
 export interface ChatMessage {

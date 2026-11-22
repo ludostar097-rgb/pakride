@@ -6,8 +6,8 @@
       "fullName": "Ali Khan",
       "role": "PASSENGER",
       "languagePreference": "en",
-      "createdAt": "2026-11-22T15:33:01.026Z",
-      "passwordHash": "$2b$10$P6xVS0dCj.Ah19280D6SP.L0JYVoC5qRd3bL2J3uacxc9dqaukTzy"
+      "createdAt": "2026-11-22T20:17:27.973Z",
+      "passwordHash": "$2b$10$Fw2kGt0zJUcRbR6KGa0S1OOpCRoSZeP1esa1qp3G5WKdKAXlyWi02"
     },
     "user-driver-car-1": {
       "id": "user-driver-car-1",
@@ -15,8 +15,8 @@
       "fullName": "Tariq Mehmood",
       "role": "DRIVER",
       "languagePreference": "ur",
-      "createdAt": "2026-11-22T15:33:01.029Z",
-      "passwordHash": "$2b$10$P6xVS0dCj.Ah19280D6SP.L0JYVoC5qRd3bL2J3uacxc9dqaukTzy"
+      "createdAt": "2026-11-22T20:17:27.977Z",
+      "passwordHash": "$2b$10$Fw2kGt0zJUcRbR6KGa0S1OOpCRoSZeP1esa1qp3G5WKdKAXlyWi02"
     },
     "user-driver-moto-1": {
       "id": "user-driver-moto-1",
@@ -24,8 +24,8 @@
       "fullName": "Kamran Iqbal",
       "role": "DRIVER",
       "languagePreference": "ur",
-      "createdAt": "2026-11-22T15:33:01.036Z",
-      "passwordHash": "$2b$10$P6xVS0dCj.Ah19280D6SP.L0JYVoC5qRd3bL2J3uacxc9dqaukTzy"
+      "createdAt": "2026-11-22T20:17:27.982Z",
+      "passwordHash": "$2b$10$Fw2kGt0zJUcRbR6KGa0S1OOpCRoSZeP1esa1qp3G5WKdKAXlyWi02"
     },
     "user-driver-rick-1": {
       "id": "user-driver-rick-1",
@@ -33,8 +33,8 @@
       "fullName": "Zubair Ahmed",
       "role": "DRIVER",
       "languagePreference": "ur",
-      "createdAt": "2026-11-22T15:33:01.039Z",
-      "passwordHash": "$2b$10$P6xVS0dCj.Ah19280D6SP.L0JYVoC5qRd3bL2J3uacxc9dqaukTzy"
+      "createdAt": "2026-11-22T20:17:27.986Z",
+      "passwordHash": "$2b$10$Fw2kGt0zJUcRbR6KGa0S1OOpCRoSZeP1esa1qp3G5WKdKAXlyWi02"
     },
     "user-driver-pending-1": {
       "id": "user-driver-pending-1",
@@ -42,8 +42,8 @@
       "fullName": "Usman Farooq",
       "role": "DRIVER",
       "languagePreference": "en",
-      "createdAt": "2026-11-22T15:33:01.043Z",
-      "passwordHash": "$2b$10$P6xVS0dCj.Ah19280D6SP.L0JYVoC5qRd3bL2J3uacxc9dqaukTzy"
+      "createdAt": "2026-11-22T20:17:27.990Z",
+      "passwordHash": "$2b$10$Fw2kGt0zJUcRbR6KGa0S1OOpCRoSZeP1esa1qp3G5WKdKAXlyWi02"
     },
     "user-admin-1": {
       "id": "user-admin-1",
@@ -51,8 +51,8 @@
       "fullName": "Ahmad Hassan",
       "role": "ADMIN",
       "languagePreference": "en",
-      "createdAt": "2026-11-22T15:33:01.050Z",
-      "passwordHash": "$2b$10$P6xVS0dCj.Ah19280D6SP.L0JYVoC5qRd3bL2J3uacxc9dqaukTzy"
+      "createdAt": "2026-11-22T20:17:27.994Z",
+      "passwordHash": "$2b$10$Fw2kGt0zJUcRbR6KGa0S1OOpCRoSZeP1esa1qp3G5WKdKAXlyWi02"
     },
     "user-manager-1": {
       "id": "user-manager-1",
@@ -60,8 +60,8 @@
       "fullName": "Karachi Ops Lead",
       "role": "CITY_MANAGER",
       "languagePreference": "en",
-      "createdAt": "2026-11-22T15:33:01.051Z",
-      "passwordHash": "$2b$10$P6xVS0dCj.Ah19280D6SP.L0JYVoC5qRd3bL2J3uacxc9dqaukTzy"
+      "createdAt": "2026-11-22T20:17:27.997Z",
+      "passwordHash": "$2b$10$Fw2kGt0zJUcRbR6KGa0S1OOpCRoSZeP1esa1qp3G5WKdKAXlyWi02"
     },
     "user-isb-passenger-1795151092007": {
       "id": "user-isb-passenger-1795151092007",
@@ -314,6 +314,33 @@
       "role": "DRIVER",
       "languagePreference": "en",
       "createdAt": "2026-11-22T15:33:01.186Z"
+    },
+    "user-passenger-2": {
+      "id": "user-passenger-2",
+      "phone": "03007443615",
+      "fullName": "Zainab Bibi",
+      "role": "PASSENGER",
+      "languagePreference": "ur",
+      "createdAt": "2026-11-22T20:17:27.976Z",
+      "passwordHash": "$2b$10$Fw2kGt0zJUcRbR6KGa0S1OOpCRoSZeP1esa1qp3G5WKdKAXlyWi02"
+    },
+    "user-isb-passenger-1795378647682": {
+      "id": "user-isb-passenger-1795378647682",
+      "phone": "03019876543",
+      "passwordHash": "$2b$10$53DTTN8vS0UvlPZ7X4k5ReIZJxRQyREqNDsfkOZS8mtWzRaTZDdQq",
+      "fullName": "Hamza Malik (Islamabad)",
+      "role": "PASSENGER",
+      "languagePreference": "en",
+      "createdAt": "2026-11-22T20:17:27.999Z"
+    },
+    "user-isb-driver-1795378648001": {
+      "id": "user-isb-driver-1795378648001",
+      "phone": "03129876543",
+      "passwordHash": "$2b$10$oqVKSV5OKLyidtINpWEq7.nS19EnOv9DQFCxFx8S9rAe7Sw2y0v3W",
+      "fullName": "Bilal Khan (Islamabad)",
+      "role": "DRIVER",
+      "languagePreference": "en",
+      "createdAt": "2026-11-22T20:17:28.124Z"
     }
   },
   "driverProfiles": {
@@ -711,6 +738,28 @@
       "vehicle": {
         "id": "veh-isb-1795361581187",
         "driverId": "user-isb-driver-1795361581055",
+        "category": "CAR",
+        "make": "Honda",
+        "model": "Civic",
+        "year": 2022,
+        "plateNumber": "ISB-4921",
+        "color": "Silver"
+      }
+    },
+    "user-isb-driver-1795378648001": {
+      "id": "prof-isb-driver-1795378648125",
+      "userId": "user-isb-driver-1795378648001",
+      "verificationStatus": "APPROVED",
+      "isOnline": true,
+      "activeCityId": "city-islamabad",
+      "activeZoneId": "zone-islamabad-central",
+      "currentLat": 33.7077,
+      "currentLng": 73.0501,
+      "ratingAverage": 5,
+      "ratingCount": 12,
+      "vehicle": {
+        "id": "veh-isb-1795378648125",
+        "driverId": "user-isb-driver-1795378648001",
         "category": "CAR",
         "make": "Honda",
         "model": "Civic",
@@ -1582,12 +1631,138 @@
       ],
       "rating": 5,
       "reviewComment": "Excellent driver, clean car, smooth ride through Blue Area!"
+    },
+    "ride-e2e-test-1795378646152": {
+      "id": "ride-e2e-test-1795378646152",
+      "passengerId": "user-passenger-1",
+      "passengerName": "Ali Khan",
+      "passengerPhone": "03001234567",
+      "category": "CAR",
+      "pickup": {
+        "lat": 24.9213,
+        "lng": 67.1355,
+        "address": "Jauhar Chowrangi",
+        "landmark": "Gulistan-e-Jauhar"
+      },
+      "destination": {
+        "lat": 24.8988,
+        "lng": 67.1121,
+        "address": "Millennium Mall / Rashid Minhas Rd",
+        "landmark": "Gulistan-e-Jauhar"
+      },
+      "pickupNotes": "Near Continental Bakery, White Gate",
+      "distanceKm": 4.6,
+      "estimatedMinutes": 12,
+      "suggestedFarePaisa": 33500,
+      "proposedFarePaisa": 28000,
+      "status": "COMPLETED",
+      "paymentMethod": "CASH",
+      "paymentStatus": "PAID",
+      "createdAt": "2026-11-22T20:17:26.152Z",
+      "updatedAt": "2026-11-22T20:17:26.165Z",
+      "driverId": "user-driver-car-1",
+      "driverName": "Tariq Mehmood",
+      "driverPhone": "03007654321",
+      "driverRating": 4.9,
+      "vehicleDetails": "Toyota Corolla White (KHI-8291)",
+      "agreedFarePaisa": 30000,
+      "verificationOtp": "3700"
+    },
+    "ride-sec-test-1795378646703": {
+      "id": "ride-sec-test-1795378646703",
+      "passengerId": "user-p-1",
+      "passengerName": "Ali Khan",
+      "passengerPhone": "03001234567",
+      "category": "CAR",
+      "pickup": {
+        "lat": 24.918,
+        "lng": 67.135,
+        "address": "Jauhar"
+      },
+      "destination": {
+        "lat": 24.898,
+        "lng": 67.112,
+        "address": "Millennium"
+      },
+      "distanceKm": 4.5,
+      "estimatedMinutes": 12,
+      "suggestedFarePaisa": 30000,
+      "proposedFarePaisa": 28000,
+      "status": "IN_PROGRESS",
+      "paymentMethod": "CASH",
+      "paymentStatus": "PAID",
+      "createdAt": "2026-11-22T20:17:26.703Z",
+      "updatedAt": "2026-11-22T20:17:26.714Z",
+      "driverId": "driver-a",
+      "driverName": "Driver A",
+      "driverPhone": "03001111111",
+      "driverRating": 4.9,
+      "vehicleDetails": "White Corolla",
+      "agreedFarePaisa": 28000,
+      "verificationOtp": "3608"
+    },
+    "ride-isb-1795378648132": {
+      "id": "ride-isb-1795378648132",
+      "passengerId": "user-isb-passenger-1795378647682",
+      "passengerName": "Hamza Malik (Islamabad)",
+      "passengerPhone": "03019876543",
+      "category": "CAR",
+      "pickup": {
+        "lat": 33.7077,
+        "lng": 73.0501,
+        "address": "The Centaurus Mall, Jinnah Ave, F-8, Islamabad",
+        "landmark": "F-8"
+      },
+      "destination": {
+        "lat": 33.7296,
+        "lng": 73.0372,
+        "address": "Faisal Mosque Main Gate, Islamabad",
+        "landmark": "Margalla Foothills"
+      },
+      "pickupNotes": "Gate 2, Centaurus Jinnah Avenue side",
+      "distanceKm": 3.7,
+      "estimatedMinutes": 13,
+      "suggestedFarePaisa": 34500,
+      "proposedFarePaisa": 34500,
+      "verificationOtp": "8912",
+      "status": "COMPLETED",
+      "paymentMethod": "CASH",
+      "paymentStatus": "PENDING",
+      "createdAt": "2026-11-22T20:17:28.132Z",
+      "updatedAt": "2026-11-22T20:17:28.151Z",
+      "driverId": "user-isb-driver-1795378648001",
+      "driverName": "Bilal Khan (Islamabad)",
+      "driverPhone": "03129876543",
+      "vehicleDetails": "Honda Civic (ISB-4921)",
+      "agreedFarePaisa": 34500,
+      "chatMessages": [
+        {
+          "id": "msg-test-1",
+          "rideId": "ride-isb-1795378648132",
+          "senderId": "user-isb-passenger-1795378647682",
+          "senderName": "Hamza Malik (Islamabad)",
+          "senderRole": "PASSENGER",
+          "text": "Assalam-o-Alaikum, I am wearing a black jacket outside Centaurus Gate 2.",
+          "timestamp": "2026-11-22T20:17:28.142Z"
+        },
+        {
+          "id": "msg-test-2",
+          "rideId": "ride-isb-1795378648132",
+          "senderId": "user-isb-driver-1795378648001",
+          "senderName": "Bilal Khan (Islamabad)",
+          "senderRole": "DRIVER",
+          "text": "Walaikum Assalam! Honda Civic silver color arriving in 2 minutes.",
+          "timestamp": "2026-11-22T20:17:28.142Z"
+        }
+      ],
+      "rating": 5,
+      "reviewComment": "Excellent driver, clean car, smooth ride through Blue Area!"
     }
   },
   "offers": {
     "off-e2e-1": {
       "id": "off-e2e-1",
-      "rideId": "ride-e2e-test-1795361578048",
+      "rideId": "ride-e2e-test-1795378646152",
       "driverId": "user-driver-car-1",
       "driverName": "Tariq Mehmood",
       "driverPhone": "03007654321",
@@ -1596,12 +1771,12 @@
       "counterFarePaisa": 30000,
       "etaMinutes": 3,
       "status": "ACCEPTED",
-      "createdAt": "2026-11-22T15:32:58.054Z",
-      "expiresAt": "2026-11-22T15:37:58.055Z"
+      "createdAt": "2026-11-22T20:17:26.156Z",
+      "expiresAt": "2026-11-22T20:22:26.156Z"
     },
     "off-e2e-2": {
       "id": "off-e2e-2",
-      "rideId": "ride-e2e-test-1795361578048",
+      "rideId": "ride-e2e-test-1795378646152",
       "driverId": "user-driver-moto-1",
       "driverName": "Kamran Iqbal",
       "driverPhone": "03112233445",
@@ -1610,8 +1785,8 @@
       "counterFarePaisa": 25000,
       "etaMinutes": 5,
       "status": "REJECTED",
-      "createdAt": "2026-11-22T15:32:58.055Z",
-      "expiresAt": "2026-11-22T15:37:58.055Z"
+      "createdAt": "2026-11-22T20:17:26.156Z",
+      "expiresAt": "2026-11-22T20:22:26.156Z"
     },
     "off-a-1795149450944": {
       "id": "off-a-1795149450944",
@@ -1850,6 +2025,48 @@
       "status": "PENDING",
       "createdAt": "2026-11-22T15:33:01.195Z",
       "expiresAt": "2026-11-22T15:34:01.195Z"
+    },
+    "off-a-1795378646706": {
+      "id": "off-a-1795378646706",
+      "rideId": "ride-sec-test-1795378646703",
+      "driverId": "driver-a",
+      "driverName": "Driver A",
+      "driverPhone": "03001111111",
+      "driverRating": 4.9,
+      "driverVehicle": "White Corolla",
+      "counterFarePaisa": 28000,
+      "etaMinutes": 3,
+      "status": "ACCEPTED",
+      "createdAt": "2026-11-22T20:17:26.706Z",
+      "expiresAt": "2026-11-22T20:22:26.706Z"
+    },
+    "off-b-1795378646706": {
+      "id": "off-b-1795378646706",
+      "rideId": "ride-sec-test-1795378646703",
+      "driverId": "driver-b",
+      "driverName": "Driver B",
+      "driverPhone": "03002222222",
+      "driverRating": 4.8,
+      "driverVehicle": "Red Bike",
+      "counterFarePaisa": 28000,
+      "etaMinutes": 4,
+      "status": "REJECTED",
+      "createdAt": "2026-11-22T20:17:26.706Z",
+      "expiresAt": "2026-11-22T20:22:26.706Z"
+    },
+    "offer-isb-1795378648134": {
+      "id": "offer-isb-1795378648134",
+      "rideId": "ride-isb-1795378648132",
+      "driverId": "user-isb-driver-1795378648001",
+      "driverName": "Bilal Khan (Islamabad)",
+      "driverPhone": "03129876543",
+      "driverRating": 5,
+      "driverVehicle": "Honda Civic (ISB-4921)",
+      "counterFarePaisa": 34500,
+      "etaMinutes": 3,
+      "status": "PENDING",
+      "createdAt": "2026-11-22T20:17:28.134Z",
+      "expiresAt": "2026-11-22T20:18:28.134Z"
     }
   },
   "ledger": {
@@ -1982,6 +2199,32 @@
       "status": "PAID",
       "reconciledAt": "2026-11-22T15:32:59.650Z",
       "createdAt": "2026-11-22T15:32:59.650Z"
+    },
+    "ledg-r12dtm5": {
+      "id": "ledg-r12dtm5",
+      "rideId": "ride-e2e-test-1795378646152",
+      "driverId": "user-driver-car-1",
+      "passengerId": "user-passenger-1",
+      "method": "CASH",
+      "grossAmountPaisa": 30000,
+      "platformCommissionPaisa": 0,
+      "driverNetPaisa": 30000,
+      "status": "PAID",
+      "reconciledAt": "2026-11-22T20:17:26.167Z",
+      "createdAt": "2026-11-22T20:17:26.168Z"
+    },
+    "ledg-6wizfwh": {
+      "id": "ledg-6wizfwh",
+      "rideId": "ride-sec-test-1795378646703",
+      "driverId": "driver-a",
+      "passengerId": "user-p-1",
+      "method": "CASH",
+      "grossAmountPaisa": 28000,
+      "platformCommissionPaisa": 0,
+      "driverNetPaisa": 28000,
+      "status": "PAID",
+      "reconciledAt": "2026-11-22T20:17:26.718Z",
+      "createdAt": "2026-11-22T20:17:26.718Z"
     }
   },
   "complaints": {},
@@ -2810,6 +3053,154 @@
       },
       "id": "audit-wnhu80x",
       "timestamp": "2026-11-22T15:33:01.217Z"
+    },
+    {
+      "rideId": "ride-e2e-test-1795378646152",
+      "eventType": "RIDE_STATUS_TRANSITION",
+      "actorId": "user-passenger-1",
+      "actorRole": "PASSENGER",
+      "payload": {
+        "from": "REQUESTED",
+        "to": "OFFERS_OPEN"
+      },
+      "id": "audit-dofr0ju",
+      "timestamp": "2026-11-22T20:17:26.154Z"
+    },
+    {
+      "rideId": "ride-e2e-test-1795378646152",
+      "eventType": "RIDE_STATUS_TRANSITION",
+      "actorId": "user-driver-car-1",
+      "actorRole": "DRIVER",
+      "payload": {
+        "from": "DRIVER_SELECTED",
+        "to": "EN_ROUTE"
+      },
+      "id": "audit-7504ozd",
+      "timestamp": "2026-11-22T20:17:26.162Z"
+    },
+    {
+      "rideId": "ride-e2e-test-1795378646152",
+      "eventType": "RIDE_STATUS_TRANSITION",
+      "actorId": "user-driver-car-1",
+      "actorRole": "DRIVER",
+      "payload": {
+        "from": "EN_ROUTE",
+        "to": "IN_PROGRESS"
+      },
+      "id": "audit-xcgy2rz",
+      "timestamp": "2026-11-22T20:17:26.164Z"
+    },
+    {
+      "rideId": "ride-e2e-test-1795378646152",
+      "eventType": "RIDE_STATUS_TRANSITION",
+      "actorId": "user-driver-car-1",
+      "actorRole": "DRIVER",
+      "payload": {
+        "from": "IN_PROGRESS",
+        "to": "COMPLETED"
+      },
+      "id": "audit-hv0qg35",
+      "timestamp": "2026-11-22T20:17:26.166Z"
+    },
+    {
+      "rideId": "ride-e2e-test-1795378646152",
+      "eventType": "PAYMENT_RECORDED",
+      "actorId": "user-driver-car-1",
+      "actorRole": "SYSTEM",
+      "payload": {
+        "ledgerId": "ledg-r12dtm5",
+        "grossPaisa": 30000,
+        "commissionPaisa": 0,
+        "driverNetPaisa": 30000
+      },
+      "id": "audit-q2j3hc3",
+      "timestamp": "2026-11-22T20:17:26.169Z"
+    },
+    {
+      "rideId": "ride-sec-test-1795378646703",
+      "eventType": "RIDE_STATUS_TRANSITION",
+      "actorId": "driver-a",
+      "actorRole": "DRIVER",
+      "payload": {
+        "from": "DRIVER_SELECTED",
+        "to": "EN_ROUTE"
+      },
+      "id": "audit-t5xyf0a",
+      "timestamp": "2026-11-22T20:17:26.713Z"
+    },
+    {
+      "rideId": "ride-sec-test-1795378646703",
+      "eventType": "RIDE_STATUS_TRANSITION",
+      "actorId": "driver-a",
+      "actorRole": "DRIVER",
+      "payload": {
+        "from": "EN_ROUTE",
+        "to": "IN_PROGRESS"
+      },
+      "id": "audit-70fdx63",
+      "timestamp": "2026-11-22T20:17:26.716Z"
+    },
+    {
+      "rideId": "ride-sec-test-1795378646703",
+      "eventType": "PAYMENT_RECORDED",
+      "actorId": "driver-a",
+      "actorRole": "SYSTEM",
+      "payload": {
+        "ledgerId": "ledg-6wizfwh",
+        "grossPaisa": 28000,
+        "commissionPaisa": 0,
+        "driverNetPaisa": 28000
+      },
+      "id": "audit-eh930bx",
+      "timestamp": "2026-11-22T20:17:26.722Z"
+    },
+    {
+      "rideId": "ride-isb-1795378648132",
+      "eventType": "RIDE_STATUS_TRANSITION",
+      "actorId": "user-isb-passenger-1795378647682",
+      "actorRole": "PASSENGER",
+      "payload": {
+        "from": "OFFERS_OPEN",
+        "to": "DRIVER_SELECTED"
+      },
+      "id": "audit-g6hznvp",
+      "timestamp": "2026-11-22T20:17:28.140Z"
+    },
+    {
+      "rideId": "ride-isb-1795378648132",
+      "eventType": "RIDE_STATUS_TRANSITION",
+      "actorId": "user-isb-driver-1795378648001",
+      "actorRole": "DRIVER",
+      "payload": {
+        "from": "DRIVER_SELECTED",
+        "to": "EN_ROUTE"
+      },
+      "id": "audit-p1salg4",
+      "timestamp": "2026-11-22T20:17:28.145Z"
+    },
+    {
+      "rideId": "ride-isb-1795378648132",
+      "eventType": "RIDE_STATUS_TRANSITION",
+      "actorId": "user-isb-driver-1795378648001",
+      "actorRole": "DRIVER",
+      "payload": {
+        "from": "EN_ROUTE",
+        "to": "IN_PROGRESS"
+      },
+      "id": "audit-l03anzs",
+      "timestamp": "2026-11-22T20:17:28.149Z"
+    },
+    {
+      "rideId": "ride-isb-1795378648132",
+      "eventType": "RIDE_STATUS_TRANSITION",
+      "actorId": "user-isb-driver-1795378648001",
+      "actorRole": "DRIVER",
+      "payload": {
+        "from": "IN_PROGRESS",
+        "to": "COMPLETED"
+      },
+      "id": "audit-ryaki5k",
+      "timestamp": "2026-11-22T20:17:28.152Z"
     }
   ],
   "settings": {

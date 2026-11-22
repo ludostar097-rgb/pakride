@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-import { X, Lock, Phone, User, Car, Bike, Navigation, KeyRound, CheckCircle2 } from 'lucide-react';
-import { VehicleCategory } from '../shared/types';
+import { X, Lock, Phone, User, CheckCircle2 } from 'lucide-react';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -24,13 +23,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
   const [role, setRole] = useState<'PASSENGER' | 'DRIVER'>('PASSENGER');
-
-  // Driver vehicle details
-  const [category, setCategory] = useState<VehicleCategory>('CAR');
-  const [make, setMake] = useState('Toyota');
-  const [model, setModel] = useState('Corolla');
-  const [plateNumber, setPlateNumber] = useState('KHI-5555');
-  const [color, setColor] = useState('White');
 
   // Forgot password states
   const [resetOtp, setResetOtp] = useState('');
@@ -75,22 +67,12 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     setLoading(true);
     setError(null);
     try {
-      const payload: any = {
+      const payload = {
         phone,
         password,
         fullName,
         role
       };
-      if (role === 'DRIVER') {
-        payload.vehicleDetails = {
-          category,
-          make,
-          model,
-          plateNumber,
-          color,
-          year: 2022
-        };
-      }
 
       const res = await fetch(`${apiBaseUrl}/api/auth/register`, {
         method: 'POST',
@@ -331,72 +313,15 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               </div>
             </div>
 
-            {/* Driver Vehicle Details */}
+            {/* Driver Note: Easy signup without vehicle roadblock */}
             {role === 'DRIVER' && (
-              <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-2 text-xs">
-                <span className="font-bold text-charcoal-900 block">Add Vehicle Details</span>
-                <div className="grid grid-cols-3 gap-1.5">
-                  <button
-                    type="button"
-                    onClick={() => setCategory('CAR')}
-                    className={`py-1.5 rounded-lg border text-[11px] font-bold ${
-                      category === 'CAR' ? 'border-pakgreen-500 bg-white text-pakgreen-700' : 'border-slate-200'
-                    }`}
-                  >
-                    🚗 Car
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setCategory('MOTORCYCLE')}
-                    className={`py-1.5 rounded-lg border text-[11px] font-bold ${
-                      category === 'MOTORCYCLE' ? 'border-pakgreen-500 bg-white text-pakgreen-700' : 'border-slate-200'
-                    }`}
-                  >
-                    🏍️ Bike
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setCategory('RICKSHAW')}
-                    className={`py-1.5 rounded-lg border text-[11px] font-bold ${
-                      category === 'RICKSHAW' ? 'border-pakgreen-500 bg-white text-pakgreen-700' : 'border-slate-200'
-                    }`}
-                  >
-                    🛺 Rickshaw
-                  </button>
-                </div>
-
-                <div className="grid grid-cols-2 gap-2">
-                  <input
-                    type="text"
-                    placeholder="Make (e.g. Honda, Suzuki)"
-                    value={make}
-                    onChange={(e) => setMake(e.target.value)}
-                    className="p-2 border rounded-lg bg-white"
-                  />
-                  <input
-                    type="text"
-                    placeholder="Model (e.g. CD70, Alto)"
-                    value={model}
-                    onChange={(e) => setModel(e.target.value)}
-                    className="p-2 border rounded-lg bg-white"
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-2">
-                  <input
-                    type="text"
-                    placeholder="Plate # (e.g. KHI-1234)"
-                    value={plateNumber}
-                    onChange={(e) => setPlateNumber(e.target.value)}
-                    className="p-2 border rounded-lg bg-white"
-                  />
-                  <input
-                    type="text"
-                    placeholder="Color (e.g. White, Red)"
-                    value={color}
-                    onChange={(e) => setColor(e.target.value)}
-                    className="p-2 border rounded-lg bg-white"
-                  />
-                </div>
+              <div className="p-3 bg-emerald-50 rounded-xl border border-emerald-200 text-xs text-emerald-800 space-y-1">
+                <span className="font-bold flex items-center space-x-1 text-emerald-900">
+                  <span>✨ Zero-Friction Captain Registration</span>
+                </span>
+                <p className="text-[11px] leading-relaxed text-emerald-700">
+                  No vehicle details or paperwork required right now! Once your account is created, you can easily add your Captain picture, bike/vehicle number, and registration copy directly from your dashboard.
+                </p>
               </div>
             )}
 
