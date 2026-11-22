@@ -38,6 +38,23 @@ app.use((req, res, next) => {
   next();
 });
 
+// ==========================================
+// 0. HEALTH CHECK & KEEP-ALIVE ENDPOINTS
+// ==========================================
+
+app.get('/api/health', (req, res) => {
+  return res.json({
+    status: 'ok',
+    service: 'PakRide Real-Time Dispatch Engine',
+    uptimeSeconds: Math.floor(process.uptime()),
+    timestamp: new Date().toISOString()
+  });
+});
+
+app.get('/healthz', (req, res) => {
+  return res.status(200).send('OK');
+});
+
 // Seed synthetic data on startup if empty
 seedDemoData();
 
@@ -784,4 +801,22 @@ server.listen(PORT, () => {
   console.log(` Platform Commission: 0% Introductory rate`);
   console.log(` Database: Persistent Atomic JSON Store with Minor Units`);
   console.log(`=======================================================`);
+
+  // Automatic Keep-Alive Self-Pinger (keeps Render free instances awake)
+  const externalUrl = process.env.RENDER_EXTERNAL_URL || process.env.KEEP_ALIVE_URL || 'https://pakride.onrender.com';
+  if (process.env.NODE_ENV === 'production' || process.env.ENABLE_KEEP_ALIVE === 'true') {
+    const PING_INTERVAL_MS = 13 * 60 * 1000; // 13 minutes (Render spins down after 15 mins)
+    setInterval(async () => {
+      try {
+        const pingUrl = `${externalUrl}/api/health`;
+        const res = await fetch(pingUrl);
+        if (res.ok) {
+          console.log(`[KEEP-ALIVE] Pinged ${pingUrl} at ${new Date().toISOString()} (HTTP 200)`);
+        }
+      } catch (err: any) {
+        console.warn(`[KEEP-ALIVE] Ping notice:`, err?.message || err);
+      }
+    }, PING_INTERVAL_MS);
+    console.log(`[KEEP-ALIVE] Self-pinger active for ${externalUrl} every 13 minutes.`);
+  }
 });
