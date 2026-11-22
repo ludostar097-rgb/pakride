@@ -1,4 +1,4 @@
-import { io } from '../../../frontend/node_modules/socket.io-client/build/esm/index.js';
+import { io } from 'socket.io-client';
 
 const API_BASE = 'http://localhost:4000';
 const FRONTEND_BASE = 'http://localhost:3000';
