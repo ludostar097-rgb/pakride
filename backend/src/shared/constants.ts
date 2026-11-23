@@ -66,17 +66,19 @@ export const PILOT_ZONES = [
 ];
 
 export const ISLAMABAD_LANDMARKS = [
+  { name: 'Saddar Rawalpindi (Bank Road / Cantt)', lat: 33.5930, lng: 73.0545, zone: 'Rawalpindi Saddar' },
+  { name: 'Faisal Mosque Main Gate', lat: 33.7296, lng: 73.0372, zone: 'Margalla Foothills' },
   { name: 'Centaurus Mall, Jinnah Ave', lat: 33.7077, lng: 73.0501, zone: 'Islamabad F-8' },
   { name: 'Blue Area (Saudi Pak Tower)', lat: 33.7145, lng: 73.0673, zone: 'Blue Area' },
   { name: 'F-6 Super Market', lat: 33.7297, lng: 73.0784, zone: 'Islamabad F-6' },
   { name: 'F-10 Markaz', lat: 33.6925, lng: 73.0118, zone: 'Islamabad F-10' },
   { name: 'G-9 Karachi Company', lat: 33.6894, lng: 73.0305, zone: 'Islamabad G-9' },
   { name: 'I-8 Markaz', lat: 33.6685, lng: 73.0760, zone: 'Islamabad I-8' },
-  { name: 'Faisal Mosque Main Gate', lat: 33.7296, lng: 73.0372, zone: 'Margalla Foothills' },
   { name: 'Islamabad International Airport (IIAP)', lat: 33.5605, lng: 72.8517, zone: 'Islamabad West' }
 ];
 
 export const KARACHI_LANDMARKS = [
+  { name: 'Saddar (Empress Market)', lat: 24.8615, lng: 67.0311, zone: 'Karachi South' },
   { name: 'Jauhar Chowrangi', lat: 24.9213, lng: 67.1355, zone: 'Gulistan-e-Jauhar' },
   { name: 'Kamran Chowrangi', lat: 24.9126, lng: 67.1287, zone: 'Gulistan-e-Jauhar' },
   { name: 'Continental Bakery, Block 12', lat: 24.9248, lng: 67.1382, zone: 'Gulistan-e-Jauhar' },

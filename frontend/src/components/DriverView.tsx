@@ -59,6 +59,12 @@ export const DriverView: React.FC<DriverViewProps> = ({
   const [showPinModal, setShowPinModal] = useState(false);
   const [inputPin, setInputPin] = useState('');
   const [pinError, setPinError] = useState<string | null>(null);
+  const [actionNotice, setActionNotice] = useState<string | null>(null);
+
+  const showActionNotice = (msg: string) => {
+    setActionNotice(msg);
+    setTimeout(() => setActionNotice(null), 4000);
+  };
   const [earnings, setEarnings] = useState<{
     completedTripsCount: number;
     totalGrossPkr: number;
@@ -167,6 +173,21 @@ export const DriverView: React.FC<DriverViewProps> = ({
       .catch((err) => console.error('Earnings fetch error:', err));
   };
 
+  // Fetch active trip if driver was already assigned or on reconnect
+  const fetchActiveTrip = () => {
+    fetch(`${apiBaseUrl}/api/rides/driver/active-trip`, {
+      headers: { Authorization: `Bearer ${getAuthToken()}` }
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.ride) {
+          setActiveTrip(data.ride);
+          setAvailableRides((prev) => prev.filter((r) => r.id !== data.ride.id));
+        }
+      })
+      .catch((err) => console.error('Active trip fetch error:', err));
+  };
+
   // Fetch available requests feed
   const fetchFeed = () => {
     if (!profile.isOnline || !isApproved) return;
@@ -182,8 +203,19 @@ export const DriverView: React.FC<DriverViewProps> = ({
 
   useEffect(() => {
     fetchEarnings();
+    fetchActiveTrip();
     if (profile.isOnline) fetchFeed();
-  }, [profile.isOnline, isApproved]);
+
+    // Fallback polling for live requests and active trip
+    const pollInterval = setInterval(() => {
+      fetchActiveTrip();
+      if (profile.isOnline && !activeTrip) {
+        fetchFeed();
+      }
+    }, 3500);
+
+    return () => clearInterval(pollInterval);
+  }, [profile.isOnline, isApproved, activeTrip?.id]);
 
   // Socket listeners
   useEffect(() => {
@@ -202,6 +234,7 @@ export const DriverView: React.FC<DriverViewProps> = ({
     socket.on('offer_accepted_notify', (data: { ride: RideRequest }) => {
       setActiveTrip(data.ride);
       setAvailableRides((prev) => prev.filter((r) => r.id !== data.ride.id));
+      showActionNotice(`🎉 Passenger accepted your offer for PKR ${Math.round((data.ride.agreedFarePaisa || data.ride.proposedFarePaisa) / 100)}!`);
     });
 
     socket.on('ride_status_changed', (data: { ride: RideRequest }) => {
@@ -258,7 +291,7 @@ export const DriverView: React.FC<DriverViewProps> = ({
   // Submit Driver Offer / Counteroffer
   const handleSubmitOffer = async (rideId: string, counterPkr: number) => {
     try {
-      await fetch(`${apiBaseUrl}/api/rides/${rideId}/offer`, {
+      const res = await fetch(`${apiBaseUrl}/api/rides/${rideId}/offer`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -269,9 +302,12 @@ export const DriverView: React.FC<DriverViewProps> = ({
           etaMinutes: 4
         })
       });
-      alert(`Offer of PKR ${counterPkr} submitted! Waiting for passenger confirmation.`);
-    } catch (err) {
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to submit offer');
+      showActionNotice(`✓ Offer of PKR ${counterPkr} submitted! Waiting for passenger confirmation.`);
+    } catch (err: any) {
       console.error('Submit offer error:', err);
+      showActionNotice(err.message || 'Submit offer failed');
     }
   };
 
@@ -312,7 +348,15 @@ export const DriverView: React.FC<DriverViewProps> = ({
   const commissionSavedPkr = Math.round(earnings.totalGrossPkr * 0.20);
 
   return (
-    <div className="max-w-3xl mx-auto space-y-6 pb-12">
+    <div className="max-w-3xl mx-auto space-y-6 pb-12 relative">
+      {/* Non-intrusive In-App Toast Notification */}
+      {actionNotice && (
+        <div className="fixed top-16 right-4 z-50 bg-charcoal-900 text-white px-4 py-3 rounded-2xl shadow-2xl border-2 border-pakgreen-500 flex items-center space-x-2 text-xs font-bold animate-pulse">
+          <span className="w-2.5 h-2.5 rounded-full bg-pakgreen-400"></span>
+          <span>{actionNotice}</span>
+        </div>
+      )}
+
       {/* 1. Header & Verification Status */}
       <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-5">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">

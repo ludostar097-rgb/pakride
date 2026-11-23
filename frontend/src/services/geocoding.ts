@@ -225,8 +225,9 @@ export class GeocodingService {
   public static getPopularHubs(cityName: string): LocationCoordinates[] {
     if (cityName === 'Islamabad' || cityName === 'Rawalpindi') {
       return [
+        { lat: 33.5930, lng: 73.0545, address: 'Saddar Rawalpindi (Bank Road / Cantt)', landmark: 'Saddar' },
+        { lat: 33.7296, lng: 73.0372, address: 'Faisal Mosque Main Gate', landmark: 'Faisal Masjid' },
         { lat: 33.7077, lng: 73.0501, address: 'The Centaurus Mall, Jinnah Ave', landmark: 'F-8' },
-        { lat: 33.7296, lng: 73.0372, address: 'Faisal Mosque Main Gate', landmark: 'Margalla Foothills' },
         { lat: 33.7145, lng: 73.0673, address: 'Blue Area (Saudi Pak Tower)', landmark: 'Blue Area' },
         { lat: 33.6925, lng: 73.0118, address: 'F-10 Markaz', landmark: 'F-10' },
         { lat: 33.6894, lng: 73.0305, address: 'G-9 Karachi Company', landmark: 'G-9' },

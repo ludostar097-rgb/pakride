@@ -397,6 +397,28 @@ app.get('/api/rides/:id', AuthService.requireAuth, (req, res) => {
   return res.json({ ride, offers });
 });
 
+app.get('/api/rides/passenger/active-ride', AuthService.requireAuth, (req: AuthenticatedRequest, res) => {
+  const allRides = db.getAllRides();
+  const active = allRides.find(
+    (r) =>
+      r.passengerId === req.user!.userId &&
+      r.status !== 'COMPLETED' &&
+      r.status !== 'CANCELLED'
+  );
+  const offers = active ? db.getOffersForRide(active.id) : [];
+  return res.json({ ride: active || null, offers });
+});
+
+app.get('/api/rides/driver/active-trip', AuthService.requireAuth, (req: AuthenticatedRequest, res) => {
+  const allRides = db.getAllRides();
+  const active = allRides.find(
+    (r) =>
+      r.driverId === req.user!.userId &&
+      (r.status === 'DRIVER_SELECTED' || r.status === 'EN_ROUTE' || r.status === 'IN_PROGRESS')
+  );
+  return res.json({ ride: active || null });
+});
+
 app.get('/api/rides/passenger/history', AuthService.requireAuth, (req: AuthenticatedRequest, res) => {
   const rides = db.getRidesForPassenger(req.user!.userId);
   return res.json({ rides });

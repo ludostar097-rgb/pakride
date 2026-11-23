@@ -174,6 +174,34 @@ export const PassengerView: React.FC<PassengerViewProps> = ({
       .catch((err) => console.error('Fare calculation error:', err));
   }, [category, pickup, destination, apiBaseUrl]);
 
+  // Fetch active passenger ride & offers on mount or reconnect
+  const fetchActivePassengerRide = () => {
+    fetch(`${apiBaseUrl}/api/rides/passenger/active-ride`, {
+      headers: { Authorization: `Bearer ${getAuthToken()}` }
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.ride) {
+          setActiveRide(data.ride);
+          if (data.offers && data.offers.length > 0) {
+            setOffers(data.offers);
+          }
+        }
+      })
+      .catch((err) => console.error('Passenger active ride fetch error:', err));
+  };
+
+  useEffect(() => {
+    fetchActivePassengerRide();
+
+    // Fallback sync polling for passenger offers & status
+    const pollInterval = setInterval(() => {
+      fetchActivePassengerRide();
+    }, 3000);
+
+    return () => clearInterval(pollInterval);
+  }, [currentUser.id]);
+
   // Socket event listeners for real-time ride & offer updates
   useEffect(() => {
     if (!socket) return;
