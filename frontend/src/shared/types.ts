@@ -81,6 +81,31 @@ export interface DriverProfile {
   cnicDocUrl?: string;
 }
 
+export interface DriverVehicleSetupPayload {
+  category: VehicleCategory;
+  make: string;
+  model: string;
+  plateNumber: string;
+  color: string;
+  cnicNumber: string;
+  profilePhotoUrl?: string;
+  vehicleDocUrl?: string;
+  cnicDocUrl?: string;
+}
+
+export interface AuthSuccessPayload {
+  token: string;
+  user: {
+    id: string;
+    phone: string;
+    fullName: string;
+    role: UserRole;
+    languagePreference: 'en' | 'ur';
+    createdAt: string;
+  };
+  driverProfile?: DriverProfile;
+}
+
 export interface ChatMessage {
   id: string;
   rideId: string;
@@ -101,6 +126,7 @@ export interface RideRequest {
   destination: LocationCoordinates;
   pickupNotes?: string;
   distanceKm: number;
+  driverDistanceKm?: number;
   estimatedMinutes: number;
   suggestedFarePaisa: number; // in integer minor units (PKR Paisa: 100 paisa = 1 PKR)
   proposedFarePaisa: number;

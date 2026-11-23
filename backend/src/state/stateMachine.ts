@@ -65,6 +65,12 @@ export class RideStateMachine {
     }
 
     if (newStatus === 'CANCELLED') {
+      if (actorRole !== 'ADMIN' && ride.passengerId !== actorId && ride.driverId !== actorId) {
+        return {
+          success: false,
+          error: 'You are not authorized to cancel this ride'
+        };
+      }
       if (currentStatus === 'IN_PROGRESS' && actorRole !== 'ADMIN') {
         return {
           success: false,

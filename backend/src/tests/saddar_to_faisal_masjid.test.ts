@@ -33,6 +33,25 @@ async function testSaddarToFaisalMasjidFlow() {
   const driverUserId = driverData.user.id;
   console.log(`   ✔ Driver Authenticated: ${driverData.user.fullName} (Vehicle: ${driverData.driverProfile?.vehicle?.make} ${driverData.driverProfile?.vehicle?.model})`);
 
+  // Ensure clean test slate (clear any prior lingering test trips)
+  let cleanTries = 0;
+  while (cleanTries < 5) {
+    const existingDriverTripRes = await fetch(`${API_BASE}/api/rides/driver/active-trip`, {
+      headers: { Authorization: `Bearer ${driverToken}` }
+    });
+    const existingDriverTrip: any = await existingDriverTripRes.json();
+    if (!existingDriverTrip.ride) break;
+    await fetch(`${API_BASE}/api/rides/${existingDriverTrip.ride.id}/transition`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${driverToken}`
+      },
+      body: JSON.stringify({ newStatus: 'CANCELLED', reason: 'Reset for clean test' })
+    });
+    cleanTries++;
+  }
+
   // Ensure Driver is Online
   if (!driverData.driverProfile?.isOnline) {
     await fetch(`${API_BASE}/api/driver/toggle-online`, {

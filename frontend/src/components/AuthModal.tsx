@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { X, Lock, Phone, User, CheckCircle2 } from 'lucide-react';
+import { AuthSuccessPayload } from '../shared/types';
 
 interface AuthModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSuccess: (userData: any) => void;
+  onSuccess: (userData: AuthSuccessPayload) => void;
   apiBaseUrl: string;
   lang?: string;
   t?: any;

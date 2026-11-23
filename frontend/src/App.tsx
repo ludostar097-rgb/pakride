@@ -20,7 +20,7 @@ import { DriverView } from './components/DriverView';
 import { AdminView } from './components/AdminView';
 import { AuthModal } from './components/AuthModal';
 import { translations, Language } from './i18n/translations';
-import { DriverProfile, UserRole } from './shared/types';
+import { DriverProfile, UserRole, AuthSuccessPayload } from './shared/types';
 
 // Environment-aware API URL (Vercel Cloud or Localhost)
 const API_BASE_URL = (import.meta as any).env?.VITE_API_BASE_URL || 'http://localhost:4000';
@@ -93,6 +93,9 @@ export const App: React.FC = () => {
     // Initial default: Passenger 1 (Ali Khan)
     return DEMO_PERSONAS[0];
   });
+  const [authToken, setAuthToken] = useState<string>(() => {
+    return localStorage.getItem('pakride_token') || '';
+  });
   const [isLoggedOut, setIsLoggedOut] = useState(false);
   const [driverProfile, setDriverProfile] = useState<DriverProfile | null>(null);
   const [socket, setSocket] = useState<Socket | null>(null);
@@ -102,7 +105,7 @@ export const App: React.FC = () => {
   const t = translations[lang];
 
   const getAuthToken = () => {
-    return localStorage.getItem('pakride_token') || `mock-token-${currentUser.id}`;
+    return authToken || localStorage.getItem('pakride_token') || `mock-token-${currentUser.id}`;
   };
 
   // Initialize Socket.io connection
@@ -150,7 +153,7 @@ export const App: React.FC = () => {
     } else {
       setDriverProfile(null);
     }
-  }, [currentUser?.id, currentUser?.role]);
+  }, [currentUser?.id, currentUser?.role, authToken]);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -161,7 +164,7 @@ export const App: React.FC = () => {
     setLang((prev) => (prev === 'en' ? 'ur' : 'en'));
   };
 
-  const handleAuthSuccess = (data: { user: any; token: string; driverProfile?: any }) => {
+  const handleAuthSuccess = (data: AuthSuccessPayload) => {
     const userObj: PersonaUser = {
       id: data.user.id,
       fullName: data.user.fullName,
@@ -174,6 +177,7 @@ export const App: React.FC = () => {
     localStorage.setItem('pakride_user', JSON.stringify(userObj));
     if (data.token) {
       localStorage.setItem('pakride_token', data.token);
+      setAuthToken(data.token);
     }
     if (data.driverProfile) {
       setDriverProfile(data.driverProfile);
@@ -187,21 +191,22 @@ export const App: React.FC = () => {
   const handleLogout = () => {
     localStorage.removeItem('pakride_token');
     localStorage.removeItem('pakride_user');
+    setAuthToken('');
     setIsLoggedOut(true);
     showToast('Logged out successfully.');
   };
 
   // Switch between 3 Core App Modes on Web
-  const handleSwitchApp = (mode: 'PASSENGER' | 'DRIVER' | 'ADMIN') => {
-    setAppMode(mode);
+  const handleSwitchApp = async (mode: 'PASSENGER' | 'DRIVER' | 'ADMIN') => {
     setIsLoggedOut(false);
     if (mode === 'PASSENGER') {
-      handleSwitchAccount('user-passenger-1');
+      await handleSwitchAccount('user-passenger-1');
     } else if (mode === 'DRIVER') {
-      handleSwitchAccount('user-driver-car-1');
+      await handleSwitchAccount('user-driver-car-1');
     } else if (mode === 'ADMIN') {
-      handleSwitchAccount('user-admin-1');
+      await handleSwitchAccount('user-admin-1');
     }
+    setAppMode(mode);
   };
 
   // Switch between pre-seeded demo accounts
@@ -227,6 +232,7 @@ export const App: React.FC = () => {
         };
         localStorage.setItem('pakride_user', JSON.stringify(userObj));
         setCurrentUser(userObj);
+        setAuthToken(data.token);
         if (data.driverProfile) setDriverProfile(data.driverProfile);
         else setDriverProfile(null);
         showToast(`Logged in as ${data.user.fullName} (${data.user.role})`);
@@ -236,9 +242,11 @@ export const App: React.FC = () => {
       console.warn('Direct login failed, using fallback persona', e);
     }
     // Fallback if offline
-    localStorage.setItem('pakride_token', `mock-token-${persona.id}`);
+    const fallbackToken = `mock-token-${persona.id}`;
+    localStorage.setItem('pakride_token', fallbackToken);
     localStorage.setItem('pakride_user', JSON.stringify(persona));
     setCurrentUser(persona);
+    setAuthToken(fallbackToken);
     showToast(`Switched to ${persona.fullName} (${persona.role})`);
   };
 
@@ -392,8 +400,10 @@ export const App: React.FC = () => {
       <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6">
         {appMode === 'PASSENGER' && (
           <PassengerView
+            key={`passenger-${currentUser.id}`}
             socket={socket}
             currentUser={currentUser}
+            authToken={authToken}
             lang={lang}
             t={t}
             apiBaseUrl={API_BASE_URL}
@@ -402,8 +412,10 @@ export const App: React.FC = () => {
 
         {appMode === 'DRIVER' && (
           <DriverView
+            key={`driver-${currentUser.id}`}
             socket={socket}
             currentUser={currentUser}
+            authToken={authToken}
             driverProfile={
               driverProfile || {
                 id: `prof-${currentUser.id}`,

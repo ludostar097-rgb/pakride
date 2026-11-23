@@ -109,6 +109,11 @@ app.post('/api/auth/register', async (req, res) => {
     return res.status(400).json({ error: 'Missing required registration fields' });
   }
 
+  // Prevent privilege escalation attacks (Admin accounts cannot be self-registered)
+  if (role !== 'PASSENGER' && role !== 'DRIVER') {
+    return res.status(400).json({ error: 'Public registration is only allowed for PASSENGER or DRIVER roles' });
+  }
+
   const existing = db.getUserByPhone(phone);
   if (existing) {
     return res.status(400).json({ error: 'User with this phone number already exists' });
@@ -339,6 +344,20 @@ app.post('/api/rides/request', AuthService.requireAuth, (req: AuthenticatedReque
     return res.status(400).json({ error: 'Missing required ride fields' });
   }
 
+  const validCategories: VehicleCategory[] = ['CAR', 'MOTORCYCLE', 'RICKSHAW'];
+  if (!validCategories.includes(category)) {
+    return res.status(400).json({ error: 'Invalid vehicle category. Allowed: CAR, MOTORCYCLE, RICKSHAW' });
+  }
+
+  const numFare = Number(proposedFarePkr);
+  if (isNaN(numFare) || numFare <= 0 || numFare > 500000) {
+    return res.status(400).json({ error: 'Proposed fare must be a valid positive amount' });
+  }
+
+  if (typeof pickup.lat !== 'number' || typeof pickup.lng !== 'number' || typeof destination.lat !== 'number' || typeof destination.lng !== 'number') {
+    return res.status(400).json({ error: 'Invalid pickup or destination coordinates' });
+  }
+
   const distanceKm = PricingService.calculateDistanceKm(
     pickup.lat,
     pickup.lng,
@@ -399,23 +418,27 @@ app.get('/api/rides/:id', AuthService.requireAuth, (req, res) => {
 
 app.get('/api/rides/passenger/active-ride', AuthService.requireAuth, (req: AuthenticatedRequest, res) => {
   const allRides = db.getAllRides();
-  const active = allRides.find(
-    (r) =>
-      r.passengerId === req.user!.userId &&
-      r.status !== 'COMPLETED' &&
-      r.status !== 'CANCELLED'
-  );
+  const active = allRides
+    .filter(
+      (r) =>
+        r.passengerId === req.user!.userId &&
+        r.status !== 'COMPLETED' &&
+        r.status !== 'CANCELLED'
+    )
+    .sort((a, b) => new Date(b.updatedAt || b.createdAt).getTime() - new Date(a.updatedAt || a.createdAt).getTime())[0];
   const offers = active ? db.getOffersForRide(active.id) : [];
   return res.json({ ride: active || null, offers });
 });
 
 app.get('/api/rides/driver/active-trip', AuthService.requireAuth, (req: AuthenticatedRequest, res) => {
   const allRides = db.getAllRides();
-  const active = allRides.find(
-    (r) =>
-      r.driverId === req.user!.userId &&
-      (r.status === 'DRIVER_SELECTED' || r.status === 'EN_ROUTE' || r.status === 'IN_PROGRESS')
-  );
+  const active = allRides
+    .filter(
+      (r) =>
+        r.driverId === req.user!.userId &&
+        (r.status === 'DRIVER_SELECTED' || r.status === 'EN_ROUTE' || r.status === 'IN_PROGRESS')
+    )
+    .sort((a, b) => new Date(b.updatedAt || b.createdAt).getTime() - new Date(a.updatedAt || a.createdAt).getTime())[0];
   return res.json({ ride: active || null });
 });
 
@@ -444,7 +467,31 @@ app.get('/api/rides/driver/feed', AuthService.requireAuth, (req: AuthenticatedRe
 
   const category = driverProfile.vehicle?.category || 'ALL';
   const rides = db.getAvailableRidesForDrivers(category, driverProfile.activeZoneId);
-  return res.json({ rides });
+
+  // Proximity sorting: Driver sees nearby rides first (supports Forward Dispatch near drop-off!)
+  const { nearLat, nearLng } = req.query;
+  const driverLat = nearLat ? parseFloat(nearLat as string) : (driverProfile.currentLat || 24.918);
+  const driverLng = nearLng ? parseFloat(nearLng as string) : (driverProfile.currentLng || 67.135);
+
+  const enrichedRides = rides
+    .map((r) => {
+      const distToPickup = PricingService.calculateDistanceKm(
+        driverLat,
+        driverLng,
+        r.pickup.lat,
+        r.pickup.lng
+      );
+      return {
+        ...r,
+        driverDistanceKm: Math.round(distToPickup * 10) / 10
+      };
+    })
+    .sort((a, b) => a.driverDistanceKm - b.driverDistanceKm);
+
+  return res.json({
+    rides: enrichedRides,
+    referenceLocation: { lat: driverLat, lng: driverLng, isForwardDispatch: Boolean(nearLat) }
+  });
 });
 
 // ==========================================
@@ -470,7 +517,12 @@ app.post('/api/rides/:id/offer', AuthService.requireAuth, (req: AuthenticatedReq
     return res.status(400).json({ error: 'This ride is no longer accepting offers' });
   }
 
-  const counterFarePaisa = Math.round(Number(counterFarePkr) * 100);
+  const numFare = Number(counterFarePkr);
+  if (isNaN(numFare) || numFare <= 0 || numFare > 500000) {
+    return res.status(400).json({ error: 'Counter offer fare must be a valid positive amount' });
+  }
+
+  const counterFarePaisa = Math.round(numFare * 100);
 
   const offer: RideOffer = {
     id: 'off-' + uuidv4().substring(0, 8),
@@ -567,6 +619,11 @@ app.post('/api/rides/:id/transition', AuthService.requireAuth, (req: Authenticat
   // If completed, record ledger transaction automatically
   if (newStatus === 'COMPLETED') {
     LedgerService.recordRidePayment(ride, ride.paymentMethod || 'CASH');
+  }
+
+  // If cancelled, broadcast cancellation to all drivers so request disappears from feeds
+  if (newStatus === 'CANCELLED') {
+    io.emit(SOCKET_EVENTS.RIDE_CANCELLED_BROADCAST, { rideId });
   }
 
   // Notify both driver and passenger of the state change
@@ -688,6 +745,10 @@ app.get('/api/driver/earnings', AuthService.requireAuth, (req: AuthenticatedRequ
 });
 
 app.post('/api/driver/vehicle', AuthService.requireAuth, (req: AuthenticatedRequest, res) => {
+  if (req.user!.role !== 'DRIVER' && req.user!.role !== 'ADMIN') {
+    return res.status(403).json({ error: 'Only drivers can update vehicle documents' });
+  }
+
   const {
     category,
     make,
@@ -702,27 +763,56 @@ app.post('/api/driver/vehicle', AuthService.requireAuth, (req: AuthenticatedRequ
     cnicDocUrl
   } = req.body;
 
+  const validCategories: VehicleCategory[] = ['CAR', 'MOTORCYCLE', 'RICKSHAW'];
+  if (category && !validCategories.includes(category)) {
+    return res.status(400).json({ error: 'Invalid vehicle category. Allowed: CAR, MOTORCYCLE, RICKSHAW' });
+  }
+
+  if (plateNumber !== undefined && (typeof plateNumber !== 'string' || plateNumber.trim().length === 0 || plateNumber.length > 25)) {
+    return res.status(400).json({ error: 'Plate number must be between 1 and 25 characters' });
+  }
+
+  if (cnicNumber !== undefined && (typeof cnicNumber !== 'string' || cnicNumber.length > 30)) {
+    return res.status(400).json({ error: 'CNIC number must be under 30 characters' });
+  }
+
+  const MAX_PAYLOAD_SIZE = 15 * 1024 * 1024; // 15MB limit
+  if (profilePhotoUrl && typeof profilePhotoUrl === 'string' && profilePhotoUrl.length > MAX_PAYLOAD_SIZE) {
+    return res.status(400).json({ error: 'Profile photo exceeds maximum permitted size' });
+  }
+  if (vehicleDocUrl && typeof vehicleDocUrl === 'string' && vehicleDocUrl.length > MAX_PAYLOAD_SIZE) {
+    return res.status(400).json({ error: 'Vehicle document exceeds maximum permitted size' });
+  }
+  if (cnicDocUrl && typeof cnicDocUrl === 'string' && cnicDocUrl.length > MAX_PAYLOAD_SIZE) {
+    return res.status(400).json({ error: 'CNIC document exceeds maximum permitted size' });
+  }
+
   const profile = db.getDriverProfile(req.user!.userId);
   if (!profile) return res.status(404).json({ error: 'Driver profile not found' });
 
   const existingVehicle = profile.vehicle || db.getVehicleByDriver(req.user!.userId);
 
+  const cleanMake = typeof make === 'string' ? make.trim().slice(0, 50) : (existingVehicle?.make || 'Honda');
+  const cleanModel = typeof model === 'string' ? model.trim().slice(0, 50) : (existingVehicle?.model || 'CD 70');
+  const cleanColor = typeof color === 'string' ? color.trim().slice(0, 30) : (existingVehicle?.color || 'Black');
+  const cleanPlate = typeof plateNumber === 'string' ? plateNumber.trim().toUpperCase().slice(0, 20) : (existingVehicle?.plateNumber || 'KHI-0000');
+
   const vehicle = {
     id: existingVehicle?.id || ('veh-' + uuidv4().substring(0, 8)),
     driverId: req.user!.userId,
     category: (category || existingVehicle?.category || 'MOTORCYCLE') as VehicleCategory,
-    make: make || existingVehicle?.make || 'Honda',
-    model: model || existingVehicle?.model || 'CD 70',
+    make: cleanMake,
+    model: cleanModel,
     year: Number(year) || existingVehicle?.year || 2022,
-    plateNumber: plateNumber || existingVehicle?.plateNumber || 'KHI-0000',
-    color: color || existingVehicle?.color || 'Black'
+    plateNumber: cleanPlate,
+    color: cleanColor
   };
 
   db.saveVehicle(vehicle);
   profile.vehicle = vehicle;
 
-  if (cnicNumber !== undefined) profile.cnicNumber = cnicNumber;
-  if (licenseNumber !== undefined) profile.licenseNumber = licenseNumber;
+  if (cnicNumber !== undefined) profile.cnicNumber = typeof cnicNumber === 'string' ? cnicNumber.trim().slice(0, 25) : '';
+  if (licenseNumber !== undefined) profile.licenseNumber = typeof licenseNumber === 'string' ? licenseNumber.trim().slice(0, 25) : '';
   if (profilePhotoUrl !== undefined) profile.profilePhotoUrl = profilePhotoUrl;
   if (vehicleDocUrl !== undefined) profile.vehicleDocUrl = vehicleDocUrl;
   if (cnicDocUrl !== undefined) profile.cnicDocUrl = cnicDocUrl;
