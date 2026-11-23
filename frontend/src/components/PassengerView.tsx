@@ -310,6 +310,27 @@ export const PassengerView: React.FC<PassengerViewProps> = ({
     }
   };
 
+  // Passenger bumps fare to attract captains faster (inDrive style)
+  const handleBumpFare = async (bumpAmountPkr: number) => {
+    if (!activeRide) return;
+    try {
+      const res = await fetch(`${apiBaseUrl}/api/rides/${activeRide.id}/bump-fare`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${getAuthToken()}`
+        },
+        body: JSON.stringify({ bumpAmountPkr })
+      });
+      const data = await res.json();
+      if (data.ride) {
+        setActiveRide(data.ride);
+      }
+    } catch (err) {
+      console.error('Bump fare error:', err);
+    }
+  };
+
   // Submit Rating & Review
   const handleRatingSubmit = async (rating: number, comment: string) => {
     if (!activeRide) return;
@@ -403,6 +424,7 @@ export const PassengerView: React.FC<PassengerViewProps> = ({
               detectedCity={detectedCity}
               onOpenChat={() => setShowChatModal(true)}
               onOpenSos={() => setShowSosModal(true)}
+              onBumpFare={handleBumpFare}
               t={t}
             />
 

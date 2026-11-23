@@ -306,15 +306,17 @@ app.post('/api/admin/zones/:zoneId/toggle', AuthService.requireAuth, AuthService
 
 app.post('/api/rides/calculate-fare', (req, res) => {
   const { category, pickup, destination, zoneId } = req.body as {
-    category: VehicleCategory;
+    category?: VehicleCategory;
     pickup: LocationCoordinates;
     destination: LocationCoordinates;
     zoneId?: string;
   };
 
-  if (!category || !pickup || !destination) {
-    return res.status(400).json({ error: 'category, pickup, and destination are required' });
+  if (!pickup || !destination) {
+    return res.status(400).json({ error: 'pickup and destination are required' });
   }
+
+  const selectedCategory: VehicleCategory = category || 'CAR';
 
   const distanceKm = PricingService.calculateDistanceKm(
     pickup.lat,
@@ -328,10 +330,14 @@ app.post('/api/rides/calculate-fare', (req, res) => {
   const activeZoneId = zoneId || matchedZone?.id || 'zone-karachi-jauhar';
 
   const suggestedFarePaisa = PricingService.calculateSuggestedFarePaisa(
-    category,
+    selectedCategory,
     distanceKm,
     activeZoneId
   );
+
+  const carFarePaisa = PricingService.calculateSuggestedFarePaisa('CAR', distanceKm, activeZoneId);
+  const motoFarePaisa = PricingService.calculateSuggestedFarePaisa('MOTORCYCLE', distanceKm, activeZoneId);
+  const rickFarePaisa = PricingService.calculateSuggestedFarePaisa('RICKSHAW', distanceKm, activeZoneId);
 
   const estimatedMinutes = Math.max(Math.round(distanceKm * 3.5), 5);
 
@@ -340,8 +346,13 @@ app.post('/api/rides/calculate-fare', (req, res) => {
     estimatedMinutes,
     suggestedFarePaisa,
     suggestedFarePkr: Math.round(suggestedFarePaisa / 100),
+    estimatesByCategory: {
+      CAR: Math.round(carFarePaisa / 100),
+      MOTORCYCLE: Math.round(motoFarePaisa / 100),
+      RICKSHAW: Math.round(rickFarePaisa / 100)
+    },
     currency: 'PKR',
-    category,
+    category: selectedCategory,
     detectedZone: matchedZone ? { id: matchedZone.id, cityName: matchedZone.cityName, zoneName: matchedZone.zoneName } : undefined
   });
 });
@@ -561,7 +572,7 @@ app.post('/api/rides/:id/offer', AuthService.requireAuth, (req: AuthenticatedReq
     etaMinutes: etaMinutes || 4,
     status: 'PENDING',
     createdAt: new Date().toISOString(),
-    expiresAt: new Date(Date.now() + 5 * 60 * 1000).toISOString() // 5 min expiry
+    expiresAt: new Date(Date.now() + 25 * 1000).toISOString() // 25s inDrive-style live bid expiry
   };
 
   db.saveOffer(offer);
@@ -573,6 +584,23 @@ app.post('/api/rides/:id/offer', AuthService.requireAuth, (req: AuthenticatedReq
   });
 
   return res.status(201).json({ offer });
+});
+
+app.post('/api/rides/:id/bump-fare', AuthService.requireAuth, (req: AuthenticatedRequest, res) => {
+  const rideId = req.params.id as string;
+  const { bumpAmountPkr } = req.body;
+  const ride = db.getRide(rideId);
+  if (!ride) return res.status(404).json({ error: 'Ride not found' });
+  if (ride.passengerId !== req.user!.userId) {
+    return res.status(403).json({ error: 'Only requesting passenger can raise fare' });
+  }
+  const addPaisa = Math.round((Number(bumpAmountPkr) || 25) * 100);
+  ride.proposedFarePaisa += addPaisa;
+  ride.updatedAt = new Date().toISOString();
+  db.saveRide(ride);
+
+  io.emit(SOCKET_EVENTS.NEW_RIDE_AVAILABLE, ride);
+  return res.json({ success: true, ride });
 });
 
 app.post('/api/rides/:id/select-offer', AuthService.requireAuth, (req: AuthenticatedRequest, res) => {
@@ -588,6 +616,11 @@ app.post('/api/rides/:id/select-offer', AuthService.requireAuth, (req: Authentic
 
   const offer = db.getOffer(offerId);
   if (!offer) return res.status(404).json({ error: 'Offer not found' });
+
+  // InDrive rule: Reject expired offers
+  if (offer.expiresAt && new Date(offer.expiresAt).getTime() < Date.now()) {
+    return res.status(410).json({ error: 'This driver offer has expired. Please select a live offer.' });
+  }
 
   // Atomic Assignment: Locks winning driver, atomically rejects all other offers
   const assigned = db.selectOfferAtomically(rideId, offerId, offer.driverId);

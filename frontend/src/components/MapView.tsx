@@ -286,12 +286,6 @@ export const MapView: React.FC<MapViewProps> = ({
     <div className="relative w-full h-full min-h-[300px] overflow-hidden rounded-2xl border border-slate-200 shadow-inner">
       <div ref={mapContainerRef} className="w-full h-full z-0" />
 
-      {/* Dynamic Zone / GPS Pill Indicator */}
-      <div className="absolute top-3 left-3 z-[400] bg-white/95 backdrop-blur-md px-3 py-1.5 rounded-full shadow-md border border-slate-200 flex items-center space-x-2 text-xs font-semibold text-slate-700">
-        <span className="w-2.5 h-2.5 rounded-full bg-pakgreen-500 animate-pulse"></span>
-        <span>{zoneName ? `Zone: ${zoneName}` : activeCity ? `${activeCity} Zone` : 'GPS Live Routing'}</span>
-      </div>
-
       {/* Floating Road Route Stats Banner (When Route is loaded) */}
       {routeInfo && (
         <div className="absolute top-3 right-3 z-[400] bg-charcoal-900/90 text-white backdrop-blur-md px-3 py-1.5 rounded-xl shadow-lg border border-slate-700 flex items-center space-x-3 text-xs">
