@@ -136,20 +136,13 @@ export const PassengerView: React.FC<PassengerViewProps> = ({
     );
   };
 
-  const handleSelectCity = (cityId: string) => {
-    const city = OPERATING_CITIES.find((c) => c.id === cityId);
-    if (!city) return;
-    setDetectedCity(city.name);
-    const hubs = GeocodingService.getPopularHubs(city.name);
-    if (hubs.length >= 2) {
-      setPickup(hubs[0]);
-      setDestination(hubs[1]);
-      setRecentChips(hubs);
-    } else if (hubs.length === 1) {
-      setPickup(hubs[0]);
-      setRecentChips(hubs);
+  // Automatically derive operating city whenever passenger locates or selects a pickup location
+  useEffect(() => {
+    if (pickup?.lat && pickup?.lng) {
+      const nearest = getNearestOperatingCity(pickup.lat, pickup.lng);
+      setDetectedCity(nearest.name);
     }
-  };
+  }, [pickup?.lat, pickup?.lng]);
 
   // Fetch estimated fare whenever pickup, dest, or category changes
   useEffect(() => {
@@ -398,7 +391,6 @@ export const PassengerView: React.FC<PassengerViewProps> = ({
             loading={loading}
             t={t}
             detectedCity={detectedCity}
-            onSelectCity={handleSelectCity}
           />
         )}
 

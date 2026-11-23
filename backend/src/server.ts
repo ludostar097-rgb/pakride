@@ -12,6 +12,7 @@ import { seedDemoData } from './seed.js';
 import {
   SOCKET_EVENTS,
   OPERATING_CITIES,
+  getNearestOperatingCity,
   KARACHI_LANDMARKS,
   ISLAMABAD_LANDMARKS,
   LAHORE_LANDMARKS,
@@ -985,6 +986,17 @@ io.on('connection', (socket) => {
     if (profile && profile.isOnline) {
       profile.currentLat = data.lat;
       profile.currentLng = data.lng;
+
+      // Automatically sync active operating city & zone from live GPS coordinates
+      const matchedCity = getNearestOperatingCity(data.lat, data.lng);
+      if (matchedCity) {
+        profile.activeCityId = matchedCity.id;
+      }
+      const matchedZone = PricingService.findMatchingZone(data.lat, data.lng);
+      if (matchedZone) {
+        profile.activeZoneId = matchedZone.id;
+      }
+
       db.saveDriverProfile(profile);
 
       // Broadcast position to passenger tracking this driver

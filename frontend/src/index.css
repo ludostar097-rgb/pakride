@@ -2,6 +2,37 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer components {
+  /* Reusable PakRide Component System (Eliminates multi-line Tailwind class bloat) */
+  .pak-card {
+    @apply bg-white rounded-2xl border border-slate-200 shadow-sm p-5;
+  }
+  .pak-card-compact {
+    @apply bg-white rounded-xl border border-slate-200 shadow-sm p-4;
+  }
+  .pak-btn-primary {
+    @apply px-4 py-2 bg-pakgreen-600 hover:bg-pakgreen-700 text-white rounded-xl text-xs font-bold transition shadow-sm flex items-center justify-center space-x-1.5;
+  }
+  .pak-btn-secondary {
+    @apply px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold transition flex items-center space-x-1.5;
+  }
+  .pak-badge-success {
+    @apply px-2.5 py-1 bg-emerald-100 text-emerald-800 rounded-full text-xs font-bold inline-flex items-center space-x-1;
+  }
+  .pak-badge-warning {
+    @apply px-2.5 py-1 bg-amber-100 text-amber-800 rounded-full text-xs font-bold inline-flex items-center space-x-1;
+  }
+  .pak-badge-info {
+    @apply px-2.5 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-bold inline-flex items-center space-x-1;
+  }
+  .pak-badge-neutral {
+    @apply px-2.5 py-1 bg-slate-100 text-slate-700 rounded-full text-xs font-bold inline-flex items-center space-x-1;
+  }
+  .pak-input {
+    @apply w-full px-3 py-2 border border-slate-300 rounded-xl outline-none text-xs focus:border-pakgreen-500 transition;
+  }
+}
+
 /* Leaflet Container Styling */
 .leaflet-container {
   width: 100%;

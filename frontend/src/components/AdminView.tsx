@@ -1,25 +1,23 @@
 import React, { useState, useEffect, useRef } from 'react';
 import L from 'leaflet';
 import {
-  ShieldCheck,
   Users,
   Car,
-  FileText,
   DollarSign,
-  AlertCircle,
-  CheckCircle,
-  XCircle,
-  Settings,
-  RefreshCw,
-  Radar,
   Radio,
-  MapPin,
-  Plus,
-  Compass,
-  Power
+  Compass
 } from 'lucide-react';
 import { DriverProfile, RideRequest, PaymentLedgerEntry, CityZone } from '../shared/types';
 import { PILOT_ZONES, OPERATING_CITIES } from '../shared/constants';
+import { AdminHeader } from './admin/AdminHeader';
+import { AdminMetrics } from './admin/AdminMetrics';
+import { AdminRadarTab } from './admin/AdminRadarTab';
+import { AdminZonesTab } from './admin/AdminZonesTab';
+import { AdminDriversTab } from './admin/AdminDriversTab';
+import { AdminRidesTab } from './admin/AdminRidesTab';
+import { AdminLedgerTab } from './admin/AdminLedgerTab';
+import { AddZoneModal } from './admin/AddZoneModal';
+import { DocumentPreviewModal } from './admin/DocumentPreviewModal';
 
 interface AdminViewProps {
   currentUser: { id: string; fullName: string; phone: string; role: string };
@@ -43,16 +41,7 @@ export const AdminView: React.FC<AdminViewProps> = ({
   const [selectedCityId, setSelectedCityId] = useState<string>('ALL');
   const [loading, setLoading] = useState(false);
   const [previewDocModal, setPreviewDocModal] = useState<{ title: string; url: string } | null>(null);
-
-  // New Zone Form state
   const [showAddZoneModal, setShowAddZoneModal] = useState(false);
-  const [newCityName, setNewCityName] = useState('Multan');
-  const [newZoneName, setNewZoneName] = useState('Cantt & Bosan Road');
-  const [newCenterLat, setNewCenterLat] = useState('30.1984');
-  const [newCenterLng, setNewCenterLng] = useState('71.4687');
-  const [newRadiusKm, setNewRadiusKm] = useState('9.0');
-  const [newBaseFareCar, setNewBaseFareCar] = useState('140');
-  const [newPerKmCar, setNewPerKmCar] = useState('35');
 
   // Map refs for Radar
   const radarMapContainerRef = useRef<HTMLDivElement>(null);
@@ -81,7 +70,6 @@ export const AdminView: React.FC<AdminViewProps> = ({
     setLoading(true);
     try {
       const headers = { Authorization: `Bearer ${getAuthToken()}` };
-
       const [dRes, rRes, lRes, sRes, zRes] = await Promise.all([
         fetch(`${apiBaseUrl}/api/admin/drivers`, { headers }),
         fetch(`${apiBaseUrl}/api/admin/rides`, { headers }),
@@ -119,11 +107,11 @@ export const AdminView: React.FC<AdminViewProps> = ({
     if (activeTab !== 'radar' || !radarMapContainerRef.current) return;
 
     if (!radarMapRef.current) {
-      const jauhar = [24.918, 67.135] as [number, number];
+      const defaultCenter = [OPERATING_CITIES[0].centerLat, OPERATING_CITIES[0].centerLng] as [number, number];
       const map = L.map(radarMapContainerRef.current, {
         zoomControl: true,
         attributionControl: false
-      }).setView(jauhar, 14);
+      }).setView(defaultCenter, OPERATING_CITIES[0].defaultZoom);
 
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         maxZoom: 19
@@ -134,7 +122,6 @@ export const AdminView: React.FC<AdminViewProps> = ({
 
     const map = radarMapRef.current;
     if (map) {
-      // Pan radar map dynamically based on canonical OPERATING_CITIES registry
       const targetCity = OPERATING_CITIES.find((c) => c.id === selectedCityId) || OPERATING_CITIES[0];
       map.flyTo([targetCity.centerLat, targetCity.centerLng], targetCity.defaultZoom);
 
@@ -144,7 +131,8 @@ export const AdminView: React.FC<AdminViewProps> = ({
 
       displayedDrivers.forEach((d) => {
         if (d.currentLat && d.currentLng) {
-          const iconChar = d.vehicle?.category === 'MOTORCYCLE' ? '🏍️' : d.vehicle?.category === 'RICKSHAW' ? '🛺' : '🚗';
+          const iconChar =
+            d.vehicle?.category === 'MOTORCYCLE' ? '🏍️' : d.vehicle?.category === 'RICKSHAW' ? '🛺' : '🚗';
           const iconColor = d.isOnline ? '#00a859' : '#94a3b8';
           const customIcon = L.divIcon({
             className: 'admin-radar-pin',
@@ -154,7 +142,11 @@ export const AdminView: React.FC<AdminViewProps> = ({
           });
 
           const marker = L.marker([d.currentLat, d.currentLng], { icon: customIcon }).addTo(map);
-          marker.bindPopup(`<b>${d.fullName}</b><br>${d.vehicle?.make || 'Vehicle'} (${d.vehicle?.category || 'CAR'})<br>${d.isOnline ? '🟢 Online' : '⚪ Offline'}`);
+          marker.bindPopup(
+            `<b>${d.fullName}</b><br>${d.vehicle?.make || 'Vehicle'} (${d.vehicle?.category || 'CAR'})<br>${
+              d.isOnline ? '🟢 Online' : '⚪ Offline'
+            }`
+          );
           driverMarkersMapRef.current[d.userId] = marker;
         }
       });
@@ -199,129 +191,57 @@ export const AdminView: React.FC<AdminViewProps> = ({
   };
 
   // Create New City/Zone
-  const handleCreateZone = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      const res = await fetch(`${apiBaseUrl}/api/admin/zones`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${getAuthToken()}`
-        },
-        body: JSON.stringify({
-          cityName: newCityName,
-          zoneName: newZoneName,
-          centerLat: parseFloat(newCenterLat),
-          centerLng: parseFloat(newCenterLng),
-          radiusKm: parseFloat(newRadiusKm),
-          baseFareCarPaisa: Math.round(parseFloat(newBaseFareCar) * 100),
-          perKmCarPaisa: Math.round(parseFloat(newPerKmCar) * 100)
-        })
-      });
-      if (res.ok) {
-        setShowAddZoneModal(false);
-        fetchAdminData();
-      }
-    } catch (err) {
-      console.error('Create zone error:', err);
+  const handleCreateZone = async (zoneData: {
+    cityName: string;
+    zoneName: string;
+    centerLat: number;
+    centerLng: number;
+    radiusKm: number;
+    baseFareCarPaisa: number;
+    perKmCarPaisa: number;
+  }) => {
+    const res = await fetch(`${apiBaseUrl}/api/admin/zones`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${getAuthToken()}`
+      },
+      body: JSON.stringify(zoneData)
+    });
+    if (res.ok) {
+      fetchAdminData();
     }
   };
 
   return (
     <div className="max-w-6xl mx-auto space-y-6 pb-12">
-      {/* 1. Dashboard Header */}
-      <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div>
-          <h2 className="text-xl font-bold text-charcoal-900 flex items-center space-x-2">
-            <ShieldCheck className="w-6 h-6 text-pakgreen-600" />
-            <span>{t.adminDashboard}</span>
-          </h2>
-          <p className="text-xs text-slate-500 mt-1">
-            Multi-City Control Hub • Karachi, Islamabad, Lahore, Multan & D.G. Khan
-          </p>
-        </div>
-
-        <div className="flex items-center space-x-3 flex-wrap gap-2">
-          {/* Admin Operational City Dropdown Selector */}
-          <div className="flex items-center space-x-2 bg-slate-50 border-2 border-slate-300 px-3 py-1.5 rounded-xl shadow-2xs">
-            <MapPin className="w-4 h-4 text-pakgreen-600 flex-shrink-0" />
-            <span className="text-xs font-bold text-slate-700">Filter City:</span>
-            <select
-              value={selectedCityId}
-              onChange={(e) => setSelectedCityId(e.target.value)}
-              className="bg-transparent text-xs font-extrabold text-charcoal-900 outline-none cursor-pointer"
-            >
-              <option value="ALL">All Cities (Pakistan)</option>
-              {OPERATING_CITIES.map((city) => (
-                <option key={city.id} value={city.id}>
-                  {city.name} ({city.province})
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <button
-            type="button"
-            onClick={fetchAdminData}
-            className="flex items-center space-x-1.5 px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold transition"
-          >
-            <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
-            <span>Refresh Feed</span>
-          </button>
-        </div>
-      </div>
+      {/* 1. Header with City Selector & Refresh */}
+      <AdminHeader
+        selectedCityId={selectedCityId}
+        onCityChange={setSelectedCityId}
+        onRefresh={fetchAdminData}
+        loading={loading}
+        t={t}
+      />
 
       {/* 2. Top Metric Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-          <div className="text-xs text-slate-400 font-semibold uppercase">Total Drivers</div>
-          <div className="text-2xl font-bold text-charcoal-900 mt-1">{displayedDrivers.length}</div>
-          <div className="text-[11px] text-green-600 mt-1 font-semibold">
-            {displayedDrivers.filter((d) => d.verificationStatus === 'APPROVED').length} Approved
-          </div>
-        </div>
-
-        <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-          <div className="text-xs text-slate-400 font-semibold uppercase">Total Rides</div>
-          <div className="text-2xl font-bold text-charcoal-900 mt-1">{displayedRides.length}</div>
-          <div className="text-[11px] text-slate-500 mt-1">
-            {displayedRides.filter((r) => r.status === 'COMPLETED').length} Completed
-          </div>
-        </div>
-
-        <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-          <div className="text-xs text-slate-400 font-semibold uppercase">Gross GMV (PKR)</div>
-          <div className="text-2xl font-bold text-pakgreen-600 mt-1">
-            PKR {displayedLedger.reduce((acc, l) => acc + Math.round(l.grossAmountPaisa / 100), 0)}
-          </div>
-          <div className="text-[11px] text-slate-500 mt-1">
-            {selectedCityId === 'ALL'
-              ? 'All Active Cities'
-              : `${OPERATING_CITIES.find((c) => c.id === selectedCityId)?.name || selectedCityId} Area`}
-          </div>
-        </div>
-
-        <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-          <div className="text-xs text-slate-400 font-semibold uppercase">Active Zones</div>
-          <div className="text-2xl font-bold text-slate-700 mt-1">
-            {displayedZones.filter((z) => z.isActive).length} / {displayedZones.length}
-          </div>
-          <div className="text-[11px] text-purple-600 mt-1 font-semibold">
-            {selectedCityId === 'ALL'
-              ? 'Nationwide'
-              : `${OPERATING_CITIES.find((c) => c.id === selectedCityId)?.name || selectedCityId} Region`}
-          </div>
-        </div>
-      </div>
+      <AdminMetrics
+        totalDriversCount={displayedDrivers.length}
+        approvedDriversCount={displayedDrivers.filter((d) => d.verificationStatus === 'APPROVED').length}
+        totalRidesCount={displayedRides.length}
+        completedRidesCount={displayedRides.filter((r) => r.status === 'COMPLETED').length}
+        grossGmvPkr={displayedLedger.reduce((acc, l) => acc + Math.round(l.grossAmountPaisa / 100), 0)}
+        activeZonesCount={displayedZones.filter((z) => z.isActive).length}
+        totalZonesCount={displayedZones.length}
+        selectedCityId={selectedCityId}
+      />
 
       {/* 3. Navigation Tabs */}
       <div className="flex space-x-2 border-b border-slate-200 pb-2 overflow-x-auto">
         <button
           onClick={() => setActiveTab('radar')}
           className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center space-x-2 ${
-            activeTab === 'radar'
-              ? 'bg-charcoal-900 text-white'
-              : 'bg-white text-slate-600 hover:bg-slate-100'
+            activeTab === 'radar' ? 'bg-charcoal-900 text-white' : 'bg-white text-slate-600 hover:bg-slate-100'
           }`}
         >
           <Radio className="w-4 h-4 text-pakgreen-400 animate-pulse" />
@@ -331,9 +251,7 @@ export const AdminView: React.FC<AdminViewProps> = ({
         <button
           onClick={() => setActiveTab('zones')}
           className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center space-x-2 ${
-            activeTab === 'zones'
-              ? 'bg-charcoal-900 text-white'
-              : 'bg-white text-slate-600 hover:bg-slate-100'
+            activeTab === 'zones' ? 'bg-charcoal-900 text-white' : 'bg-white text-slate-600 hover:bg-slate-100'
           }`}
         >
           <Compass className="w-4 h-4 text-emerald-400" />
@@ -343,9 +261,7 @@ export const AdminView: React.FC<AdminViewProps> = ({
         <button
           onClick={() => setActiveTab('drivers')}
           className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center space-x-2 ${
-            activeTab === 'drivers'
-              ? 'bg-charcoal-900 text-white'
-              : 'bg-white text-slate-600 hover:bg-slate-100'
+            activeTab === 'drivers' ? 'bg-charcoal-900 text-white' : 'bg-white text-slate-600 hover:bg-slate-100'
           }`}
         >
           <Users className="w-4 h-4" />
@@ -355,9 +271,7 @@ export const AdminView: React.FC<AdminViewProps> = ({
         <button
           onClick={() => setActiveTab('rides')}
           className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center space-x-2 ${
-            activeTab === 'rides'
-              ? 'bg-charcoal-900 text-white'
-              : 'bg-white text-slate-600 hover:bg-slate-100'
+            activeTab === 'rides' ? 'bg-charcoal-900 text-white' : 'bg-white text-slate-600 hover:bg-slate-100'
           }`}
         >
           <Car className="w-4 h-4" />
@@ -367,9 +281,7 @@ export const AdminView: React.FC<AdminViewProps> = ({
         <button
           onClick={() => setActiveTab('ledger')}
           className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center space-x-2 ${
-            activeTab === 'ledger'
-              ? 'bg-charcoal-900 text-white'
-              : 'bg-white text-slate-600 hover:bg-slate-100'
+            activeTab === 'ledger' ? 'bg-charcoal-900 text-white' : 'bg-white text-slate-600 hover:bg-slate-100'
           }`}
         >
           <DollarSign className="w-4 h-4" />
@@ -377,547 +289,53 @@ export const AdminView: React.FC<AdminViewProps> = ({
         </button>
       </div>
 
-      {/* 4. Tab 0: City Radar Live Map View */}
+      {/* 4. Tab Views */}
       {activeTab === 'radar' && (
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 space-y-3">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
-            <h3 className="font-bold text-sm text-charcoal-900 flex items-center space-x-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-pakgreen-500 animate-ping"></span>
-              <span>{t.radarTitle}</span>
-            </h3>
-
-            {/* City Radar Switcher */}
-            <div className="flex items-center space-x-1.5 bg-slate-100 p-1 rounded-xl flex-wrap gap-1">
-              <button
-                type="button"
-                onClick={() => setSelectedCityId('ALL')}
-                className={`px-2.5 py-1 text-xs font-bold rounded-lg transition ${
-                  selectedCityId === 'ALL' ? 'bg-white text-pakgreen-700 shadow-xs' : 'text-slate-500 hover:text-slate-700'
-                }`}
-              >
-                All Pakistan
-              </button>
-              {OPERATING_CITIES.map((c) => (
-                <button
-                  key={c.id}
-                  type="button"
-                  onClick={() => setSelectedCityId(c.id)}
-                  className={`px-2.5 py-1 text-xs font-bold rounded-lg transition ${
-                    selectedCityId === c.id ? 'bg-white text-pakgreen-700 shadow-xs' : 'text-slate-500 hover:text-slate-700'
-                  }`}
-                >
-                  {c.name.split(' ')[0]}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="w-full h-[480px] rounded-xl overflow-hidden border border-slate-200 relative">
-            <div ref={radarMapContainerRef} className="w-full h-full" />
-            <div className="absolute bottom-3 left-3 z-[400] bg-white/95 backdrop-blur-md p-2.5 rounded-xl shadow-md border border-slate-200 text-[11px] space-y-1">
-              <div className="font-bold text-slate-800">Fleet Indicators:</div>
-              <div className="flex items-center space-x-2">
-                <span>🚗 Car</span>
-                <span>🏍️ Bike</span>
-                <span>🛺 Rickshaw</span>
-              </div>
-              <div className="text-[10px] text-slate-500">🟢 Online • ⚪ Offline</div>
-            </div>
-          </div>
-        </div>
+        <AdminRadarTab
+          radarMapContainerRef={radarMapContainerRef}
+          selectedCityId={selectedCityId}
+          onSelectCityId={setSelectedCityId}
+          radarTitle={t.radarTitle}
+        />
       )}
 
-      {/* 5. Tab: Cities & Zones Management */}
       {activeTab === 'zones' && (
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden space-y-4 p-5">
-          <div className="flex justify-between items-center">
-            <div>
-              <h3 className="font-bold text-base text-charcoal-900">Operational Cities & Pilot Zones</h3>
-              <p className="text-xs text-slate-500">
-                Blueprint Rule: Activate one compact, operationally manageable zone at a time.
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={() => setShowAddZoneModal(true)}
-              className="flex items-center space-x-1 px-3.5 py-2 bg-pakgreen-500 hover:bg-pakgreen-600 text-white rounded-xl text-xs font-bold shadow-xs transition"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              <span>Add Zone</span>
-            </button>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {displayedZones.map((zone) => (
-              <div
-                key={zone.id}
-                className={`p-4 rounded-xl border-2 transition ${
-                  zone.isActive ? 'border-emerald-300 bg-emerald-50/20' : 'border-slate-200 bg-slate-50/50'
-                }`}
-              >
-                <div className="flex justify-between items-start">
-                  <div>
-                    <div className="flex items-center space-x-2">
-                      <span className="font-bold text-sm text-charcoal-900">{zone.cityName}</span>
-                      <span className="text-xs text-slate-500">• {zone.zoneName}</span>
-                    </div>
-                    <div className="text-[11px] text-slate-400 mt-0.5">
-                      Center: ({zone.centerLat}, {zone.centerLng}) • Radius: {zone.radiusKm} km
-                    </div>
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={() => handleToggleZone(zone.id)}
-                    className={`px-3 py-1 rounded-full text-xs font-bold transition flex items-center space-x-1 ${
-                      zone.isActive
-                        ? 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200'
-                        : 'bg-slate-200 text-slate-600 hover:bg-slate-300'
-                    }`}
-                  >
-                    <Power className="w-3 h-3" />
-                    <span>{zone.isActive ? 'Active' : 'Inactive'}</span>
-                  </button>
-                </div>
-
-                <div className="mt-3 pt-3 border-t border-slate-200/60 grid grid-cols-3 gap-2 text-center text-xs">
-                  <div className="bg-white p-2 rounded-lg border border-slate-200">
-                    <span className="text-[10px] text-slate-400 block">Car Base / Km</span>
-                    <span className="font-bold text-slate-700">
-                      PKR {Math.round(zone.baseFareCarPaisa / 100)} / {Math.round(zone.perKmCarPaisa / 100)}
-                    </span>
-                  </div>
-                  <div className="bg-white p-2 rounded-lg border border-slate-200">
-                    <span className="text-[10px] text-slate-400 block">Bike Base / Km</span>
-                    <span className="font-bold text-slate-700">
-                      PKR {Math.round(zone.baseFareMotoPaisa / 100)} / {Math.round(zone.perKmMotoPaisa / 100)}
-                    </span>
-                  </div>
-                  <div className="bg-white p-2 rounded-lg border border-slate-200">
-                    <span className="text-[10px] text-slate-400 block">Rickshaw Base / Km</span>
-                    <span className="font-bold text-slate-700">
-                      PKR {Math.round(zone.baseFareRickshawPaisa / 100)} / {Math.round(zone.perKmRickshawPaisa / 100)}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
+        <AdminZonesTab
+          zones={displayedZones}
+          onToggleZone={handleToggleZone}
+          onOpenAddModal={() => setShowAddZoneModal(true)}
+        />
       )}
 
-      {/* 6. Tab 1: Driver Verification Queue */}
       {activeTab === 'drivers' && (
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-          <div className="p-4 border-b border-slate-200 bg-slate-50 font-bold text-sm text-charcoal-900">
-            Registered Drivers & Document Verification
-          </div>
-
-          <div className="divide-y divide-slate-200">
-            {displayedDrivers.map((driver) => {
-              const iconChar = driver.vehicle?.category === 'MOTORCYCLE' ? '🏍️' : driver.vehicle?.category === 'RICKSHAW' ? '🛺' : '🚗';
-              return (
-                <div key={driver.userId} className="p-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 hover:bg-slate-50/50 transition">
-                  <div className="flex items-start space-x-3">
-                    {driver.profilePhotoUrl ? (
-                      <img
-                        src={driver.profilePhotoUrl}
-                        alt={driver.fullName}
-                        onClick={() => setPreviewDocModal({ title: `Captain Photo - ${driver.fullName}`, url: driver.profilePhotoUrl })}
-                        className="w-12 h-12 rounded-full object-cover border-2 border-pakgreen-500 cursor-pointer hover:opacity-90 transition shadow-xs flex-shrink-0"
-                      />
-                    ) : (
-                      <div className="w-12 h-12 rounded-full bg-slate-100 border border-slate-300 flex items-center justify-center font-bold text-slate-700 text-sm flex-shrink-0">
-                        {driver.fullName.charAt(0)}
-                      </div>
-                    )}
-
-                    <div>
-                      <div className="flex items-center space-x-2 flex-wrap gap-y-1">
-                        <span className="font-bold text-sm text-charcoal-900">{driver.fullName}</span>
-                        <span className="text-xs text-slate-500">({driver.phone})</span>
-                        <span
-                          className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                            driver.verificationStatus === 'APPROVED'
-                              ? 'bg-green-100 text-green-800'
-                              : driver.verificationStatus === 'UNDER_REVIEW'
-                              ? 'bg-amber-100 text-amber-800'
-                              : driver.verificationStatus === 'PENDING_DOCUMENTS'
-                              ? 'bg-blue-100 text-blue-800'
-                              : 'bg-red-100 text-red-800'
-                          }`}
-                        >
-                          {driver.verificationStatus}
-                        </span>
-                        {driver.isOnline && (
-                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
-                            🟢 Online
-                          </span>
-                        )}
-                      </div>
-
-                      <div className="text-xs text-slate-600 mt-1">
-                        <span className="font-semibold text-slate-800 mr-1">{iconChar} {driver.vehicle?.category || 'VEHICLE'}:</span>
-                        {driver.vehicle?.plateNumber ? (
-                          <span>
-                            {driver.vehicle.color} {driver.vehicle.make} {driver.vehicle.model} ({driver.vehicle.plateNumber})
-                          </span>
-                        ) : (
-                          <span className="text-amber-600 italic">No plate number registered yet</span>
-                        )}
-                      </div>
-
-                      <div className="text-[11px] text-slate-400 mt-0.5">
-                        CNIC: {driver.cnicNumber || 'Pending'} • DL: {driver.licenseNumber || 'Verified'}
-                      </div>
-
-                      {/* Submitted Documents Pills */}
-                      <div className="flex items-center space-x-2 mt-2">
-                        {driver.profilePhotoUrl && (
-                          <button
-                            type="button"
-                            onClick={() => setPreviewDocModal({ title: `Captain Photo: ${driver.fullName}`, url: driver.profilePhotoUrl })}
-                            className="text-[11px] px-2 py-0.5 bg-slate-100 hover:bg-pakgreen-50 hover:text-pakgreen-700 rounded border border-slate-200 font-semibold transition"
-                          >
-                            📷 Photo
-                          </button>
-                        )}
-                        {driver.vehicleDocUrl && (
-                          <button
-                            type="button"
-                            onClick={() => setPreviewDocModal({ title: `Vehicle Reg Copy: ${driver.fullName} (${driver.vehicle?.plateNumber})`, url: driver.vehicleDocUrl })}
-                            className="text-[11px] px-2 py-0.5 bg-slate-100 hover:bg-pakgreen-50 hover:text-pakgreen-700 rounded border border-slate-200 font-semibold transition"
-                          >
-                            📄 Reg Copy
-                          </button>
-                        )}
-                        {driver.cnicDocUrl && (
-                          <button
-                            type="button"
-                            onClick={() => setPreviewDocModal({ title: `CNIC Document: ${driver.fullName}`, url: driver.cnicDocUrl })}
-                            className="text-[11px] px-2 py-0.5 bg-slate-100 hover:bg-pakgreen-50 hover:text-pakgreen-700 rounded border border-slate-200 font-semibold transition"
-                          >
-                            🪪 CNIC Copy
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center space-x-2 w-full md:w-auto justify-end">
-                    {driver.verificationStatus !== 'APPROVED' ? (
-                      <button
-                        type="button"
-                        onClick={() => handleApproveDriver(driver.userId, 'APPROVED')}
-                        className="px-3.5 py-1.5 bg-pakgreen-500 hover:bg-pakgreen-600 text-white rounded-lg text-xs font-bold transition flex items-center space-x-1 shadow-xs"
-                      >
-                        <CheckCircle className="w-3.5 h-3.5" />
-                        <span>{t.approveDriver}</span>
-                      </button>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={() => handleApproveDriver(driver.userId, 'REJECTED')}
-                        className="px-3 py-1.5 border border-red-200 text-red-600 hover:bg-red-50 rounded-lg text-xs font-semibold transition flex items-center space-x-1"
-                      >
-                        <XCircle className="w-3.5 h-3.5" />
-                        <span>Suspend / Reject</span>
-                      </button>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
+        <AdminDriversTab
+          drivers={displayedDrivers}
+          onApproveDriver={handleApproveDriver}
+          onPreviewDoc={setPreviewDocModal}
+          approveText={t.approveDriver}
+        />
       )}
 
-      {/* 7. Tab 2: Dispatches & Ride Monitor */}
       {activeTab === 'rides' && (
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-          <div className="p-4 border-b border-slate-200 bg-slate-50 font-bold text-sm text-charcoal-900">
-            Real-Time Ride Requests & Status
-          </div>
-
-          <div className="divide-y divide-slate-200">
-            {displayedRides.length === 0 ? (
-              <div className="p-8 text-center text-slate-400 text-sm">No rides found for selected filter.</div>
-            ) : (
-              displayedRides.map((ride) => (
-                <div key={ride.id} className="p-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-2 hover:bg-slate-50/50 transition">
-                  <div>
-                    <div className="flex items-center space-x-2">
-                      <span className="font-bold text-xs text-charcoal-900">{ride.id}</span>
-                      <span className="text-xs bg-slate-100 text-slate-700 px-2 py-0.5 rounded font-semibold">
-                        {ride.category}
-                      </span>
-                      <span className="text-xs font-bold text-pakgreen-600">
-                        PKR {Math.round((ride.agreedFarePaisa || ride.proposedFarePaisa) / 100)}
-                      </span>
-                      {ride.verificationOtp && (
-                        <span className="text-[10px] bg-amber-100 text-amber-800 px-2 py-0.5 rounded font-mono font-bold">
-                          PIN: {ride.verificationOtp}
-                        </span>
-                      )}
-                    </div>
-                    <div className="text-xs text-slate-600 mt-1">
-                      Passenger: {ride.passengerName} • 🟢 {ride.pickup.address} $\rightarrow$ 🔴 {ride.destination.address}
-                    </div>
-                    {ride.pickupNotes && (
-                      <div className="text-[11px] text-amber-700 mt-0.5">
-                        📌 Gate Note: {ride.pickupNotes}
-                      </div>
-                    )}
-                    {ride.driverName && (
-                      <div className="text-[11px] text-slate-500 mt-0.5">
-                        Driver Assigned: {ride.driverName} ({ride.vehicleDetails})
-                      </div>
-                    )}
-                  </div>
-
-                  <div>
-                    <span className="text-xs font-bold px-2.5 py-1 bg-slate-100 text-slate-800 rounded-full">
-                      {ride.status}
-                    </span>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-        </div>
+        <AdminRidesTab rides={displayedRides} />
       )}
 
-      {/* 8. Tab 3: Financial Cash Ledger */}
       {activeTab === 'ledger' && (
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-          <div className="p-4 border-b border-slate-200 bg-slate-50 font-bold text-sm text-charcoal-900 flex justify-between items-center">
-            <span>Cash Reconciliation Ledger (Integer Paisa System)</span>
-            <span className="text-xs font-semibold text-pakgreen-700 bg-pakgreen-100 px-2.5 py-0.5 rounded-full">
-              Introductory 0% Commission
-            </span>
-          </div>
-
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
-              <thead className="bg-slate-50 text-slate-500 uppercase border-b border-slate-200">
-                <tr>
-                  <th className="p-3">Ledger ID</th>
-                  <th className="p-3">Ride ID</th>
-                  <th className="p-3">Gross (PKR)</th>
-                  <th className="p-3">Commission</th>
-                  <th className="p-3">Driver Net (PKR)</th>
-                  <th className="p-3">Method</th>
-                  <th className="p-3">Status</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-200">
-                {displayedLedger.length === 0 ? (
-                  <tr>
-                    <td colSpan={7} className="p-6 text-center text-slate-400">
-                      No payments recorded for selected filter. Complete a ride to see ledger transactions.
-                    </td>
-                  </tr>
-                ) : (
-                  displayedLedger.map((l) => (
-                    <tr key={l.id} className="hover:bg-slate-50">
-                      <td className="p-3 font-semibold text-slate-700">{l.id}</td>
-                      <td className="p-3 text-slate-500">{l.rideId}</td>
-                      <td className="p-3 font-bold text-charcoal-900">
-                        PKR {Math.round(l.grossAmountPaisa / 100)}
-                      </td>
-                      <td className="p-3 text-pakgreen-600 font-semibold">
-                        PKR {Math.round(l.platformCommissionPaisa / 100)} (0%)
-                      </td>
-                      <td className="p-3 font-bold text-pakgreen-700">
-                        PKR {Math.round(l.driverNetPaisa / 100)}
-                      </td>
-                      <td className="p-3 uppercase font-semibold text-slate-600">{l.method}</td>
-                      <td className="p-3">
-                        <span className="px-2 py-0.5 bg-green-100 text-green-800 rounded-full font-bold">
-                          {l.status}
-                        </span>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
+        <AdminLedgerTab ledger={displayedLedger} />
       )}
 
-      {/* Add Zone Modal */}
-      {showAddZoneModal && (
-        <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl">
-            <h3 className="text-lg font-bold text-charcoal-900 flex items-center space-x-2">
-              <Compass className="w-5 h-5 text-pakgreen-600" />
-              <span>Add Operational City / Zone</span>
-            </h3>
-
-            <form onSubmit={handleCreateZone} className="space-y-3 text-xs">
-              <div>
-                <label className="font-semibold text-slate-700 block mb-1">Select Preset City or Type Name</label>
-                <div className="flex flex-wrap gap-1.5 mb-2">
-                  {[
-                    { city: 'Multan', zone: 'Cantt & Bosan Road', lat: '30.1984', lng: '71.4687', rad: '9.0', base: '140', perKm: '35' },
-                    { city: 'D.G. Khan', zone: 'Pull Dat & Traffic Chowk', lat: '30.0489', lng: '70.6455', rad: '7.5', base: '120', perKm: '30' },
-                    { city: 'Karachi', zone: 'Gulistan-e-Jauhar', lat: '24.9180', lng: '67.1350', rad: '7.5', base: '150', perKm: '40' },
-                    { city: 'Islamabad', zone: 'Blue Area & F Sectors', lat: '33.6844', lng: '73.0479', rad: '8.5', base: '180', perKm: '45' },
-                    { city: 'Lahore', zone: 'Gulberg & Cantt', lat: '31.5204', lng: '74.3587', rad: '10.0', base: '160', perKm: '42' }
-                  ].map((preset) => (
-                    <button
-                      key={preset.city}
-                      type="button"
-                      onClick={() => {
-                        setNewCityName(preset.city);
-                        setNewZoneName(preset.zone);
-                        setNewCenterLat(preset.lat);
-                        setNewCenterLng(preset.lng);
-                        setNewRadiusKm(preset.rad);
-                        setNewBaseFareCar(preset.base);
-                        setNewPerKmCar(preset.perKm);
-                      }}
-                      className="px-2 py-0.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-md font-bold text-[11px] transition"
-                    >
-                      + {preset.city}
-                    </button>
-                  ))}
-                </div>
-                <input
-                  type="text"
-                  required
-                  value={newCityName}
-                  onChange={(e) => setNewCityName(e.target.value)}
-                  placeholder="e.g. Multan, D.G. Khan, Islamabad"
-                  className="w-full px-3 py-2 border border-slate-300 rounded-xl outline-none"
-                />
-              </div>
-
-              <div>
-                <label className="font-semibold text-slate-700 block mb-1">Zone Name</label>
-                <input
-                  type="text"
-                  required
-                  value={newZoneName}
-                  onChange={(e) => setNewZoneName(e.target.value)}
-                  placeholder="e.g. Blue Area & F Sectors"
-                  className="w-full px-3 py-2 border border-slate-300 rounded-xl outline-none"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <label className="font-semibold text-slate-700 block mb-1">Center Lat</label>
-                  <input
-                    type="number"
-                    step="0.0001"
-                    required
-                    value={newCenterLat}
-                    onChange={(e) => setNewCenterLat(e.target.value)}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-xl outline-none"
-                  />
-                </div>
-                <div>
-                  <label className="font-semibold text-slate-700 block mb-1">Center Lng</label>
-                  <input
-                    type="number"
-                    step="0.0001"
-                    required
-                    value={newCenterLng}
-                    onChange={(e) => setNewCenterLng(e.target.value)}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-xl outline-none"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-3 gap-2">
-                <div>
-                  <label className="font-semibold text-slate-700 block mb-1">Radius (Km)</label>
-                  <input
-                    type="number"
-                    step="0.5"
-                    required
-                    value={newRadiusKm}
-                    onChange={(e) => setNewRadiusKm(e.target.value)}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-xl outline-none"
-                  />
-                </div>
-                <div>
-                  <label className="font-semibold text-slate-700 block mb-1">Base Car (PKR)</label>
-                  <input
-                    type="number"
-                    required
-                    value={newBaseFareCar}
-                    onChange={(e) => setNewBaseFareCar(e.target.value)}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-xl outline-none"
-                  />
-                </div>
-                <div>
-                  <label className="font-semibold text-slate-700 block mb-1">Per Km (PKR)</label>
-                  <input
-                    type="number"
-                    required
-                    value={newPerKmCar}
-                    onChange={(e) => setNewPerKmCar(e.target.value)}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-xl outline-none"
-                  />
-                </div>
-              </div>
-
-              <div className="flex space-x-2 pt-2">
-                <button
-                  type="submit"
-                  className="flex-1 bg-pakgreen-500 hover:bg-pakgreen-600 text-white font-bold py-2.5 rounded-xl transition"
-                >
-                  Create & Activate Zone
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setShowAddZoneModal(false)}
-                  className="border border-slate-300 text-slate-600 px-4 py-2.5 rounded-xl font-semibold"
-                >
-                  Cancel
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+      {/* Add Zone Modal Form */}
+      <AddZoneModal
+        isOpen={showAddZoneModal}
+        onClose={() => setShowAddZoneModal(false)}
+        onSubmit={handleCreateZone}
+      />
 
       {/* Document Preview Lightbox Modal */}
-      {previewDocModal && (
-        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-lg w-full p-5 space-y-4 shadow-2xl relative">
-            <div className="flex justify-between items-center border-b border-slate-100 pb-2.5">
-              <h4 className="font-bold text-sm text-charcoal-900">{previewDocModal.title}</h4>
-              <button
-                type="button"
-                onClick={() => setPreviewDocModal(null)}
-                className="text-slate-400 hover:text-charcoal-900 font-bold text-sm px-2 py-1 rounded"
-              >
-                ✕ Close
-              </button>
-            </div>
-            <div className="bg-slate-50 p-2 rounded-xl flex items-center justify-center overflow-hidden max-h-[60vh]">
-              <img
-                src={previewDocModal.url}
-                alt={previewDocModal.title}
-                className="max-h-full max-w-full object-contain rounded-lg"
-              />
-            </div>
-            <div className="text-right">
-              <button
-                type="button"
-                onClick={() => setPreviewDocModal(null)}
-                className="px-4 py-2 bg-charcoal-900 text-white font-bold text-xs rounded-xl"
-              >
-                Done
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <DocumentPreviewModal
+        modalData={previewDocModal}
+        onClose={() => setPreviewDocModal(null)}
+      />
     </div>
   );
 };
