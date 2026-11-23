@@ -116,6 +116,9 @@ export const App: React.FC = () => {
 
     s.on('connect', () => {
       console.log('[APP] Connected to PakRide real-time engine:', s.id);
+      if (currentUser?.id) {
+        s.emit('join_user_room', currentUser.id);
+      }
     });
 
     s.on('new_offer_received', (data: any) => {
@@ -136,6 +139,13 @@ export const App: React.FC = () => {
       s.disconnect();
     };
   }, []);
+
+  // Keep socket joined to the active user's personal room across persona switches & reconnects
+  useEffect(() => {
+    if (socket && socket.connected && currentUser?.id) {
+      socket.emit('join_user_room', currentUser.id);
+    }
+  }, [socket, currentUser?.id]);
 
   // Fetch driver profile if current user is a driver
   useEffect(() => {

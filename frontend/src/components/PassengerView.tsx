@@ -173,7 +173,7 @@ export const PassengerView: React.FC<PassengerViewProps> = ({
       .then((data) => {
         if (data.ride) {
           setActiveRide(data.ride);
-          if (data.offers && data.offers.length > 0) {
+          if (Array.isArray(data.offers)) {
             setOffers(data.offers);
           }
         } else if (!data.ride && activeRide && activeRide.status !== 'COMPLETED') {
@@ -201,7 +201,7 @@ export const PassengerView: React.FC<PassengerViewProps> = ({
     socket.on('new_offer_received', (data: { rideId: string; offer: RideOffer }) => {
       setOffers((prev) => {
         const exists = prev.some((o) => o.id === data.offer.id);
-        if (exists) return prev;
+        if (exists) return prev.map((o) => (o.id === data.offer.id ? data.offer : o));
         return [data.offer, ...prev];
       });
     });

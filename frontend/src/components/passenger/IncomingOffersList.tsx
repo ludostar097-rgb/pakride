@@ -23,13 +23,8 @@ export const IncomingOffersList: React.FC<IncomingOffersListProps> = ({
     return () => clearInterval(interval);
   }, []);
 
-  // Filter only active, unexpired offers (25s inDrive window)
-  const activeOffers = offers.filter((o) => {
-    const expireTime = o.expiresAt
-      ? new Date(o.expiresAt).getTime()
-      : new Date(o.createdAt).getTime() + 25000;
-    return expireTime > now;
-  });
+  // Filter pending offers (resilient 3-minute inDrive window, never vanishes prematurely)
+  const activeOffers = offers.filter((o) => o.status === 'PENDING' || !o.status);
 
   return (
     <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-200 space-y-3">
@@ -48,7 +43,7 @@ export const IncomingOffersList: React.FC<IncomingOffersListProps> = ({
           <Clock className="w-6 h-6 mx-auto text-pakgreen-600 animate-spin" />
           <p className="font-semibold text-slate-700">{t.noOffersYet || 'Waiting for nearby driver offers...'}</p>
           <p className="text-[11px] text-slate-400">
-            Captains are reviewing your request. Offers will appear here with live acceptance timers.
+            Captains are reviewing your request. When a captain accepts or bids, their card will appear here instantly.
           </p>
         </div>
       ) : (
@@ -57,24 +52,25 @@ export const IncomingOffersList: React.FC<IncomingOffersListProps> = ({
             const offerPkr = Math.round(offer.counterFarePaisa / 100);
             const isSelected = loadingOfferId === offer.id;
 
+            const totalDurationMs = 180000; // 3 minutes
             const expireTime = offer.expiresAt
               ? new Date(offer.expiresAt).getTime()
-              : new Date(offer.createdAt).getTime() + 25000;
+              : new Date(offer.createdAt).getTime() + totalDurationMs;
             const remainingMs = Math.max(0, expireTime - now);
             const secondsLeft = Math.ceil(remainingMs / 1000);
-            const progressPercent = Math.min(100, Math.max(0, (remainingMs / 25000) * 100));
+            const progressPercent = Math.min(100, Math.max(0, (remainingMs / totalDurationMs) * 100));
 
             const barColor =
-              secondsLeft > 12
+              secondsLeft > 60
                 ? 'bg-emerald-500'
-                : secondsLeft > 6
+                : secondsLeft > 20
                 ? 'bg-amber-500'
                 : 'bg-red-500 animate-pulse';
 
             const timerBadgeColor =
-              secondsLeft > 12
+              secondsLeft > 60
                 ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                : secondsLeft > 6
+                : secondsLeft > 20
                 ? 'bg-amber-50 text-amber-700 border-amber-200'
                 : 'bg-red-50 text-red-700 border-red-200 animate-pulse font-bold';
 
@@ -97,17 +93,17 @@ export const IncomingOffersList: React.FC<IncomingOffersListProps> = ({
                       <span className="font-bold text-sm text-charcoal-900">{offer.driverName}</span>
                       <span className="flex items-center text-xs font-bold text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200">
                         <Star className="w-3 h-3 fill-amber-500 text-amber-500 mr-0.5" />
-                        {offer.driverRating.toFixed(1)}
+                        {(offer.driverRating || 4.9).toFixed(1)}
                       </span>
                       {/* Active Countdown Badge */}
                       <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full border flex items-center space-x-1 ${timerBadgeColor}`}>
                         <Timer className="w-3 h-3 flex-shrink-0" />
-                        <span>{secondsLeft}s left</span>
+                        <span>{secondsLeft > 0 ? `${secondsLeft}s left` : 'Reviewing'}</span>
                       </span>
                     </div>
 
                     <div className="text-xs text-slate-500">
-                      {offer.driverVehicle} • <span className="font-semibold text-emerald-700">{offer.etaMinutes} mins away</span>
+                      {offer.driverVehicle} • <span className="font-semibold text-emerald-700">{offer.etaMinutes || 4} mins away</span>
                     </div>
                   </div>
 

@@ -36,10 +36,10 @@ export const RequestsFeed: React.FC<RequestsFeedProps> = ({
     }
   };
 
-  // Filter rides where acceptance window hasn't expired (30 seconds from ride creation or if driver already sent offer)
+  // Filter rides where acceptance window hasn't expired (5-minute inDrive/Uber window)
   const activeRides = rides.filter((ride) => {
     if (submittedOffers[ride.id]) return true; // keep showing if offer already sent
-    const expireTime = new Date(ride.createdAt).getTime() + 35000;
+    const expireTime = new Date(ride.createdAt).getTime() + 300000; // 5 minutes
     return expireTime > now;
   });
 
@@ -74,22 +74,23 @@ export const RequestsFeed: React.FC<RequestsFeedProps> = ({
             const currentCounter = counterValues[ride.id] || passengerFare;
             const submittedFare = submittedOffers[ride.id];
 
-            const expireTime = new Date(ride.createdAt).getTime() + 35000;
+            const totalDurationMs = 300000;
+            const expireTime = new Date(ride.createdAt).getTime() + totalDurationMs;
             const remainingMs = Math.max(0, expireTime - now);
             const secondsLeft = Math.ceil(remainingMs / 1000);
-            const progressPercent = Math.min(100, Math.max(0, (remainingMs / 35000) * 100));
+            const progressPercent = Math.min(100, Math.max(0, (remainingMs / totalDurationMs) * 100));
 
             const barColor =
-              secondsLeft > 15
+              secondsLeft > 120
                 ? 'bg-emerald-500'
-                : secondsLeft > 7
+                : secondsLeft > 30
                 ? 'bg-amber-500'
                 : 'bg-red-500 animate-pulse';
 
             const timerBadgeColor =
-              secondsLeft > 15
+              secondsLeft > 120
                 ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                : secondsLeft > 7
+                : secondsLeft > 30
                 ? 'bg-amber-50 text-amber-700 border-amber-200'
                 : 'bg-red-50 text-red-700 border-red-200 animate-pulse font-bold';
 

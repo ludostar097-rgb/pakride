@@ -572,7 +572,7 @@ app.post('/api/rides/:id/offer', AuthService.requireAuth, (req: AuthenticatedReq
     etaMinutes: etaMinutes || 4,
     status: 'PENDING',
     createdAt: new Date().toISOString(),
-    expiresAt: new Date(Date.now() + 25 * 1000).toISOString() // 25s inDrive-style live bid expiry
+    expiresAt: new Date(Date.now() + 3 * 60 * 1000).toISOString() // 3-minute inDrive bidding window
   };
 
   db.saveOffer(offer);
@@ -581,6 +581,13 @@ app.post('/api/rides/:id/offer', AuthService.requireAuth, (req: AuthenticatedReq
   io.to(`user:${ride.passengerId}`).emit(SOCKET_EVENTS.NEW_OFFER_RECEIVED, {
     rideId,
     offer
+  });
+
+  // Also broadcast so any connected client/tab tracking this ride receives the offer instantly
+  io.emit(SOCKET_EVENTS.NEW_OFFER_RECEIVED, {
+    rideId,
+    offer,
+    passengerId: ride.passengerId
   });
 
   return res.status(201).json({ offer });
