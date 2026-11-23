@@ -3,6 +3,7 @@ import { Car, Bike, Navigation, Clock, Sparkles } from 'lucide-react';
 import { LocationCoordinates, VehicleCategory } from '../../shared/types';
 import { LocationSearchInput } from '../LocationSearchInput';
 import { GeocodingService } from '../../services/geocoding';
+import { OPERATING_CITIES } from '../../shared/constants';
 
 interface BookingCardProps {
   category: VehicleCategory;
@@ -23,6 +24,8 @@ interface BookingCardProps {
   onRequestRide: () => void;
   loading: boolean;
   t: any;
+  detectedCity?: string;
+  onSelectCity?: (cityId: string) => void;
 }
 
 export const BookingCard: React.FC<BookingCardProps> = ({
@@ -43,7 +46,9 @@ export const BookingCard: React.FC<BookingCardProps> = ({
   onLocateGps,
   onRequestRide,
   loading,
-  t
+  t,
+  detectedCity = 'Karachi',
+  onSelectCity
 }) => {
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 space-y-4">
@@ -59,7 +64,7 @@ export const BookingCard: React.FC<BookingCardProps> = ({
         </div>
 
         {/* GPS location pill */}
-        <div className="flex items-center justify-between bg-slate-50 border border-slate-200 px-3 py-2 rounded-xl text-xs">
+        <div className="flex items-center justify-between bg-slate-50 border border-slate-200 px-3 py-2 rounded-xl text-xs mb-2">
           <div className="flex items-center space-x-2 truncate pr-2">
             <span className="w-2.5 h-2.5 rounded-full bg-pakgreen-500 animate-pulse flex-shrink-0"></span>
             <span className="text-slate-700 font-semibold truncate">
@@ -75,6 +80,28 @@ export const BookingCard: React.FC<BookingCardProps> = ({
             <Navigation className={`w-3 h-3 ${isLocatingGps ? 'animate-spin' : ''}`} />
             <span>{isLocatingGps ? 'Locating...' : 'Locate Me'}</span>
           </button>
+        </div>
+
+        {/* Operating City Selector Pills */}
+        <div className="flex items-center space-x-1 overflow-x-auto pb-1 pt-1 no-scrollbar text-xs">
+          <span className="text-[11px] font-bold text-slate-500 whitespace-nowrap mr-1">City:</span>
+          {OPERATING_CITIES.map((c) => {
+            const isSelected = detectedCity && detectedCity.toLowerCase().includes(c.name.split(' ')[0].toLowerCase());
+            return (
+              <button
+                key={c.id}
+                type="button"
+                onClick={() => onSelectCity && onSelectCity(c.id)}
+                className={`px-2.5 py-1 rounded-lg font-bold text-[11px] transition whitespace-nowrap ${
+                  isSelected
+                    ? 'bg-pakgreen-600 text-white shadow-2xs'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-slate-800'
+                }`}
+              >
+                {c.name.split(' ')[0]}
+              </button>
+            );
+          })}
         </div>
       </div>
 

@@ -71,7 +71,14 @@ class DatabaseStore {
       }
       if (fs.existsSync(DATA_FILE)) {
         const raw = fs.readFileSync(DATA_FILE, 'utf-8');
-        return JSON.parse(raw);
+        const parsed: DatabaseSchema = JSON.parse(raw);
+        if (!parsed.zones) parsed.zones = {};
+        for (const z of PILOT_ZONES) {
+          if (!parsed.zones[z.id]) {
+            parsed.zones[z.id] = z as any;
+          }
+        }
+        return parsed;
       }
     } catch (err) {
       console.error('[DB] Error loading database file, initializing defaults:', err);

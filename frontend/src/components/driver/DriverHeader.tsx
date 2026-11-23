@@ -1,6 +1,7 @@
 import React from 'react';
-import { Power, ShieldCheck, ShieldAlert, AlertCircle, Clock, Edit3 } from 'lucide-react';
+import { Power, ShieldCheck, ShieldAlert, AlertCircle, Clock, Edit3, MapPin } from 'lucide-react';
 import { DriverProfile } from '../../shared/types';
+import { OPERATING_CITIES } from '../../shared/constants';
 
 interface DriverHeaderProps {
   currentUser: { fullName: string; phone: string };
@@ -8,9 +9,10 @@ interface DriverHeaderProps {
   isApproved: boolean;
   isUnderReview: boolean;
   isEditingVehicle: boolean;
-  pilotZoneText: string;
+  pilotZoneText?: string;
   onToggleOnline: () => void;
   onToggleEditVehicle: () => void;
+  onSwitchCity?: (cityId: string) => void;
 }
 
 export const DriverHeader: React.FC<DriverHeaderProps> = ({
@@ -21,7 +23,8 @@ export const DriverHeader: React.FC<DriverHeaderProps> = ({
   isEditingVehicle,
   pilotZoneText,
   onToggleOnline,
-  onToggleEditVehicle
+  onToggleEditVehicle,
+  onSwitchCity
 }) => {
   const iconChar =
     profile.vehicle?.category === 'MOTORCYCLE'
@@ -68,15 +71,33 @@ export const DriverHeader: React.FC<DriverHeaderProps> = ({
               )}
             </div>
 
-            <p className="text-xs text-slate-500 mt-1">
-              {profile.vehicle?.plateNumber ? (
-                <span>
-                  {iconChar} {profile.vehicle.make} {profile.vehicle.model} ({profile.vehicle.plateNumber}) • {pilotZoneText}
-                </span>
-              ) : (
-                <span className="text-amber-600 font-semibold">Vehicle details not yet submitted</span>
-              )}
-            </p>
+            <div className="flex items-center space-x-2 mt-1.5 flex-wrap gap-1">
+              <span className="text-xs text-slate-500">
+                {profile.vehicle?.plateNumber ? (
+                  <span>
+                    {iconChar} {profile.vehicle.make} {profile.vehicle.model} ({profile.vehicle.plateNumber})
+                  </span>
+                ) : (
+                  <span className="text-amber-600 font-semibold">Vehicle details pending</span>
+                )}
+              </span>
+
+              {/* Operating City Selector Pill */}
+              <div className="flex items-center space-x-1 bg-slate-100 px-2 py-0.5 rounded-lg border border-slate-200">
+                <MapPin className="w-3 h-3 text-pakgreen-600" />
+                <select
+                  value={profile.activeCityId || 'city-karachi'}
+                  onChange={(e) => onSwitchCity && onSwitchCity(e.target.value)}
+                  className="bg-transparent text-[11px] font-bold text-slate-700 outline-none cursor-pointer"
+                >
+                  {OPERATING_CITIES.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
           </div>
         </div>
 

@@ -10,6 +10,7 @@ import {
 import { MapView } from './MapView';
 import { LiveChatModal } from './LiveChatModal';
 import { GeocodingService } from '../services/geocoding';
+import { getNearestOperatingCity, OPERATING_CITIES } from '../shared/constants';
 import { BookingCard } from './passenger/BookingCard';
 import { IncomingOffersList } from './passenger/IncomingOffersList';
 import { ActiveRideCard } from './passenger/ActiveRideCard';
@@ -84,9 +85,8 @@ export const PassengerView: React.FC<PassengerViewProps> = ({
             GeocodingService.saveRecentLocation(loc);
             const hubs = GeocodingService.getPopularHubsForLocation({ lat, lng });
             setRecentChips(hubs);
-            if (lat >= 33.0) setDetectedCity('Islamabad / Rawalpindi');
-            else if (lat >= 31.0) setDetectedCity('Lahore');
-            else setDetectedCity('Karachi');
+            const nearest = getNearestOperatingCity(lat, lng);
+            setDetectedCity(nearest.name);
           } catch (e) {
             console.warn('Auto reverse-geocoding error:', e);
           } finally {
@@ -119,9 +119,8 @@ export const PassengerView: React.FC<PassengerViewProps> = ({
           GeocodingService.saveRecentLocation(loc);
           const hubs = GeocodingService.getPopularHubsForLocation({ lat, lng });
           setRecentChips(hubs);
-          if (lat >= 33.0) setDetectedCity('Islamabad / Rawalpindi');
-          else if (lat >= 31.0) setDetectedCity('Lahore');
-          else setDetectedCity('Karachi');
+          const nearest = getNearestOperatingCity(lat, lng);
+          setDetectedCity(nearest.name);
         } catch (e) {
           console.warn('Reverse geocode error:', e);
         } finally {
@@ -135,6 +134,21 @@ export const PassengerView: React.FC<PassengerViewProps> = ({
       },
       { timeout: 10000, enableHighAccuracy: true }
     );
+  };
+
+  const handleSelectCity = (cityId: string) => {
+    const city = OPERATING_CITIES.find((c) => c.id === cityId);
+    if (!city) return;
+    setDetectedCity(city.name);
+    const hubs = GeocodingService.getPopularHubs(city.name);
+    if (hubs.length >= 2) {
+      setPickup(hubs[0]);
+      setDestination(hubs[1]);
+      setRecentChips(hubs);
+    } else if (hubs.length === 1) {
+      setPickup(hubs[0]);
+      setRecentChips(hubs);
+    }
   };
 
   // Fetch estimated fare whenever pickup, dest, or category changes
@@ -383,6 +397,8 @@ export const PassengerView: React.FC<PassengerViewProps> = ({
             onRequestRide={handleRequestRide}
             loading={loading}
             t={t}
+            detectedCity={detectedCity}
+            onSelectCity={handleSelectCity}
           />
         )}
 

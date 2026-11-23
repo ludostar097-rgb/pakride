@@ -196,6 +196,27 @@ export const DriverView: React.FC<DriverViewProps> = ({
   }, [socket, currentUser.id, profile.isOnline, isApproved, activeTrip?.id]);
 
   // Toggle Online/Offline
+  const handleSwitchCity = async (newCityId: string) => {
+    try {
+      const res = await fetch(`${apiBaseUrl}/api/driver/city`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${getAuthToken()}`
+        },
+        body: JSON.stringify({ cityId: newCityId })
+      });
+      const data = await res.json();
+      if (data.profile) {
+        setProfile(data.profile);
+        showActionNotice(`Operating city updated!`);
+        fetchFeed();
+      }
+    } catch (err) {
+      console.error('Error switching driver city:', err);
+    }
+  };
+
   const handleToggleOnline = async () => {
     if (!isApproved) return;
     try {
@@ -352,9 +373,10 @@ export const DriverView: React.FC<DriverViewProps> = ({
         isApproved={isApproved}
         isUnderReview={isUnderReview}
         isEditingVehicle={isEditingVehicle}
-        pilotZoneText={t.pilotZone || 'Karachi & Islamabad Pilot'}
+        pilotZoneText={t.pilotZone}
         onToggleOnline={handleToggleOnline}
         onToggleEditVehicle={() => setIsEditingVehicle(!isEditingVehicle)}
+        onSwitchCity={handleSwitchCity}
       />
 
       {/* 2. Post-login Onboarding or Update Card */}

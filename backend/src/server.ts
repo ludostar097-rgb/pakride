@@ -9,7 +9,15 @@ import { PricingService } from './services/pricing.js';
 import { RideStateMachine } from './state/stateMachine.js';
 import { LedgerService } from './services/ledger.js';
 import { seedDemoData } from './seed.js';
-import { SOCKET_EVENTS, KARACHI_LANDMARKS, ISLAMABAD_LANDMARKS } from './shared/constants.js';
+import {
+  SOCKET_EVENTS,
+  OPERATING_CITIES,
+  KARACHI_LANDMARKS,
+  ISLAMABAD_LANDMARKS,
+  LAHORE_LANDMARKS,
+  MULTAN_LANDMARKS,
+  DGKHAN_LANDMARKS
+} from './shared/constants.js';
 import {
   RideRequest,
   RideOffer,
@@ -250,7 +258,10 @@ app.get('/api/zones', (req, res) => {
     zones,
     landmarks: KARACHI_LANDMARKS,
     karachiLandmarks: KARACHI_LANDMARKS,
-    islamabadLandmarks: ISLAMABAD_LANDMARKS
+    islamabadLandmarks: ISLAMABAD_LANDMARKS,
+    lahoreLandmarks: LAHORE_LANDMARKS,
+    multanLandmarks: MULTAN_LANDMARKS,
+    dgkhanLandmarks: DGKHAN_LANDMARKS
   });
 });
 
@@ -260,9 +271,10 @@ app.post('/api/admin/zones', AuthService.requireAuth, AuthService.requireRole(['
     return res.status(400).json({ error: 'City, zone name, and center coordinates are required' });
   }
 
+  const sanitizedCityId = req.body.cityId || ('city-' + cityName.toLowerCase().replace(/[^a-z0-9]/g, ''));
   const newZone = {
-    id: 'zone-' + cityName.toLowerCase() + '-' + Date.now().toString(36),
-    cityId: 'city-' + cityName.toLowerCase(),
+    id: 'zone-' + cityName.toLowerCase().replace(/[^a-z0-9]/g, '') + '-' + Date.now().toString(36),
+    cityId: sanitizedCityId,
     cityName,
     zoneName,
     isActive: true,
@@ -368,6 +380,9 @@ app.post('/api/rides/request', AuthService.requireAuth, (req: AuthenticatedReque
   // Automatically detect operational zone from pickup coordinates
   const matchedZone = PricingService.findMatchingZone(pickup.lat, pickup.lng);
   const activeZoneId = zoneId || matchedZone?.id || 'zone-karachi-jauhar';
+  const activeCityId = matchedZone?.cityId || 'city-karachi';
+  const activeCityName = matchedZone?.cityName || 'Karachi';
+  const activeZoneName = matchedZone?.zoneName || 'Gulistan-e-Jauhar & Gulshan';
 
   const suggestedFarePaisa = PricingService.calculateSuggestedFarePaisa(
     category,
@@ -382,6 +397,10 @@ app.post('/api/rides/request', AuthService.requireAuth, (req: AuthenticatedReque
     passengerId: req.user!.userId,
     passengerName: req.user!.fullName,
     passengerPhone: req.user!.phone,
+    cityId: activeCityId,
+    cityName: activeCityName,
+    zoneId: activeZoneId,
+    zoneName: activeZoneName,
     category,
     pickup,
     destination,
@@ -468,12 +487,17 @@ app.get('/api/rides/driver/feed', AuthService.requireAuth, (req: AuthenticatedRe
   const category = driverProfile.vehicle?.category || 'ALL';
   const rides = db.getAvailableRidesForDrivers(category, driverProfile.activeZoneId);
 
+  // Relational City Filter: Driver receives requests from their operating city
+  const cityFilteredRides = rides.filter(
+    (r) => !driverProfile.activeCityId || !r.cityId || r.cityId === driverProfile.activeCityId
+  );
+
   // Proximity sorting: Driver sees nearby rides first (supports Forward Dispatch near drop-off!)
   const { nearLat, nearLng } = req.query;
   const driverLat = nearLat ? parseFloat(nearLat as string) : (driverProfile.currentLat || 24.918);
   const driverLng = nearLng ? parseFloat(nearLng as string) : (driverProfile.currentLng || 67.135);
 
-  const enrichedRides = rides
+  const enrichedRides = cityFilteredRides
     .map((r) => {
       const distToPickup = PricingService.calculateDistanceKm(
         driverLat,
@@ -822,9 +846,39 @@ app.post('/api/driver/vehicle', AuthService.requireAuth, (req: AuthenticatedRequ
     profile.verificationStatus = 'UNDER_REVIEW';
   }
 
+  if (req.body.activeCityId && typeof req.body.activeCityId === 'string') {
+    profile.activeCityId = req.body.activeCityId.trim();
+  }
+
   db.saveDriverProfile(profile);
 
   return res.json({ success: true, profile, vehicle });
+});
+
+app.post('/api/driver/city', AuthService.requireAuth, (req: AuthenticatedRequest, res) => {
+  if (req.user!.role !== 'DRIVER' && req.user!.role !== 'ADMIN') {
+    return res.status(403).json({ error: 'Only drivers can update operating city' });
+  }
+
+  const { cityId } = req.body;
+  if (!cityId || typeof cityId !== 'string') {
+    return res.status(400).json({ error: 'Valid cityId is required' });
+  }
+
+  const profile = db.getDriverProfile(req.user!.userId);
+  if (!profile) return res.status(404).json({ error: 'Driver profile not found' });
+
+  profile.activeCityId = cityId;
+
+  // Update initial coordinates to city center if available
+  const city = OPERATING_CITIES.find((c) => c.id === cityId);
+  if (city) {
+    profile.currentLat = city.centerLat;
+    profile.currentLng = city.centerLng;
+  }
+
+  db.saveDriverProfile(profile);
+  return res.json({ success: true, profile });
 });
 
 // ==========================================

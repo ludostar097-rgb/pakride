@@ -103,11 +103,25 @@ export interface ChatMessage {
   timestamp: string;
 }
 
+export interface OperatingCity {
+  id: string;
+  name: string;
+  province: string;
+  centerLat: number;
+  centerLng: number;
+  defaultZoom: number;
+  isActive: boolean;
+}
+
 export interface RideRequest {
   id: string;
   passengerId: string;
   passengerName: string;
   passengerPhone: string;
+  cityId?: string;
+  cityName?: string;
+  zoneId?: string;
+  zoneName?: string;
   category: VehicleCategory;
   pickup: LocationCoordinates;
   destination: LocationCoordinates;
@@ -154,6 +168,7 @@ export interface RideOffer {
 export interface PaymentLedgerEntry {
   id: string;
   rideId: string;
+  cityId?: string;
   driverId: string;
   passengerId: string;
   method: PaymentMethod;

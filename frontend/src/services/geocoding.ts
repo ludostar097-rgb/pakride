@@ -24,7 +24,15 @@ const PAK_PHONETIC_REPLACEMENTS: [RegExp, string][] = [
   [/\b(f7|f 7|jinnah super)\b/gi, 'F-7'],
   [/\b(f6|f 6|super market)\b/gi, 'F-6'],
   [/\b(g9|g 9|karachi company)\b/gi, 'G-9'],
-  [/\b(i8|i 8)\b/gi, 'I-8']
+  [/\b(i8|i 8)\b/gi, 'I-8'],
+  [/\b(multan|mltan|multn)\b/gi, 'Multan'],
+  [/\b(dgk|dg khan|d g khan|dera ghazi khan|dgkhan|dera ghazi)\b/gi, 'D.G. Khan'],
+  [/\b(bzu|bahuddin|zakariya university)\b/gi, 'BZU Multan'],
+  [/\b(ghanta ghar|ghantaghar)\b/gi, 'Ghanta Ghar'],
+  [/\b(pull dat|pul dat|puldatt)\b/gi, 'Pull Dat'],
+  [/\b(traffic chowk|trafic chawk)\b/gi, 'Traffic Chowk'],
+  [/\b(nishtar|nishtar hospital)\b/gi, 'Nishtar Hospital'],
+  [/\b(ghazi university|ghazi uni)\b/gi, 'Ghazi University']
 ];
 
 // City coordinate centroids for location-biasing queries
@@ -32,7 +40,9 @@ const CITY_CENTROIDS: Record<string, { lat: number; lng: number }> = {
   Islamabad: { lat: 33.6844, lng: 73.0479 },
   Rawalpindi: { lat: 33.5651, lng: 73.0169 },
   Karachi: { lat: 24.8607, lng: 67.0011 },
-  Lahore: { lat: 31.5204, lng: 74.3587 }
+  Lahore: { lat: 31.5204, lng: 74.3587 },
+  Multan: { lat: 30.1984, lng: 71.4687 },
+  'D.G. Khan': { lat: 30.0489, lng: 70.6455 }
 };
 
 export interface SearchResult {
@@ -243,6 +253,26 @@ export class GeocodingService {
         { lat: 31.5882, lng: 74.3105, address: 'Badshahi Mosque, Old City', landmark: 'Walled City' }
       ];
     }
+    if (cityName === 'Multan') {
+      return [
+        { lat: 30.1984, lng: 71.4687, address: 'Ghanta Ghar Chowk, Old Multan', landmark: 'Ghanta Ghar' },
+        { lat: 30.1815, lng: 71.4428, address: 'Multan Cantt (Mall Road / Sadar Bazar)', landmark: 'Cantt' },
+        { lat: 30.2642, lng: 71.4984, address: 'Bahauddin Zakariya University (BZU Main Gate)', landmark: 'BZU Bosan Rd' },
+        { lat: 30.2241, lng: 71.4883, address: 'Gulgasht Colony Commercial Center', landmark: 'Gulgasht' },
+        { lat: 30.1878, lng: 71.4497, address: 'Nishtar Hospital Main Gate', landmark: 'Nishtar Rd' },
+        { lat: 30.2032, lng: 71.4278, address: 'Multan International Airport (MUX)', landmark: 'Multan Airport' }
+      ];
+    }
+    if (cityName === 'D.G. Khan' || cityName === 'DG Khan' || cityName === 'Dera Ghazi Khan') {
+      return [
+        { lat: 30.0561, lng: 70.6402, address: 'Traffic Chowk, DG Khan City', landmark: 'Traffic Chowk' },
+        { lat: 30.0489, lng: 70.6455, address: 'Pull Dat (Canal Bridge Market)', landmark: 'Pull Dat' },
+        { lat: 30.0270, lng: 70.6280, address: 'Ghazi University (Airport Road Campus)', landmark: 'Ghazi Uni' },
+        { lat: 30.0610, lng: 70.6425, address: 'DHQ Teaching Hospital DG Khan', landmark: 'DHQ Hospital' },
+        { lat: 30.0410, lng: 70.6380, address: 'Model Town Commercial Area', landmark: 'Model Town' },
+        { lat: 30.0680, lng: 70.6490, address: 'DG Khan General Bus Stand (Lari Adda)', landmark: 'Lari Adda' }
+      ];
+    }
     // Default Karachi
     return [
       { lat: 24.9213, lng: 67.1355, address: 'Jauhar Chowrangi', landmark: 'Gulistan-e-Jauhar' },
@@ -262,16 +292,22 @@ export class GeocodingService {
       return [
         { lat: 33.7077, lng: 73.0501, address: 'The Centaurus Mall, Islamabad', landmark: 'Islamabad F-8' },
         { lat: 24.9213, lng: 67.1355, address: 'Jauhar Chowrangi, Karachi', landmark: 'Karachi Jauhar' },
-        { lat: 31.5126, lng: 74.3436, address: 'Liberty Market, Gulberg, Lahore', landmark: 'Lahore Gulberg' },
-        { lat: 33.7145, lng: 73.0673, address: 'Blue Area, Islamabad', landmark: 'Islamabad Central' },
-        { lat: 24.8293, lng: 67.0336, address: 'Clifton (Teen Talwar), Karachi', landmark: 'Karachi Clifton' }
+        { lat: 30.1984, lng: 71.4687, address: 'Ghanta Ghar Chowk, Multan', landmark: 'Multan Center' },
+        { lat: 30.0561, lng: 70.6402, address: 'Traffic Chowk, DG Khan', landmark: 'DG Khan' },
+        { lat: 31.5126, lng: 74.3436, address: 'Liberty Market, Gulberg, Lahore', landmark: 'Lahore Gulberg' }
       ];
     }
 
-    if (loc.lat >= 33.0) {
+    if (loc.lat >= 32.5) {
       return this.getPopularHubs('Islamabad');
-    } else if (loc.lat >= 30.5) {
+    } else if (loc.lat >= 31.0) {
       return this.getPopularHubs('Lahore');
+    } else if (loc.lat >= 29.5 && loc.lat <= 30.9) {
+      if (loc.lng < 71.0) {
+        return this.getPopularHubs('D.G. Khan');
+      } else {
+        return this.getPopularHubs('Multan');
+      }
     } else {
       return this.getPopularHubs('Karachi');
     }

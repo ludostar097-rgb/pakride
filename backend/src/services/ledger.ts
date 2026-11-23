@@ -21,6 +21,7 @@ export class LedgerService {
     const entry: PaymentLedgerEntry = {
       id: 'ledg-' + Math.random().toString(36).substring(2, 9),
       rideId: ride.id,
+      cityId: ride.cityId || 'city-karachi',
       driverId: ride.driverId || 'unassigned',
       passengerId: ride.passengerId,
       method,
