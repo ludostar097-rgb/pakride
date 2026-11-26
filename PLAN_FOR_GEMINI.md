@@ -27,8 +27,186 @@ Always add this line to the end of every prompt you give Gemini:
 | Icons & buttons | 3/10 | Wrong icons, emoji mixed with icons, 84 of 100 buttons styled one-off, tiny tap targets |
 | Mobile UX | 4/10 | Long scroll page; no full-screen map + bottom sheet like Uber/Careem/inDrive |
 
-Typecheck passes and backend tests pass. **Nothing new has been committed since the last audit** — every
-issue below is still open.
+Typecheck passes and backend tests pass. Since then Gemini committed Phase 1.1 (frontend login only) — see
+"Status update" below. Pricing: 4/10. Vehicle categories: 3 only, no Car Plus / Premium.
+
+**Recommended order now:** 1.2 → 1.3 → 0.2 → 0.1 (leftovers) → 2.1 → 2.5 → 2.6 → 2.2 → 2.4 → 0.3 → Phase 3 → 4 → 5.
+
+---
+
+## Status update — after Gemini commit `73bc426` ("Phase 1.1")
+
+**What Gemini actually did:** a new login screen (AuthView), removed the Passenger/Driver/Admin switcher tabs
+and the `mock-token` fallbacks, and made the dev quick-login buttons show only in local dev. That's a real
+improvement. **Nothing on the backend was changed.**
+
+**Still wrong in the Phase 1.1 commit:**
+1. `App.tsx` still invents a driver profile if the real one fails to load — and now marks it
+   `verificationStatus: 'APPROVED'` with zone `zone-isb-central`, **a zone that doesn't exist**. Delete it;
+   show a loading/error state instead.
+2. `AuthModal.tsx` is still in the repo (dead code) with the `7788` "Use Demo Code" box. Delete the file.
+3. A `CITY_MANAGER` user can log in but `App.tsx` renders nothing for that role (blank screen).
+4. The login form placeholder is a real seeded phone number (`03001234567`) and the password placeholder is
+   `••••••••`, so the form looks pre-filled. Use "03XX XXXXXXX" and an empty password placeholder.
+5. Sign-up has no SMS verification, no "confirm password", no terms checkbox.
+6. Booking still opens Islamabad → Karachi, 1,528 km, PKR 68,965.
+
+### Live end-to-end test (run against the real backend, 26 Nov)
+
+The basic ride works end to end: login → fare → request → driver sees it → counter-offer → accept → wrong
+PIN rejected → right PIN starts → complete → driver earnings updated. ✅
+
+But **12 out of 26 checks failed**, all reproducible:
+
+| Check | Result |
+|---|---|
+| Another passenger opens someone else's ride | ❌ Allowed — sees their **phone number and trip PIN** |
+| A stranger posts in someone else's trip chat | ❌ Allowed |
+| A stranger rates someone else's driver 1★ five times | ❌ All 5 accepted (can destroy any driver's rating) |
+| Passenger offers PKR 1 for a car ride | ❌ Accepted |
+| Islamabad → Karachi ride | ❌ Accepted: 1,528 km, PKR 68,930 |
+| Ride from Quetta (no PakRide zone) | ❌ Accepted and priced as **D.G. Khan** |
+| Password-reset code returned by the API | ❌ Returns `7788` |
+| Take over the **Admin** account with reset code `7788` | ❌ **Worked** — admin password changed |
+| Forge an admin login using the default secret in the code | ❌ **Worked** — full admin API access |
+| 30 wrong passwords in a row | ❌ No limit |
+| Admin sets driver status to "BANANA" / commission to 500% | ❌ No validation in the code |
+| Anonymous socket (no login) listens in | ❌ Receives every new ride (with passenger phone) and every offer |
+| Anonymous socket moves a driver on the map | ❌ Moved driver to 0,0 (Atlantic Ocean) |
+
+➡ **Do Prompt 1.2 and 1.3 next.** Nothing else matters until these are closed.
+
+---
+
+## Vehicle categories — why there's no Car+ / Premium, and what to add
+
+Right now the whole app has only 3 types: `CAR | MOTORCYCLE | RICKSHAW`, hard-coded in 12 files (types,
+pricing, zones, booking card, driver setup, admin). Every car — a 2008 Mehran and a 2024 Civic — is the same
+"Car" at the same price. Competitors in Pakistan split cars into tiers, and riders who want AC / a newer car
+pay more. You should add tiers, but **as data, not as more hard-coding**, so you can add "XL" or "Ladies only"
+later without code changes.
+
+### Recommended category list (launch)
+
+| Code | Name (EN / اردو) | Seats | Who qualifies (admin checks at verification) | Price vs Car |
+|---|---|---|---|---|
+| `BIKE` | Bike / بائیک | 1 | Motorcycle, 70cc+ | ~0.45× |
+| `RICKSHAW` | Rickshaw / رکشہ | 3 | CNG/petrol auto-rickshaw | ~0.65× |
+| `CAR_MINI` | Mini / منی | 4 | Small hatchbacks (Alto, Mehran, Wagon R, Cultus), any year 2010+ | ~0.85× |
+| `CAR` | Car / کار | 4 | Sedans/hatchbacks 1000cc+, 2012+, working AC | 1.0× |
+| `CAR_PLUS` | Car Plus / کار پلس | 4 | 1300cc+, **2017+**, AC required, clean interior, driver rating ≥ 4.6 | ~1.3× |
+| `PREMIUM` | Premium / پریمیم | 4 | Civic, Corolla Altis Grande, Elantra, Sportage, Tucson etc., **2020+**, AC, rating ≥ 4.8, 50+ trips | ~1.8× |
+| `XL` *(phase 2)* | XL / ایکس ایل | 6–7 | BR-V, APV, Hiace-type, 2015+ | ~1.5× |
+
+Multipliers are **starting suggestions** — admin sets the real per-city prices. Rules:
+- A driver is approved for ONE top tier, and may also accept rides from lower car tiers if they switch it on
+  (e.g. a Premium driver can take Car Plus and Car rides). Never upward.
+- Premium/Car Plus drivers must upload 4 photos of the car (front, back, interior front, interior back);
+  admin decides the tier, not the driver.
+- Tier auto-downgrades if rating drops below the threshold (admin notified).
+
+### Prompt 2.5 — Vehicle categories as data
+```
+Replace the hard-coded VehicleCategory union ('CAR' | 'MOTORCYCLE' | 'RICKSHAW') with a database-driven
+category system. Do NOT add more hard-coded strings in components.
+Backend:
+1. New table VehicleCategory: code, nameEn, nameUr, iconKey, seats, sortOrder, isActive,
+   minYear, minEngineCc, requiresAc, minDriverRating, minCompletedTrips, requiresInteriorPhotos.
+   Seed: BIKE, RICKSHAW, CAR_MINI, CAR, CAR_PLUS, PREMIUM (XL inactive). Migrate old 'MOTORCYCLE' -> 'BIKE'.
+2. New table Tariff (per city x category): baseFarePaisa, perKmPaisa, perMinPaisa, minFarePaisa,
+   isActive. Remove the baseFareCarPaisa/perKmMotoPaisa... columns from Zone.
+3. DriverProfile gets: approvedCategoryCode (set by admin only), acceptLowerTiers: boolean,
+   vehicle.engineCc, vehicle.hasAc, vehicle photos (front, back, interiorFront, interiorBack).
+4. GET /api/categories?cityId= -> active categories with that city's tariff.
+5. POST /api/rides/calculate-fare returns a price for EVERY active category in that city in one call.
+6. Ride request validates the category is active in that city.
+7. Driver feed: driver sees rides of their approved category, plus lower car tiers if acceptLowerTiers.
+   BIKE and RICKSHAW never mix with car tiers.
+8. Admin: approve driver INTO a category; nightly job downgrades drivers below minDriverRating.
+Frontend:
+9. BookingCard renders categories from the API (horizontal scroll list), each with its own custom SVG icon,
+   name, seats, price, ETA. Default-select the cheapest car tier.
+10. Driver signup: driver picks requested category, enters engine cc + AC + year, uploads interior photos
+    when required. Shows "Requested: Premium — admin will confirm".
+11. Admin "Categories & Prices" screen: edit category rules and the tariff table per city (inline-editable
+    grid), with a preview calculator (distance + minutes -> fare for each category).
+Tests: fare for each category, driver eligibility, lower-tier acceptance, inactive category rejected.
+```
+
+---
+
+## Pricing audit
+
+**How it works today:** `fare = base + perKm × max(distance, 1)`, rounded to PKR 5. Distance is a straight
+line × 1.35. Time = distance × 3.5 min. Example (Karachi, Jauhar → Airport, 4.1 km): Car PKR 315, Bike
+PKR 135, Rickshaw PKR 195.
+
+**Problems:**
+1. **No time component.** Karachi/Lahore traffic means a 5 km trip can take 10 or 40 minutes; drivers lose
+   money in traffic. Need `perMin`.
+2. **Distance is a guess** (×1.35 straight line). Can be off by 30–100% around rivers, canals, one-ways,
+   cantonment roads. Use the real road distance/time (OSRM — already used for drawing the map).
+3. **No floor on the passenger's offer.** PKR 1 is accepted. inDrive-style apps enforce a minimum
+   (e.g. 70–80% of the suggested fare).
+4. **No ceilings.** Driver counter-offer can be up to PKR 500,000; passenger "raise fare" has no limit and
+   works even after the trip started.
+5. **No distance or zone limits.** Intercity (1,528 km) accepted; areas outside every zone are priced with
+   the nearest city's rates.
+6. **Admin can only set car prices** when creating a zone; bike/rickshaw are hard-coded, and nothing can be
+   edited after creation.
+7. **Commission setting has no validation** (500% accepted). Also commission is recorded but cash is never
+   collected from drivers — there's no driver wallet/dues for when commission goes above 0%.
+8. **Cash marked "PAID" automatically** on completion; no driver confirmation "cash received", no dispute.
+9. **Missing charges real apps have:** waiting time after free minutes, cancellation fee (after driver has
+   arrived / after X minutes), tolls (motorway/expressway), airport pickup fee.
+10. **Fuel price changes** (frequent in Pakistan) require code edits. Make perKm admin-editable per city, with
+    a one-click "+X% to all tariffs in city" tool.
+
+### Prompt 2.6 — Pricing engine
+```
+Rewrite backend/src/services/pricing.ts as a real pricing engine (works with Prompt 2.5 tables):
+1. Route: get road distance (km) and duration (min) from OSRM on the backend. Cache by rounded coordinates
+   for 10 minutes. If OSRM fails, return 503 "Couldn't calculate route, try again" — NO straight-line
+   fallback.
+2. suggestedFare = max(minFare, base + perKm*km + perMin*min), round to nearest PKR 10.
+3. Limits (all admin-editable in Settings): max trip 60 km (city rides only), passenger offer must be
+   >= 75% of suggested, driver counter <= 150% of suggested, passenger raise-fare max 3 times, each <= PKR 100,
+   only while OFFERS_OPEN.
+4. Pickup must be inside an ACTIVE zone; destination must be within the same city's service area.
+   Otherwise 400 with a clear message.
+5. Extra charges (admin-editable per city): free waiting 3 min then perWaitMinPaisa; cancellation fee when
+   passenger cancels after driver ARRIVED or > 2 min after accepting; airport fee; tolls entered by driver
+   with photo of receipt, added to final fare.
+6. Final fare = agreed fare + waiting + tolls + airport fee. Show a breakdown on the receipt.
+7. Cash flow: driver taps "Cash received PKR X" to complete; ledger status CASH_COLLECTED. Add driver dues
+   balance = sum of commission owed (for when commission > 0), visible to driver and admin.
+8. Settings validation with zod: commission 0–30%, all limits positive and sensible.
+9. Admin "+X% all tariffs in this city" bulk tool (for fuel price changes), logged in the audit log.
+Unit tests: each formula branch, each limit, each extra charge, rounding.
+```
+
+---
+
+## Workflow & connection audit (what happens between screens)
+
+| Flow | Works? | Problem |
+|---|---|---|
+| Sign up → use app | ⚠️ | No SMS verification; driver gets fake defaults |
+| Login / logout | ✅ (new) | Placeholder looks pre-filled; CITY_MANAGER blank screen |
+| Forgot password | ❌ | Code always 7788; anyone can reset anyone (incl. admin) |
+| Driver onboarding → admin approval | ⚠️ | "Use Demo CNIC" buttons; docs stored inside the JSON DB; no reject reason shown to driver |
+| Passenger books | ⚠️ | Wrong default route; no fare floor; no zone check |
+| Driver sees request | ⚠️ | Works, but every logged-out socket sees it too; feed polls every 3s AND uses sockets |
+| Offer → accept | ✅ | ETA always "4 min"; offers never expire on the server |
+| Driver drives to pickup | ❌ | Driver GPS never sent → passenger map never moves; no "Arrived" step |
+| PIN → start → complete | ✅ | Works |
+| Chat / call | ⚠️ | Works, but strangers can read/post |
+| Rating | ❌ | Anyone can rate any ride unlimited times; driver can't rate passenger |
+| History / receipts | ❌ | No screen |
+| Complaints / SOS follow-up | ❌ | API only, no screen |
+| Admin dashboard | ⚠️ | Works; no complaints/audit tabs; no tariff editing |
+| Server restart / redeploy | ❌ | JSON file DB; Render wipes it; seed resets admin password |
+| Android APK | ❌ | No location permission; cleartext HTTP; no push notifications |
 
 ---
 
@@ -279,7 +457,7 @@ Driver document images (CNIC, license, photo) go to Cloudinary or S3 — store o
 - Remove capacitor.config.json "cleartext": true and "allowMixedContent": true; use HTTPS backend URL.
 ```
 
-### Prompt 2.3 — Real pricing and sane limits
+### Prompt 2.3 — Real pricing and sane limits (SKIP — replaced by Prompts 2.5 + 2.6 above)
 ```
 - Calculate distance and duration from OSRM road route on the backend (cache results), not straight-line x1.35.
 - Reject ride requests over 60 km or with pickup outside an active zone, with a clear message.
@@ -337,8 +515,10 @@ Icon rules for PakRide:
 - Use ONE icon set only: lucide-react, stroke width 2, sizes 16 (inline text), 20 (buttons/lists),
   24 (nav/headers). Remove every emoji from the UI (🚗 🛺 🏍 🟢 🔴 📌 🎉 ✨ 🎯 🏁 ⚡) and replace with icons or
   plain text.
-- Vehicle category icons: create custom SVG components in src/components/icons/ — CarIcon, MotorbikeIcon,
-  RickshawIcon — drawn in the same 24x24, 2px stroke, rounded line style as Lucide, so they match.
+- Vehicle category icons: create custom SVG components in src/components/icons/ — BikeIcon (motorbike),
+  RickshawIcon, MiniCarIcon (small hatchback), CarIcon (sedan), CarPlusIcon (sedan + small star/AC badge),
+  PremiumIcon (executive sedan/SUV silhouette), XlIcon (7-seater van) — all drawn in the same 24x24, 2px
+  stroke, rounded line style as Lucide, so they match. Map them by category.iconKey from the API.
   Do NOT use Lucide `Bike` (that's a bicycle) or `Navigation` for rickshaw.
 - Status dots: use a small coloured circle element, not 🟢/🔴 emoji.
 - Map markers: custom SVG pins — green pickup dot, dark destination square, top-down car icon for drivers,
