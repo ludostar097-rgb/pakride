@@ -236,22 +236,22 @@ export const AdminView: React.FC<AdminViewProps> = ({
         selectedCityId={selectedCityId}
       />
 
-      {/* 3. Navigation Tabs */}
-      <div className="flex space-x-2 border-b border-slate-200 pb-2 overflow-x-auto">
+      {/* 3. Navigation Tabs (Glassmorphic Segmented Bar) */}
+      <div className="flex space-x-2 glass-panel-subtle p-1.5 rounded-2xl border border-white/80 overflow-x-auto shadow-xs">
         <button
           onClick={() => setActiveTab('radar')}
-          className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center space-x-2 ${
-            activeTab === 'radar' ? 'bg-charcoal-900 text-white' : 'bg-white text-slate-600 hover:bg-slate-100'
+          className={`px-4 py-2 rounded-xl text-xs font-black transition-all flex items-center space-x-2 ${
+            activeTab === 'radar' ? 'bg-slate-900 text-white shadow-md shadow-slate-900/30 scale-[1.02]' : 'text-slate-700 hover:text-slate-950 hover:bg-white/70'
           }`}
         >
-          <Radio className="w-4 h-4 text-pakgreen-400 animate-pulse" />
+          <Radio className="w-4 h-4 text-emerald-400 animate-pulse" />
           <span>{t.radarTab}</span>
         </button>
 
         <button
           onClick={() => setActiveTab('zones')}
-          className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center space-x-2 ${
-            activeTab === 'zones' ? 'bg-charcoal-900 text-white' : 'bg-white text-slate-600 hover:bg-slate-100'
+          className={`px-4 py-2 rounded-xl text-xs font-black transition-all flex items-center space-x-2 ${
+            activeTab === 'zones' ? 'bg-slate-900 text-white shadow-md shadow-slate-900/30 scale-[1.02]' : 'text-slate-700 hover:text-slate-950 hover:bg-white/70'
           }`}
         >
           <Compass className="w-4 h-4 text-emerald-400" />
@@ -260,31 +260,31 @@ export const AdminView: React.FC<AdminViewProps> = ({
 
         <button
           onClick={() => setActiveTab('drivers')}
-          className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center space-x-2 ${
-            activeTab === 'drivers' ? 'bg-charcoal-900 text-white' : 'bg-white text-slate-600 hover:bg-slate-100'
+          className={`px-4 py-2 rounded-xl text-xs font-black transition-all flex items-center space-x-2 ${
+            activeTab === 'drivers' ? 'bg-slate-900 text-white shadow-md shadow-slate-900/30 scale-[1.02]' : 'text-slate-700 hover:text-slate-950 hover:bg-white/70'
           }`}
         >
-          <Users className="w-4 h-4" />
+          <Users className="w-4 h-4 text-emerald-400" />
           <span>{t.driverVerification}</span>
         </button>
 
         <button
           onClick={() => setActiveTab('rides')}
-          className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center space-x-2 ${
-            activeTab === 'rides' ? 'bg-charcoal-900 text-white' : 'bg-white text-slate-600 hover:bg-slate-100'
+          className={`px-4 py-2 rounded-xl text-xs font-black transition-all flex items-center space-x-2 ${
+            activeTab === 'rides' ? 'bg-slate-900 text-white shadow-md shadow-slate-900/30 scale-[1.02]' : 'text-slate-700 hover:text-slate-950 hover:bg-white/70'
           }`}
         >
-          <Car className="w-4 h-4" />
+          <Car className="w-4 h-4 text-emerald-400" />
           <span>{t.activeDispatches}</span>
         </button>
 
         <button
           onClick={() => setActiveTab('ledger')}
-          className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center space-x-2 ${
-            activeTab === 'ledger' ? 'bg-charcoal-900 text-white' : 'bg-white text-slate-600 hover:bg-slate-100'
+          className={`px-4 py-2 rounded-xl text-xs font-black transition-all flex items-center space-x-2 ${
+            activeTab === 'ledger' ? 'bg-slate-900 text-white shadow-md shadow-slate-900/30 scale-[1.02]' : 'text-slate-700 hover:text-slate-950 hover:bg-white/70'
           }`}
         >
-          <DollarSign className="w-4 h-4" />
+          <DollarSign className="w-4 h-4 text-emerald-400" />
           <span>{t.financialLedger}</span>
         </button>
       </div>

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Car, Bike, Navigation, Clock, Sparkles, Plus, Minus, Check, MapPin } from 'lucide-react';
+import { Car, Bike, Navigation, Clock, Sparkles, Plus, Minus, Check, MapPin, Zap } from 'lucide-react';
 import { LocationCoordinates, VehicleCategory } from '../../shared/types';
 import { LocationSearchInput } from '../LocationSearchInput';
 import { GeocodingService } from '../../services/geocoding';
@@ -69,19 +69,19 @@ export const BookingCard: React.FC<BookingCardProps> = ({
   };
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 space-y-5">
-      {/* 1. Header with direct bidding reassurance */}
-      <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+    <div className="glass-panel p-6 space-y-5 border border-white/80 shadow-2xl shadow-slate-900/5 transition-all">
+      {/* 1. Header with Modern Frosted Badging */}
+      <div className="flex items-center justify-between pb-3 border-b border-slate-200/50">
         <div>
-          <h2 className="text-lg font-extrabold text-charcoal-900 tracking-tight">
+          <h2 className="text-xl font-black text-slate-900 tracking-tight">
             {t.selectCategory || 'Choose Your Ride'}
           </h2>
-          <p className="text-xs text-slate-500">
+          <p className="text-xs text-slate-500 font-medium">
             Transparent Bidding • 0% Platform Commission
           </p>
         </div>
-        <span className="text-[11px] font-bold bg-pakgreen-50 text-pakgreen-700 border border-pakgreen-200 px-2.5 py-1 rounded-full flex items-center space-x-1">
-          <span className="w-1.5 h-1.5 rounded-full bg-pakgreen-500 animate-pulse"></span>
+        <span className="text-[11px] font-extrabold bg-emerald-500/10 text-emerald-800 border border-emerald-500/20 backdrop-blur-md px-3 py-1 rounded-full flex items-center space-x-1.5 shadow-2xs">
+          <span className="w-2 h-2 rounded-full bg-pakgreen-500 animate-pulse"></span>
           <span>inDrive Bidding</span>
         </span>
       </div>
@@ -125,7 +125,7 @@ export const BookingCard: React.FC<BookingCardProps> = ({
                     setDestination(hub);
                     GeocodingService.saveRecentLocation(hub);
                   }}
-                  className="px-2.5 py-1 bg-slate-50 hover:bg-slate-100 border border-slate-200 hover:border-slate-300 text-slate-700 rounded-lg text-xs font-semibold transition truncate max-w-[200px]"
+                  className="px-2.5 py-1 bg-white/75 hover:bg-white backdrop-blur-md border border-slate-200/80 hover:border-pakgreen-400 text-slate-700 rounded-xl text-xs font-semibold transition truncate max-w-[200px] shadow-2xs active:scale-95"
                 >
                   {hub.landmark || hub.address.split(',')[0]}
                 </button>
@@ -135,12 +135,12 @@ export const BookingCard: React.FC<BookingCardProps> = ({
         )}
       </div>
 
-      {/* 3. VEHICLE CATEGORIES: Comparative Pricing (Uber / Careem / Bykea Style) */}
+      {/* 3. VEHICLE CATEGORIES: Modern Glass Cards with Dynamic Pricing */}
       <div>
         <div className="text-xs font-bold text-slate-600 mb-2 flex items-center justify-between">
-          <span>Select Vehicle Tier</span>
+          <span className="font-extrabold text-slate-800">Select Vehicle Tier</span>
           {fareEstimate && (
-            <span className="text-[11px] text-slate-400 font-normal">
+            <span className="text-[11px] text-emerald-800 bg-emerald-50/80 border border-emerald-200/80 px-2 py-0.5 rounded-full font-semibold">
               {fareEstimate.distanceKm} km • ~{fareEstimate.estimatedMinutes} mins
             </span>
           )}
@@ -151,21 +151,23 @@ export const BookingCard: React.FC<BookingCardProps> = ({
           <button
             type="button"
             onClick={() => handleCategorySelect('CAR')}
-            className={`p-3 rounded-xl border-2 flex flex-col items-center justify-between transition relative text-left ${
+            className={`p-3.5 rounded-2xl flex flex-col items-center justify-between text-left relative transition-all duration-200 ${
               category === 'CAR'
-                ? 'border-pakgreen-500 bg-pakgreen-50/60 text-pakgreen-950 shadow-sm'
-                : 'border-slate-200 hover:border-slate-300 bg-white text-slate-700'
+                ? 'glass-card-active scale-[1.02]'
+                : 'glass-card hover:bg-white/90'
             }`}
           >
             {category === 'CAR' && (
-              <span className="absolute top-1.5 right-1.5 w-4 h-4 bg-pakgreen-500 text-white rounded-full flex items-center justify-center text-[10px]">
+              <span className="absolute top-2 right-2 w-4 h-4 bg-pakgreen-600 text-white rounded-full flex items-center justify-center text-[10px] shadow-xs">
                 <Check className="w-2.5 h-2.5 stroke-[3]" />
               </span>
             )}
-            <Car className={`w-6 h-6 mb-1 ${category === 'CAR' ? 'text-pakgreen-600' : 'text-slate-500'}`} />
-            <span className="font-bold text-xs text-center">{t.car || 'Car (AC)'}</span>
-            <span className="text-[10px] text-slate-400">4 Seats</span>
-            <span className="mt-1 text-xs font-extrabold text-pakgreen-700 bg-white px-2 py-0.5 rounded-md border border-slate-200">
+            <div className={`p-2 rounded-xl mb-1 ${category === 'CAR' ? 'bg-pakgreen-600/15 text-pakgreen-700' : 'bg-slate-100 text-slate-600'}`}>
+              <Car className="w-6 h-6" />
+            </div>
+            <span className="font-extrabold text-xs text-center text-slate-900">{t.car || 'Car (AC)'}</span>
+            <span className="text-[10px] text-slate-400 font-medium">4 Seats</span>
+            <span className="mt-1.5 text-xs font-black text-pakgreen-800 bg-white/90 px-2.5 py-0.5 rounded-lg border border-slate-200/80 shadow-2xs">
               PKR {carPrice}
             </span>
           </button>
@@ -174,21 +176,23 @@ export const BookingCard: React.FC<BookingCardProps> = ({
           <button
             type="button"
             onClick={() => handleCategorySelect('MOTORCYCLE')}
-            className={`p-3 rounded-xl border-2 flex flex-col items-center justify-between transition relative text-left ${
+            className={`p-3.5 rounded-2xl flex flex-col items-center justify-between text-left relative transition-all duration-200 ${
               category === 'MOTORCYCLE'
-                ? 'border-pakgreen-500 bg-pakgreen-50/60 text-pakgreen-950 shadow-sm'
-                : 'border-slate-200 hover:border-slate-300 bg-white text-slate-700'
+                ? 'glass-card-active scale-[1.02]'
+                : 'glass-card hover:bg-white/90'
             }`}
           >
             {category === 'MOTORCYCLE' && (
-              <span className="absolute top-1.5 right-1.5 w-4 h-4 bg-pakgreen-500 text-white rounded-full flex items-center justify-center text-[10px]">
+              <span className="absolute top-2 right-2 w-4 h-4 bg-pakgreen-600 text-white rounded-full flex items-center justify-center text-[10px] shadow-xs">
                 <Check className="w-2.5 h-2.5 stroke-[3]" />
               </span>
             )}
-            <Bike className={`w-6 h-6 mb-1 ${category === 'MOTORCYCLE' ? 'text-pakgreen-600' : 'text-slate-500'}`} />
-            <span className="font-bold text-xs text-center">{t.motorcycle || 'Bike / سواری'}</span>
-            <span className="text-[10px] text-slate-400">1 Rider</span>
-            <span className="mt-1 text-xs font-extrabold text-pakgreen-700 bg-white px-2 py-0.5 rounded-md border border-slate-200">
+            <div className={`p-2 rounded-xl mb-1 ${category === 'MOTORCYCLE' ? 'bg-pakgreen-600/15 text-pakgreen-700' : 'bg-slate-100 text-slate-600'}`}>
+              <Bike className="w-6 h-6" />
+            </div>
+            <span className="font-extrabold text-xs text-center text-slate-900">{t.motorcycle || 'Bike / سواری'}</span>
+            <span className="text-[10px] text-slate-400 font-medium">1 Rider</span>
+            <span className="mt-1.5 text-xs font-black text-pakgreen-800 bg-white/90 px-2.5 py-0.5 rounded-lg border border-slate-200/80 shadow-2xs">
               PKR {motoPrice}
             </span>
           </button>
@@ -197,56 +201,58 @@ export const BookingCard: React.FC<BookingCardProps> = ({
           <button
             type="button"
             onClick={() => handleCategorySelect('RICKSHAW')}
-            className={`p-3 rounded-xl border-2 flex flex-col items-center justify-between transition relative text-left ${
+            className={`p-3.5 rounded-2xl flex flex-col items-center justify-between text-left relative transition-all duration-200 ${
               category === 'RICKSHAW'
-                ? 'border-pakgreen-500 bg-pakgreen-50/60 text-pakgreen-950 shadow-sm'
-                : 'border-slate-200 hover:border-slate-300 bg-white text-slate-700'
+                ? 'glass-card-active scale-[1.02]'
+                : 'glass-card hover:bg-white/90'
             }`}
           >
             {category === 'RICKSHAW' && (
-              <span className="absolute top-1.5 right-1.5 w-4 h-4 bg-pakgreen-500 text-white rounded-full flex items-center justify-center text-[10px]">
+              <span className="absolute top-2 right-2 w-4 h-4 bg-pakgreen-600 text-white rounded-full flex items-center justify-center text-[10px] shadow-xs">
                 <Check className="w-2.5 h-2.5 stroke-[3]" />
               </span>
             )}
-            <Navigation className={`w-6 h-6 mb-1 ${category === 'RICKSHAW' ? 'text-pakgreen-600' : 'text-slate-500'}`} />
-            <span className="font-bold text-xs text-center">{t.rickshaw || 'Auto / رکشہ'}</span>
-            <span className="text-[10px] text-slate-400">3 Seats</span>
-            <span className="mt-1 text-xs font-extrabold text-pakgreen-700 bg-white px-2 py-0.5 rounded-md border border-slate-200">
+            <div className={`p-2 rounded-xl mb-1 ${category === 'RICKSHAW' ? 'bg-pakgreen-600/15 text-pakgreen-700' : 'bg-slate-100 text-slate-600'}`}>
+              <Navigation className="w-6 h-6" />
+            </div>
+            <span className="font-extrabold text-xs text-center text-slate-900">{t.rickshaw || 'Auto / رکشہ'}</span>
+            <span className="text-[10px] text-slate-400 font-medium">3 Seats</span>
+            <span className="mt-1.5 text-xs font-black text-pakgreen-800 bg-white/90 px-2.5 py-0.5 rounded-lg border border-slate-200/80 shadow-2xs">
               PKR {rickPrice}
             </span>
           </button>
         </div>
       </div>
 
-      {/* 4. inDrive FARE NEGOTIATION / BIDDING STEPPER */}
-      <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 space-y-3">
+      {/* 4. inDrive FARE NEGOTIATION / FROSTED STEPPER */}
+      <div className="glass-panel-subtle p-4 border border-white/80 space-y-3">
         <div className="flex items-center justify-between">
           <div>
-            <span className="text-xs font-bold text-slate-700 block">Offer Your Fare</span>
+            <span className="text-xs font-extrabold text-slate-800 block">Offer Your Fare</span>
             {fareEstimate && (
-              <span className="text-[11px] text-slate-500">
+              <span className="text-[11px] text-slate-500 font-medium">
                 Recommended: PKR {fareEstimate.suggestedFarePkr}
               </span>
             )}
           </div>
-          <span className="text-xs font-semibold text-pakgreen-700 bg-pakgreen-100/70 px-2 py-0.5 rounded-md">
+          <span className="text-xs font-extrabold text-emerald-800 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-0.5 rounded-full">
             Cash on Arrival
           </span>
         </div>
 
-        {/* Big Stepper */}
-        <div className="flex items-center justify-between bg-white border-2 border-slate-200 rounded-xl p-2 shadow-2xs">
+        {/* Big Frosted Stepper */}
+        <div className="flex items-center justify-between bg-white/90 backdrop-blur-md border border-slate-200/80 rounded-2xl p-2 shadow-inner">
           <button
             type="button"
             onClick={() => setProposedFarePkr(Math.max(50, proposedFarePkr - 20))}
-            className="w-10 h-10 rounded-lg bg-slate-100 hover:bg-slate-200 active:bg-slate-300 text-slate-700 font-bold flex items-center justify-center transition"
+            className="w-11 h-11 rounded-xl bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-700 font-black flex items-center justify-center transition shadow-2xs"
             aria-label="Decrease Fare"
           >
-            <Minus className="w-4 h-4" />
+            <Minus className="w-4 h-4 stroke-[3]" />
           </button>
 
           <div className="text-center">
-            <span className="text-2xl font-black text-charcoal-900 tracking-tight">
+            <span className="text-2xl font-black text-slate-900 tracking-tight">
               PKR {proposedFarePkr}
             </span>
           </div>
@@ -254,40 +260,40 @@ export const BookingCard: React.FC<BookingCardProps> = ({
           <button
             type="button"
             onClick={() => setProposedFarePkr(proposedFarePkr + 20)}
-            className="w-10 h-10 rounded-lg bg-pakgreen-500 hover:bg-pakgreen-600 active:bg-pakgreen-700 text-white font-bold flex items-center justify-center transition shadow-xs"
+            className="w-11 h-11 rounded-xl glass-btn-primary active:scale-95 text-white font-black flex items-center justify-center transition shadow-md shadow-pakgreen-600/30"
             aria-label="Increase Fare"
           >
-            <Plus className="w-4 h-4" />
+            <Plus className="w-4 h-4 stroke-[3]" />
           </button>
         </div>
 
         {/* Quick Bump Pills */}
-        <div className="grid grid-cols-4 gap-1.5 pt-1">
+        <div className="grid grid-cols-4 gap-2 pt-1">
           <button
             type="button"
             onClick={() => setProposedFarePkr(Math.max(50, proposedFarePkr - 20))}
-            className="py-1.5 px-2 bg-white border border-slate-200 hover:border-slate-300 hover:bg-slate-100 rounded-lg text-xs font-bold text-slate-600 transition text-center"
+            className="glass-btn-secondary py-1.5 px-2 text-xs font-bold text-slate-700 hover:text-pakgreen-700 transition text-center active:scale-95"
           >
             -20
           </button>
           <button
             type="button"
             onClick={() => setProposedFarePkr(proposedFarePkr + 20)}
-            className="py-1.5 px-2 bg-white border border-slate-200 hover:border-slate-300 hover:bg-slate-100 rounded-lg text-xs font-bold text-slate-700 transition text-center"
+            className="glass-btn-secondary py-1.5 px-2 text-xs font-bold text-slate-700 hover:text-pakgreen-700 transition text-center active:scale-95"
           >
             +20
           </button>
           <button
             type="button"
             onClick={() => setProposedFarePkr(proposedFarePkr + 50)}
-            className="py-1.5 px-2 bg-white border border-slate-200 hover:border-slate-300 hover:bg-slate-100 rounded-lg text-xs font-bold text-slate-700 transition text-center"
+            className="glass-btn-secondary py-1.5 px-2 text-xs font-bold text-slate-700 hover:text-pakgreen-700 transition text-center active:scale-95"
           >
             +50
           </button>
           <button
             type="button"
             onClick={() => setProposedFarePkr(proposedFarePkr + 100)}
-            className="py-1.5 px-2 bg-white border border-slate-200 hover:border-slate-300 hover:bg-slate-100 rounded-lg text-xs font-bold text-slate-700 transition text-center"
+            className="glass-btn-secondary py-1.5 px-2 text-xs font-bold text-slate-700 hover:text-pakgreen-700 transition text-center active:scale-95"
           >
             +100
           </button>
@@ -296,7 +302,7 @@ export const BookingCard: React.FC<BookingCardProps> = ({
 
       {/* 5. Gate Notes / Instructions */}
       <div>
-        <label className="text-xs font-bold text-slate-700 block mb-1">
+        <label className="text-xs font-extrabold text-slate-700 block mb-1">
           {t.pickupNotes || 'Pickup Gate Note'} (Optional)
         </label>
         <input
@@ -304,7 +310,7 @@ export const BookingCard: React.FC<BookingCardProps> = ({
           placeholder="e.g. Near White Gate, Call upon arrival..."
           value={pickupNotes}
           onChange={(e) => setPickupNotes(e.target.value)}
-          className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-pakgreen-500 outline-none"
+          className="glass-input w-full px-3.5 py-2.5 text-xs text-slate-800 placeholder:text-slate-400 outline-none"
         />
         <div className="flex flex-wrap gap-1.5 mt-2">
           {notePresets.map((preset) => (
@@ -312,7 +318,7 @@ export const BookingCard: React.FC<BookingCardProps> = ({
               key={preset}
               type="button"
               onClick={() => setPickupNotes(preset)}
-              className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg text-[11px] font-semibold transition"
+              className="px-2.5 py-1 bg-white/70 hover:bg-white backdrop-blur-sm border border-slate-200/80 text-slate-600 rounded-xl text-[11px] font-semibold transition active:scale-95 shadow-2xs"
             >
               {preset}
             </button>
@@ -325,7 +331,7 @@ export const BookingCard: React.FC<BookingCardProps> = ({
         type="button"
         disabled={loading || !pickup || !destination}
         onClick={onRequestRide}
-        className="w-full py-4 bg-pakgreen-600 hover:bg-pakgreen-700 active:bg-pakgreen-800 text-white font-extrabold text-sm rounded-xl shadow-md transition flex items-center justify-center space-x-2 disabled:opacity-50"
+        className="w-full py-4 glass-btn-primary text-white font-black text-sm rounded-2xl shadow-xl shadow-pakgreen-600/30 transition flex items-center justify-center space-x-2 disabled:opacity-50 active:scale-[0.99]"
       >
         <Car className="w-4 h-4" />
         <span>
@@ -335,7 +341,7 @@ export const BookingCard: React.FC<BookingCardProps> = ({
         </span>
       </button>
 
-      <div className="text-center text-[11px] text-slate-400">
+      <div className="text-center text-[11px] text-slate-500 font-medium">
         100% Cash payment to Captain • No surge pricing • No commission cuts
       </div>
     </div>

@@ -3,41 +3,199 @@
 @tailwind utilities;
 
 @layer components {
-  /* Reusable PakRide Component System (Eliminates multi-line Tailwind class bloat) */
+  /* ========================================================
+     PAKRIDE MODERN GLASSMORPHIC DESIGN SYSTEM (v2.0)
+     Apple iOS / macOS Sonoma / Modern Yango Glass UI
+     ======================================================== */
+
+  /* Main Translucent Glass Containers */
+  .glass-panel {
+    background: rgba(255, 255, 255, 0.82);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.7);
+    box-shadow: 
+      0 20px 40px -15px rgba(15, 23, 42, 0.07),
+      0 0 1px 1px rgba(255, 255, 255, 0.9) inset;
+    border-radius: 1.5rem;
+  }
+
+  .glass-panel-subtle {
+    background: rgba(255, 255, 255, 0.65);
+    backdrop-filter: blur(14px) saturate(160%);
+    -webkit-backdrop-filter: blur(14px) saturate(160%);
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    box-shadow: 0 10px 30px -10px rgba(15, 23, 42, 0.05);
+    border-radius: 1.25rem;
+  }
+
+  .glass-panel-dark {
+    background: rgba(15, 23, 42, 0.84);
+    backdrop-filter: blur(24px) saturate(190%);
+    -webkit-backdrop-filter: blur(24px) saturate(190%);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 
+      0 20px 50px -10px rgba(0, 0, 0, 0.4),
+      0 0 1px 1px rgba(255, 255, 255, 0.08) inset;
+    border-radius: 1.5rem;
+  }
+
+  /* Interactive Glass Cards */
+  .glass-card {
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.8);
+    box-shadow: 0 8px 24px -6px rgba(15, 23, 42, 0.04);
+    border-radius: 1.25rem;
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .glass-card:hover {
+    background: rgba(255, 255, 255, 0.85);
+    transform: translateY(-2px);
+    box-shadow: 0 16px 32px -8px rgba(0, 168, 89, 0.12);
+    border-color: rgba(0, 168, 89, 0.4);
+  }
+
+  .glass-card-active {
+    background: linear-gradient(135deg, rgba(238, 251, 244, 0.9) 0%, rgba(215, 246, 228, 0.8) 100%);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 2px solid #00a859;
+    box-shadow: 
+      0 14px 28px -6px rgba(0, 168, 89, 0.2),
+      0 0 0 1px rgba(0, 168, 89, 0.2);
+    border-radius: 1.25rem;
+  }
+
+  /* Glass Form Inputs */
+  .glass-input {
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1.5px solid rgba(226, 232, 240, 0.9);
+    border-radius: 1rem;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02) inset;
+    transition: all 0.2s ease;
+  }
+
+  .glass-input:focus {
+    background: rgba(255, 255, 255, 0.95);
+    border-color: #00a859;
+    box-shadow: 
+      0 0 0 3px rgba(0, 168, 89, 0.15),
+      0 2px 6px rgba(0, 0, 0, 0.02) inset;
+  }
+
+  /* Glass Buttons */
+  .glass-btn-primary {
+    background: linear-gradient(135deg, #00b862 0%, #008746 100%);
+    box-shadow: 
+      0 10px 24px -4px rgba(0, 168, 89, 0.35),
+      0 1px 1px 0 rgba(255, 255, 255, 0.3) inset;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 1rem;
+    color: white;
+    font-weight: 800;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .glass-btn-primary:hover {
+    background: linear-gradient(135deg, #00c76b 0%, #00964e 100%);
+    transform: translateY(-1px);
+    box-shadow: 
+      0 14px 30px -4px rgba(0, 168, 89, 0.45),
+      0 1px 1px 0 rgba(255, 255, 255, 0.4) inset;
+  }
+
+  .glass-btn-primary:active {
+    transform: translateY(0);
+    box-shadow: 0 4px 12px rgba(0, 168, 89, 0.3);
+  }
+
+  .glass-btn-secondary {
+    background: rgba(255, 255, 255, 0.75);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(226, 232, 240, 0.9);
+    border-radius: 0.875rem;
+    color: #334155;
+    font-weight: 700;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+    transition: all 0.2s ease;
+  }
+
+  .glass-btn-secondary:hover {
+    background: rgba(255, 255, 255, 0.95);
+    border-color: rgba(203, 213, 225, 1);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.06);
+  }
+
+  /* Glass Badges */
+  .glass-badge-success {
+    background: rgba(238, 251, 244, 0.85);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(0, 168, 89, 0.25);
+    color: #045b32;
+    border-radius: 9999px;
+    font-weight: 700;
+  }
+
+  .glass-badge-warning {
+    background: rgba(254, 243, 199, 0.85);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(245, 158, 11, 0.3);
+    color: #92400e;
+    border-radius: 9999px;
+    font-weight: 700;
+  }
+
+  .glass-badge-info {
+    background: rgba(239, 246, 255, 0.85);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(59, 130, 246, 0.25);
+    color: #1e40af;
+    border-radius: 9999px;
+    font-weight: 700;
+  }
+
+  /* Legacy Utility aliases */
   .pak-card {
-    @apply bg-white rounded-2xl border border-slate-200 shadow-sm p-5;
+    @apply glass-panel p-5;
   }
   .pak-card-compact {
-    @apply bg-white rounded-xl border border-slate-200 shadow-sm p-4;
+    @apply glass-panel-subtle p-4;
   }
   .pak-btn-primary {
-    @apply px-4 py-2 bg-pakgreen-600 hover:bg-pakgreen-700 text-white rounded-xl text-xs font-bold transition shadow-sm flex items-center justify-center space-x-1.5;
+    @apply glass-btn-primary px-4 py-2 text-xs flex items-center justify-center space-x-1.5;
   }
   .pak-btn-secondary {
-    @apply px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold transition flex items-center space-x-1.5;
+    @apply glass-btn-secondary px-3.5 py-2 text-xs flex items-center space-x-1.5;
   }
   .pak-badge-success {
-    @apply px-2.5 py-1 bg-emerald-100 text-emerald-800 rounded-full text-xs font-bold inline-flex items-center space-x-1;
+    @apply glass-badge-success px-2.5 py-1 text-xs inline-flex items-center space-x-1;
   }
   .pak-badge-warning {
-    @apply px-2.5 py-1 bg-amber-100 text-amber-800 rounded-full text-xs font-bold inline-flex items-center space-x-1;
+    @apply glass-badge-warning px-2.5 py-1 text-xs inline-flex items-center space-x-1;
   }
   .pak-badge-info {
-    @apply px-2.5 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-bold inline-flex items-center space-x-1;
+    @apply glass-badge-info px-2.5 py-1 text-xs inline-flex items-center space-x-1;
   }
   .pak-badge-neutral {
-    @apply px-2.5 py-1 bg-slate-100 text-slate-700 rounded-full text-xs font-bold inline-flex items-center space-x-1;
+    @apply px-2.5 py-1 bg-white/70 backdrop-blur-md border border-slate-200 text-slate-700 rounded-full text-xs font-bold inline-flex items-center space-x-1;
   }
   .pak-input {
-    @apply w-full px-3 py-2 border border-slate-300 rounded-xl outline-none text-xs focus:border-pakgreen-500 transition;
+    @apply glass-input w-full px-3 py-2 text-xs outline-none transition;
   }
 }
 
-/* Leaflet Container Styling */
+/* Map & Leaflet Styling for Glass Container */
 .leaflet-container {
   width: 100%;
   height: 100%;
-  border-radius: 1rem;
+  border-radius: 1.5rem;
 }
 
 /* Custom Scrollbars */
@@ -46,12 +204,13 @@
   height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #f1f5f9;
+  background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
-  border-radius: 3px;
+  background: rgba(148, 163, 184, 0.4);
+  border-radius: 9999px;
+  backdrop-filter: blur(4px);
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
+  background: rgba(100, 116, 139, 0.6);
 }

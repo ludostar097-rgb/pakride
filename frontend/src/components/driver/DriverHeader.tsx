@@ -30,7 +30,7 @@ export const DriverHeader: React.FC<DriverHeaderProps> = ({
       : '🚗';
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-5">
+    <div className="glass-panel p-6 border border-white/80 shadow-2xl shadow-slate-900/5 transition-all">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         {/* Profile info */}
         <div className="flex items-center space-x-3.5">
@@ -38,36 +38,36 @@ export const DriverHeader: React.FC<DriverHeaderProps> = ({
             <img
               src={profile.profilePhotoUrl}
               alt={currentUser.fullName}
-              className="w-13 h-13 rounded-full object-cover border-2 border-pakgreen-500 shadow-sm"
+              className="w-14 h-14 rounded-2xl object-cover border-2 border-pakgreen-500 shadow-md shadow-pakgreen-500/20"
             />
           ) : (
-            <div className="w-13 h-13 rounded-full bg-pakgreen-100 border-2 border-pakgreen-500 flex items-center justify-center font-bold text-pakgreen-800 text-lg">
+            <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-pakgreen-600 to-emerald-400 border-2 border-white/40 flex items-center justify-center font-black text-white text-xl shadow-md shadow-pakgreen-600/30">
               {currentUser.fullName.charAt(0)}
             </div>
           )}
 
           <div>
             <div className="flex items-center space-x-2 flex-wrap gap-y-1">
-              <h2 className="text-xl font-bold text-charcoal-900">{currentUser.fullName}</h2>
+              <h2 className="text-xl font-black text-slate-900 tracking-tight">{currentUser.fullName}</h2>
               {isApproved ? (
-                <span className="flex items-center space-x-1 text-xs font-semibold px-2.5 py-1 bg-green-100 text-green-800 rounded-full">
-                  <ShieldCheck className="w-3.5 h-3.5" />
+                <span className="flex items-center space-x-1 text-xs font-extrabold px-3 py-1 bg-emerald-500/15 text-emerald-900 border border-emerald-500/30 rounded-full shadow-2xs">
+                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
                   <span>Verified Captain</span>
                 </span>
               ) : isUnderReview ? (
-                <span className="flex items-center space-x-1 text-xs font-semibold px-2.5 py-1 bg-amber-100 text-amber-800 rounded-full">
-                  <Clock className="w-3.5 h-3.5" />
+                <span className="flex items-center space-x-1 text-xs font-extrabold px-3 py-1 bg-amber-500/15 text-amber-900 border border-amber-500/30 rounded-full shadow-2xs">
+                  <Clock className="w-3.5 h-3.5 text-amber-600" />
                   <span>Documents Under Review</span>
                 </span>
               ) : (
-                <span className="flex items-center space-x-1 text-xs font-semibold px-2.5 py-1 bg-blue-100 text-blue-800 rounded-full">
-                  <AlertCircle className="w-3.5 h-3.5" />
+                <span className="flex items-center space-x-1 text-xs font-extrabold px-3 py-1 bg-blue-500/15 text-blue-900 border border-blue-500/30 rounded-full shadow-2xs">
+                  <AlertCircle className="w-3.5 h-3.5 text-blue-600" />
                   <span>Documents Pending</span>
                 </span>
               )}
             </div>
 
-            <p className="text-xs text-slate-500 mt-1">
+            <p className="text-xs text-slate-500 mt-1 font-medium">
               {profile.vehicle?.plateNumber ? (
                 <span>
                   {iconChar} {profile.vehicle.make} {profile.vehicle.model} ({profile.vehicle.plateNumber})
@@ -80,11 +80,11 @@ export const DriverHeader: React.FC<DriverHeaderProps> = ({
         </div>
 
         {/* Action Controls */}
-        <div className="flex items-center space-x-2 w-full sm:w-auto">
+        <div className="flex items-center space-x-2.5 w-full sm:w-auto">
           <button
             type="button"
             onClick={onToggleEditVehicle}
-            className="px-3.5 py-2.5 rounded-xl border border-slate-300 hover:bg-slate-50 text-slate-700 font-bold text-xs flex items-center space-x-1.5 transition"
+            className="px-4 py-2.5 rounded-xl glass-btn-secondary text-xs font-bold flex items-center space-x-1.5 transition active:scale-95 shadow-xs"
           >
             <Edit3 className="w-3.5 h-3.5 text-slate-500" />
             <span>{isEditingVehicle ? 'Close Form' : 'Update Vehicle / Docs'}</span>
@@ -94,12 +94,12 @@ export const DriverHeader: React.FC<DriverHeaderProps> = ({
             type="button"
             disabled={!isApproved}
             onClick={onToggleOnline}
-            className={`flex-1 sm:flex-none px-6 py-2.5 rounded-xl font-bold text-sm flex items-center justify-center space-x-2 shadow-sm transition ${
+            className={`flex-1 sm:flex-none px-6 py-2.5 rounded-xl font-black text-sm flex items-center justify-center space-x-2 transition active:scale-95 shadow-md ${
               !isApproved
-                ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                ? 'bg-slate-200 text-slate-400 cursor-not-allowed shadow-none'
                 : profile.isOnline
-                ? 'bg-red-500 hover:bg-red-600 text-white'
-                : 'bg-pakgreen-500 hover:bg-pakgreen-600 text-white'
+                ? 'bg-gradient-to-tr from-red-600 to-rose-500 hover:from-red-700 hover:to-rose-600 text-white shadow-red-500/30'
+                : 'glass-btn-primary text-white shadow-pakgreen-600/30'
             }`}
           >
             <Power className="w-4 h-4" />

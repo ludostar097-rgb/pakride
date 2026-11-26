@@ -102,8 +102,8 @@ export const LiveChatModal: React.FC<LiveChatModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="bg-white rounded-3xl max-w-sm w-full h-[520px] flex flex-col shadow-2xl relative overflow-hidden border border-slate-200">
+    <div className="fixed inset-0 z-50 bg-slate-950/65 backdrop-blur-md flex items-center justify-center p-4">
+      <div className="glass-panel max-w-sm w-full h-[520px] flex flex-col shadow-2xl relative overflow-hidden border border-white/90 p-0">
         {/* Chat Header */}
         <div className="bg-charcoal-900 text-white p-4 flex items-center justify-between shadow-sm">
           <div className="flex items-center space-x-2.5">

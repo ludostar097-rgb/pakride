@@ -355,35 +355,37 @@ export const PassengerView: React.FC<PassengerViewProps> = ({
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 pb-12">
-      {/* Left Column: Interactive Map */}
-      <div className="lg:col-span-7 h-[360px] sm:h-[440px] lg:h-[720px] relative lg:sticky lg:top-20">
-        <MapView
-          pickup={pickup || undefined}
-          destination={destination || undefined}
-          driverLocation={driverPos}
-          onSelectPickup={(loc) => {
-            if (!activeRide) {
-              setPickup(loc);
-              GeocodingService.saveRecentLocation(loc);
-            }
-          }}
-          onSelectDestination={(loc) => {
-            if (!activeRide) {
-              setDestination(loc);
-              GeocodingService.saveRecentLocation(loc);
-            }
-          }}
-          zoneName={detectedCity}
-        />
-        <div className="mt-2 flex items-center justify-between text-[11px] text-slate-500 bg-white/90 backdrop-blur px-3 py-1.5 rounded-xl border border-slate-200 shadow-2xs">
-          <div className="flex items-center space-x-1.5">
+      {/* Left Column: Interactive Map with Glass Frame */}
+      <div className="lg:col-span-7 h-[360px] sm:h-[440px] lg:h-[720px] relative lg:sticky lg:top-24">
+        <div className="w-full h-full rounded-3xl p-1.5 glass-panel-subtle shadow-xl border border-white/80 overflow-hidden">
+          <MapView
+            pickup={pickup || undefined}
+            destination={destination || undefined}
+            driverLocation={driverPos}
+            onSelectPickup={(loc) => {
+              if (!activeRide) {
+                setPickup(loc);
+                GeocodingService.saveRecentLocation(loc);
+              }
+            }}
+            onSelectDestination={(loc) => {
+              if (!activeRide) {
+                setDestination(loc);
+                GeocodingService.saveRecentLocation(loc);
+              }
+            }}
+            zoneName={detectedCity}
+          />
+        </div>
+        <div className="mt-2.5 flex items-center justify-between text-[11px] text-slate-600 bg-white/75 backdrop-blur-xl px-4 py-2 rounded-2xl border border-white/80 shadow-xs">
+          <div className="flex items-center space-x-2">
             <Compass className="w-3.5 h-3.5 text-pakgreen-600" />
-            <span>Click anywhere on the map to set pin location</span>
+            <span className="font-medium">Tap map anytime to fine-tune route pin</span>
           </div>
-          <div className="flex items-center space-x-1 font-semibold">
-            <span className={mapTargetMode === 'pickup' ? 'text-pakgreen-600' : 'text-slate-400'}>🟢 Pickup</span>
-            <span>/</span>
-            <span className={mapTargetMode === 'destination' ? 'text-red-600' : 'text-slate-400'}>🔴 Drop</span>
+          <div className="flex items-center space-x-1.5 font-bold">
+            <span className="text-emerald-700 bg-emerald-50/80 px-2 py-0.5 rounded-md border border-emerald-200">🟢 Pickup</span>
+            <span>→</span>
+            <span className="text-red-700 bg-red-50/80 px-2 py-0.5 rounded-md border border-red-200">🔴 Drop</span>
           </div>
         </div>
       </div>

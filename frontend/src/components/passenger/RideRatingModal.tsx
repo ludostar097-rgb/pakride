@@ -25,8 +25,8 @@ export const RideRatingModal: React.FC<RideRatingModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl max-w-sm w-full p-6 space-y-4 shadow-2xl text-center">
+    <div className="fixed inset-0 z-50 bg-slate-950/65 backdrop-blur-md flex items-center justify-center p-4">
+      <div className="glass-panel max-w-sm w-full p-6 space-y-4 shadow-2xl text-center border border-white/90">
         <div className="w-12 h-12 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto">
           <CheckCircle2 className="w-6 h-6" />
         </div>

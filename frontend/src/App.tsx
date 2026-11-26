@@ -270,31 +270,36 @@ export const App: React.FC = () => {
   return (
     <div
       dir={lang === 'ur' ? 'rtl' : 'ltr'}
-      className={`min-h-screen bg-slate-100 flex flex-col ${
+      className={`min-h-screen bg-gradient-to-br from-slate-50 via-emerald-50/20 to-slate-100 relative overflow-x-hidden flex flex-col ${
         lang === 'ur' ? 'font-urdu' : 'font-sans'
       }`}
     >
+      {/* Ambient background blur spheres for genuine glass refraction */}
+      <div className="fixed top-[-10%] left-[-5%] w-[450px] h-[450px] bg-emerald-400/12 rounded-full blur-3xl pointer-events-none -z-10" />
+      <div className="fixed bottom-[-10%] right-[-5%] w-[550px] h-[550px] bg-teal-400/12 rounded-full blur-3xl pointer-events-none -z-10" />
+      <div className="fixed top-[35%] right-[20%] w-[350px] h-[350px] bg-emerald-300/10 rounded-full blur-3xl pointer-events-none -z-10" />
+
       {/* Toast Notification Banner */}
       {toastMessage && (
-        <div className="fixed top-4 right-4 z-50 bg-charcoal-900 text-white px-4 py-3 rounded-xl shadow-xl flex items-center space-x-2 border border-pakgreen-500 animate-bounce">
-          <Bell className="w-4 h-4 text-pakgreen-400" />
-          <span className="text-xs font-semibold">{toastMessage}</span>
+        <div className="fixed top-4 right-4 z-50 bg-slate-900/90 text-white backdrop-blur-xl px-4 py-3 rounded-2xl shadow-2xl flex items-center space-x-2.5 border border-pakgreen-400/50 animate-bounce">
+          <Bell className="w-4 h-4 text-pakgreen-400 animate-pulse" />
+          <span className="text-xs font-bold tracking-tight">{toastMessage}</span>
         </div>
       )}
 
-      {/* Top Header Navigation */}
-      <header className="bg-charcoal-900 text-white sticky top-0 z-40 shadow-md">
-        <div className="max-w-7xl mx-auto px-4 py-2.5 flex flex-wrap items-center justify-between gap-3">
+      {/* Modern Glass Header Navigation */}
+      <header className="sticky top-0 z-40 bg-slate-950/80 backdrop-blur-2xl border-b border-white/10 shadow-lg shadow-black/5 text-white transition-all">
+        <div className="max-w-7xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3">
           {/* Brand Logo */}
           <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 rounded-lg bg-pakgreen-500 flex items-center justify-center font-extrabold text-white text-base shadow-sm">
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-pakgreen-600 to-emerald-400 flex items-center justify-center font-black text-white text-base shadow-md shadow-pakgreen-500/30 border border-white/20">
               PR
             </div>
             <div>
               <div className="font-extrabold text-base tracking-tight flex items-center space-x-2">
                 <span>{t.brand}</span>
-                <span className="text-[10px] bg-pakgreen-500/20 text-pakgreen-300 px-2 py-0.5 rounded font-mono font-bold">
-                  PILOT v1.0
+                <span className="text-[10px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-2 py-0.5 rounded-full font-mono font-bold">
+                  PILOT v2.0
                 </span>
               </div>
               <div className="text-[10px] text-slate-400 hidden sm:block">{t.tagline}</div>
@@ -302,14 +307,14 @@ export const App: React.FC = () => {
           </div>
 
           {/* 3 App Switching Segmented Tabs (Unified Web Workspace for Demo & Testing) */}
-          <div className="flex items-center bg-charcoal-800 p-1 rounded-xl border border-charcoal-700">
+          <div className="flex items-center bg-white/10 backdrop-blur-md p-1 rounded-2xl border border-white/15 shadow-inner">
             <button
               type="button"
               onClick={() => handleSwitchApp('PASSENGER')}
-              className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition ${
+              className={`flex items-center space-x-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all ${
                 appMode === 'PASSENGER'
-                  ? 'bg-pakgreen-500 text-white shadow-xs'
-                  : 'text-slate-300 hover:text-white'
+                  ? 'bg-pakgreen-600 text-white shadow-md shadow-pakgreen-600/30 scale-[1.02]'
+                  : 'text-slate-300 hover:text-white hover:bg-white/5'
               }`}
             >
               <Car className="w-3.5 h-3.5" />
@@ -319,10 +324,10 @@ export const App: React.FC = () => {
             <button
               type="button"
               onClick={() => handleSwitchApp('DRIVER')}
-              className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition ${
+              className={`flex items-center space-x-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all ${
                 appMode === 'DRIVER'
-                  ? 'bg-pakgreen-500 text-white shadow-xs'
-                  : 'text-slate-300 hover:text-white'
+                  ? 'bg-pakgreen-600 text-white shadow-md shadow-pakgreen-600/30 scale-[1.02]'
+                  : 'text-slate-300 hover:text-white hover:bg-white/5'
               }`}
             >
               <Navigation className="w-3.5 h-3.5" />
@@ -332,10 +337,10 @@ export const App: React.FC = () => {
             <button
               type="button"
               onClick={() => handleSwitchApp('ADMIN')}
-              className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition ${
+              className={`flex items-center space-x-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all ${
                 appMode === 'ADMIN'
-                  ? 'bg-pakgreen-500 text-white shadow-xs'
-                  : 'text-slate-300 hover:text-white'
+                  ? 'bg-pakgreen-600 text-white shadow-md shadow-pakgreen-600/30 scale-[1.02]'
+                  : 'text-slate-300 hover:text-white hover:bg-white/5'
               }`}
             >
               <Shield className="w-3.5 h-3.5" />
@@ -347,7 +352,7 @@ export const App: React.FC = () => {
           <div className="flex items-center space-x-2">
             {/* Quick Account Switcher (e.g. Passenger 1 vs Passenger 2, Driver 1 vs Driver 2) */}
             {modeAccounts.length > 1 && (
-              <div className="flex items-center space-x-1 bg-charcoal-800 px-2 py-1.5 rounded-xl border border-charcoal-700 hidden md:flex">
+              <div className="flex items-center space-x-1 bg-white/10 backdrop-blur-md px-2.5 py-1.5 rounded-xl border border-white/10 hidden md:flex hover:border-white/20 transition">
                 <User className="w-3.5 h-3.5 text-slate-400" />
                 <select
                   value={currentUser.id}
@@ -355,7 +360,7 @@ export const App: React.FC = () => {
                   className="bg-transparent text-xs text-white outline-none cursor-pointer font-medium"
                 >
                   {modeAccounts.map((p) => (
-                    <option key={p.id} value={p.id} className="bg-charcoal-900 text-white">
+                    <option key={p.id} value={p.id} className="bg-slate-900 text-white">
                       {p.label}
                     </option>
                   ))}
@@ -365,18 +370,18 @@ export const App: React.FC = () => {
 
             {/* Profile Pill (When Logged In) vs Sign In Button (When Logged Out) */}
             {!isLoggedOut ? (
-              <div className="flex items-center space-x-2 bg-charcoal-800 px-3 py-1.5 rounded-xl border border-charcoal-700">
-                <div className="w-6 h-6 rounded-full bg-pakgreen-600 flex items-center justify-center text-xs font-bold text-white">
+              <div className="flex items-center space-x-2 bg-white/10 backdrop-blur-md px-3 py-1.5 rounded-xl border border-white/10">
+                <div className="w-6 h-6 rounded-full bg-gradient-to-tr from-pakgreen-600 to-emerald-400 flex items-center justify-center text-xs font-black text-white shadow-xs">
                   {currentUser.fullName.charAt(0)}
                 </div>
                 <div className="text-left text-xs hidden sm:block">
                   <div className="font-bold text-white truncate max-w-[110px]">{currentUser.fullName}</div>
-                  <div className="text-[10px] text-pakgreen-400 font-semibold">{currentUser.role}</div>
+                  <div className="text-[10px] text-emerald-400 font-semibold">{currentUser.role}</div>
                 </div>
                 <button
                   type="button"
                   onClick={handleLogout}
-                  className="p-1 hover:bg-charcoal-700 text-red-400 rounded-lg transition ml-1"
+                  className="p-1 hover:bg-white/10 text-red-400 rounded-lg transition ml-1"
                   title="Log out"
                 >
                   <LogOut className="w-3.5 h-3.5" />
@@ -386,7 +391,7 @@ export const App: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setShowAuthModal(true)}
-                className="flex items-center space-x-1.5 bg-pakgreen-500 hover:bg-pakgreen-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition shadow-xs"
+                className="flex items-center space-x-1.5 bg-pakgreen-600 hover:bg-pakgreen-500 text-white px-3 py-1.5 rounded-xl text-xs font-bold transition shadow-md shadow-pakgreen-600/30"
               >
                 <LogIn className="w-3.5 h-3.5" />
                 <span>{t.signIn || 'Sign In / Register'}</span>
@@ -397,7 +402,7 @@ export const App: React.FC = () => {
             <button
               type="button"
               onClick={toggleLanguage}
-              className="flex items-center space-x-1 bg-charcoal-800 hover:bg-charcoal-700 text-pakgreen-400 border border-charcoal-700 px-3 py-1.5 rounded-lg text-xs font-bold transition"
+              className="flex items-center space-x-1 bg-white/10 hover:bg-white/15 text-emerald-400 border border-white/10 px-3 py-1.5 rounded-xl text-xs font-bold transition"
             >
               <Globe className="w-3.5 h-3.5" />
               <span>{t.langToggle}</span>
@@ -474,9 +479,16 @@ export const App: React.FC = () => {
         t={t}
       />
 
-      {/* Footer */}
-      <footer className="bg-white border-t border-slate-200 py-3 text-center text-xs text-slate-500">
-        PakRide • Pilot Launch Edition • Karachi (Gulistan-e-Jauhar Pilot Zone) & Islamabad Multi-City Rollout • Cash-First Model
+      {/* Modern Glass Footer */}
+      <footer className="bg-white/60 backdrop-blur-xl border-t border-white/60 py-4 text-center text-xs text-slate-600 shadow-xs">
+        <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
+          <div className="font-semibold text-slate-700">
+            PakRide • Modern Glass Pilot Edition • Karachi, Islamabad, Lahore, Multan & D.G. Khan
+          </div>
+          <div className="text-[11px] text-emerald-700 font-bold bg-emerald-50/80 border border-emerald-200/80 px-2.5 py-1 rounded-full">
+            100% Cash-First Model • Zero Platform Commission
+          </div>
+        </div>
       </footer>
     </div>
   );
