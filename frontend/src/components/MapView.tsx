@@ -62,15 +62,11 @@ export const MapView: React.FC<MapViewProps> = ({
       attributionControl: false
     }).setView(initialCenter, 13);
 
-    // Initial Tile Layer
-    const tileUrl = isDark
-      ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
-      : 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
-    const layer = L.tileLayer(tileUrl, {
+    // Free, reliable OpenStreetMap vector/raster tiles (Subdomains a, b, c)
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19,
-      subdomains: 'abcd'
+      subdomains: ['a', 'b', 'c']
     }).addTo(map);
-    tileLayerRef.current = layer;
 
     // Map click handler: places pin and performs live Reverse Geocoding
     map.on('click', async (e) => {
@@ -94,22 +90,6 @@ export const MapView: React.FC<MapViewProps> = ({
       mapRef.current = null;
     };
   }, []);
-
-  // Dynamically swap map tiles when switching between Dark Orbix Glass and Light Glass
-  useEffect(() => {
-    if (!mapRef.current) return;
-    if (tileLayerRef.current) {
-      tileLayerRef.current.remove();
-    }
-    const tileUrl = isDark
-      ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
-      : 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
-    const layer = L.tileLayer(tileUrl, {
-      maxZoom: 19,
-      subdomains: 'abcd'
-    }).addTo(mapRef.current);
-    tileLayerRef.current = layer;
-  }, [isDark]);
 
   // Pan smoothly to user's Pickup Location whenever set or updated
   useEffect(() => {

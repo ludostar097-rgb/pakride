@@ -114,7 +114,8 @@ export const AdminView: React.FC<AdminViewProps> = ({
       }).setView(defaultCenter, OPERATING_CITIES[0].defaultZoom);
 
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        maxZoom: 19
+        maxZoom: 19,
+        subdomains: ['a', 'b', 'c']
       }).addTo(map);
 
       radarMapRef.current = map;
