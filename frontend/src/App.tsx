@@ -13,7 +13,10 @@ import {
   LogIn,
   LogOut,
   UserCheck,
-  ShieldAlert
+  ShieldAlert,
+  Sun,
+  Moon,
+  Sparkles
 } from 'lucide-react';
 import { PassengerView } from './components/PassengerView';
 import { DriverView } from './components/DriverView';
@@ -101,6 +104,31 @@ export const App: React.FC = () => {
   const [socket, setSocket] = useState<Socket | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [theme, setTheme] = useState<'dark' | 'light'>(() => {
+    const saved = localStorage.getItem('pakride_theme') as 'dark' | 'light';
+    return saved || 'dark'; // Orbix Dark Glass by default
+  });
+
+  useEffect(() => {
+    if (theme === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [theme]);
+
+  const toggleTheme = () => {
+    const nextTheme = theme === 'dark' ? 'light' : 'dark';
+    setTheme(nextTheme);
+    localStorage.setItem('pakride_theme', nextTheme);
+    if (nextTheme === 'dark') {
+      document.documentElement.classList.add('dark');
+      showToast('Switched to Orbix Dark Glass UI');
+    } else {
+      document.documentElement.classList.remove('dark');
+      showToast('Switched to Frosted Light Glass UI');
+    }
+  };
 
   const t = translations[lang];
 
@@ -270,14 +298,26 @@ export const App: React.FC = () => {
   return (
     <div
       dir={lang === 'ur' ? 'rtl' : 'ltr'}
-      className={`min-h-screen bg-gradient-to-br from-slate-50 via-emerald-50/20 to-slate-100 relative overflow-x-hidden flex flex-col ${
-        lang === 'ur' ? 'font-urdu' : 'font-sans'
-      }`}
+      className={`min-h-screen relative overflow-x-hidden flex flex-col transition-colors duration-300 ${
+        theme === 'dark'
+          ? 'dark bg-[#080c14] text-slate-100'
+          : 'bg-gradient-to-br from-slate-50 via-emerald-50/20 to-slate-100 text-slate-900'
+      } ${lang === 'ur' ? 'font-urdu' : 'font-sans'}`}
     >
       {/* Ambient background blur spheres for genuine glass refraction */}
-      <div className="fixed top-[-10%] left-[-5%] w-[450px] h-[450px] bg-emerald-400/12 rounded-full blur-3xl pointer-events-none -z-10" />
-      <div className="fixed bottom-[-10%] right-[-5%] w-[550px] h-[550px] bg-teal-400/12 rounded-full blur-3xl pointer-events-none -z-10" />
-      <div className="fixed top-[35%] right-[20%] w-[350px] h-[350px] bg-emerald-300/10 rounded-full blur-3xl pointer-events-none -z-10" />
+      {theme === 'dark' ? (
+        <>
+          <div className="fixed top-[-10%] left-[-5%] w-[550px] h-[550px] bg-emerald-500/12 rounded-full blur-[140px] pointer-events-none -z-10 animate-pulse" />
+          <div className="fixed bottom-[-10%] right-[-5%] w-[650px] h-[650px] bg-cyan-500/12 rounded-full blur-[160px] pointer-events-none -z-10" />
+          <div className="fixed top-[35%] right-[20%] w-[450px] h-[450px] bg-emerald-400/8 rounded-full blur-[120px] pointer-events-none -z-10" />
+        </>
+      ) : (
+        <>
+          <div className="fixed top-[-10%] left-[-5%] w-[450px] h-[450px] bg-emerald-400/12 rounded-full blur-3xl pointer-events-none -z-10" />
+          <div className="fixed bottom-[-10%] right-[-5%] w-[550px] h-[550px] bg-teal-400/12 rounded-full blur-3xl pointer-events-none -z-10" />
+          <div className="fixed top-[35%] right-[20%] w-[350px] h-[350px] bg-emerald-300/10 rounded-full blur-3xl pointer-events-none -z-10" />
+        </>
+      )}
 
       {/* Toast Notification Banner */}
       {toastMessage && (
@@ -398,6 +438,26 @@ export const App: React.FC = () => {
               </button>
             )}
 
+            {/* Theme Switcher: Dark Glass (Orbix) vs Light Glass */}
+            <button
+              type="button"
+              onClick={toggleTheme}
+              className="flex items-center space-x-1.5 bg-white/10 hover:bg-white/15 text-emerald-400 border border-white/10 px-3 py-1.5 rounded-xl text-xs font-bold transition"
+              title={theme === 'dark' ? 'Switch to Light Frosted Glass' : 'Switch to Orbix Dark Glass'}
+            >
+              {theme === 'dark' ? (
+                <>
+                  <Sun className="w-3.5 h-3.5 text-amber-400" />
+                  <span className="hidden sm:inline">Light Glass</span>
+                </>
+              ) : (
+                <>
+                  <Moon className="w-3.5 h-3.5 text-cyan-300" />
+                  <span className="hidden sm:inline">Orbix Glass</span>
+                </>
+              )}
+            </button>
+
             {/* Language Toggle */}
             <button
               type="button"
@@ -480,12 +540,12 @@ export const App: React.FC = () => {
       />
 
       {/* Modern Glass Footer */}
-      <footer className="bg-white/60 backdrop-blur-xl border-t border-white/60 py-4 text-center text-xs text-slate-600 shadow-xs">
+      <footer className="bg-white/60 dark:bg-slate-950/70 backdrop-blur-xl border-t border-white/60 dark:border-white/10 py-4 text-center text-xs text-slate-600 dark:text-slate-400 shadow-xs transition-colors">
         <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
-          <div className="font-semibold text-slate-700">
-            PakRide • Modern Glass Pilot Edition • Karachi, Islamabad, Lahore, Multan & D.G. Khan
+          <div className="font-semibold text-slate-700 dark:text-slate-300">
+            PakRide • Modern Orbix Glass Pilot • Karachi, Islamabad, Lahore, Multan & D.G. Khan
           </div>
-          <div className="text-[11px] text-emerald-700 font-bold bg-emerald-50/80 border border-emerald-200/80 px-2.5 py-1 rounded-full">
+          <div className="text-[11px] text-emerald-700 dark:text-emerald-400 font-bold bg-emerald-50/80 dark:bg-emerald-950/50 border border-emerald-200/80 dark:border-emerald-500/30 px-2.5 py-1 rounded-full">
             100% Cash-First Model • Zero Platform Commission
           </div>
         </div>

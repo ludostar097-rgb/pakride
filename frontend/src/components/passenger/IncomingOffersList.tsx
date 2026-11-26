@@ -27,22 +27,22 @@ export const IncomingOffersList: React.FC<IncomingOffersListProps> = ({
   const activeOffers = offers.filter((o) => o.status === 'PENDING' || !o.status);
 
   return (
-    <div className="glass-panel p-6 shadow-2xl shadow-slate-900/5 border border-white/80 space-y-4 transition-all">
-      <div className="flex justify-between items-center pb-2.5 border-b border-slate-200/50">
-        <h3 className="font-black text-sm text-slate-900 flex items-center space-x-2">
+    <div className="glass-panel p-6 shadow-2xl border border-white/80 dark:border-white/10 space-y-4 transition-all">
+      <div className="flex justify-between items-center pb-2.5 border-b border-slate-200/50 dark:border-white/10">
+        <h3 className="font-black text-sm text-slate-900 dark:text-white flex items-center space-x-2">
           <span className="w-2.5 h-2.5 rounded-full bg-pakgreen-500 animate-pulse"></span>
           <span>{t.driverOffers || 'Incoming Driver Offers'}</span>
         </h3>
-        <span className="text-xs text-emerald-800 bg-emerald-500/10 border border-emerald-500/20 px-3 py-0.5 rounded-full font-extrabold">
+        <span className="text-xs text-emerald-800 dark:text-emerald-300 bg-emerald-500/10 dark:bg-emerald-950/40 border border-emerald-500/20 dark:border-emerald-500/30 px-3 py-0.5 rounded-full font-extrabold">
           {activeOffers.length} live {activeOffers.length === 1 ? 'offer' : 'offers'}
         </span>
       </div>
 
       {activeOffers.length === 0 ? (
-        <div className="text-center py-8 text-slate-400 text-xs space-y-2 glass-panel-subtle rounded-2xl border border-dashed border-slate-200/80">
-          <Clock className="w-7 h-7 mx-auto text-pakgreen-600 animate-spin" />
-          <p className="font-extrabold text-slate-700 text-sm">{t.noOffersYet || 'Waiting for nearby driver offers...'}</p>
-          <p className="text-[11px] text-slate-400 font-medium">
+        <div className="text-center py-8 text-slate-400 text-xs space-y-2 glass-panel-subtle rounded-2xl border border-dashed border-slate-200/80 dark:border-white/10">
+          <Clock className="w-7 h-7 mx-auto text-pakgreen-600 dark:text-emerald-400 animate-spin" />
+          <p className="font-extrabold text-slate-700 dark:text-slate-200 text-sm">{t.noOffersYet || 'Waiting for nearby driver offers...'}</p>
+          <p className="text-[11px] text-slate-400 dark:text-slate-500 font-medium">
             Captains are reviewing your request. When a captain accepts or bids, their card will appear here instantly.
           </p>
         </div>
@@ -69,18 +69,18 @@ export const IncomingOffersList: React.FC<IncomingOffersListProps> = ({
 
             const timerBadgeColor =
               secondsLeft > 60
-                ? 'bg-emerald-500/10 text-emerald-800 border-emerald-500/25'
+                ? 'bg-emerald-500/10 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border-emerald-500/25 dark:border-emerald-500/30'
                 : secondsLeft > 20
-                ? 'bg-amber-500/10 text-amber-800 border-amber-500/25'
-                : 'bg-red-500/10 text-red-800 border-red-500/25 animate-pulse font-extrabold';
+                ? 'bg-amber-500/10 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 border-amber-500/25 dark:border-amber-500/30'
+                : 'bg-red-500/10 dark:bg-red-950/40 text-red-800 dark:text-red-300 border-red-500/25 dark:border-red-500/30 animate-pulse font-extrabold';
 
             return (
               <div
                 key={offer.id}
-                className="glass-card p-0 rounded-2xl overflow-hidden border border-white/80 shadow-md transition-all hover:shadow-xl"
+                className="glass-card p-0 rounded-2xl overflow-hidden border border-white/80 dark:border-white/10 shadow-md transition-all hover:shadow-xl"
               >
                 {/* inDrive Live Acceptance Countdown Progress Bar */}
-                <div className="w-full bg-slate-100/80 h-1.5">
+                <div className="w-full bg-slate-100/80 dark:bg-slate-800/80 h-1.5">
                   <div
                     className={`h-full transition-all duration-500 ease-linear ${barColor}`}
                     style={{ width: `${progressPercent}%` }}
@@ -90,8 +90,8 @@ export const IncomingOffersList: React.FC<IncomingOffersListProps> = ({
                 <div className="p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                   <div className="space-y-1.5">
                     <div className="flex items-center space-x-2 flex-wrap gap-y-1">
-                      <span className="font-black text-sm text-slate-900">{offer.driverName}</span>
-                      <span className="flex items-center text-xs font-bold text-amber-700 bg-amber-500/10 px-2 py-0.5 rounded-lg border border-amber-400/30">
+                      <span className="font-black text-sm text-slate-900 dark:text-white">{offer.driverName}</span>
+                      <span className="flex items-center text-xs font-bold text-amber-700 dark:text-amber-300 bg-amber-500/10 dark:bg-amber-950/40 px-2 py-0.5 rounded-lg border border-amber-400/30 dark:border-amber-500/30">
                         <Star className="w-3 h-3 fill-amber-500 text-amber-500 mr-1" />
                         {(offer.driverRating || 4.9).toFixed(1)}
                       </span>
@@ -102,15 +102,15 @@ export const IncomingOffersList: React.FC<IncomingOffersListProps> = ({
                       </span>
                     </div>
 
-                    <div className="text-xs text-slate-600 font-medium">
-                      {offer.driverVehicle} • <span className="font-extrabold text-emerald-700">{offer.etaMinutes || 4} mins away</span>
+                    <div className="text-xs text-slate-600 dark:text-slate-400 font-medium">
+                      {offer.driverVehicle} • <span className="font-extrabold text-emerald-700 dark:text-emerald-400">{offer.etaMinutes || 4} mins away</span>
                     </div>
                   </div>
 
-                  <div className="flex items-center space-x-3 w-full sm:w-auto justify-between sm:justify-end pt-2 sm:pt-0 border-t sm:border-0 border-slate-100">
+                  <div className="flex items-center space-x-3 w-full sm:w-auto justify-between sm:justify-end pt-2 sm:pt-0 border-t sm:border-0 border-slate-100 dark:border-white/10">
                     <div className="text-right">
-                      <span className="text-[10px] text-slate-400 uppercase font-black block">Captain Offer</span>
-                      <span className="text-2xl font-black text-pakgreen-700 tracking-tight">
+                      <span className="text-[10px] text-slate-400 dark:text-slate-500 uppercase font-black block">Captain Offer</span>
+                      <span className="text-2xl font-black text-pakgreen-700 dark:text-emerald-400 tracking-tight">
                         PKR {offerPkr}
                       </span>
                     </div>

@@ -30,7 +30,7 @@ export const DriverHeader: React.FC<DriverHeaderProps> = ({
       : '🚗';
 
   return (
-    <div className="glass-panel p-6 border border-white/80 shadow-2xl shadow-slate-900/5 transition-all">
+    <div className="glass-panel p-6 border border-white/80 dark:border-white/10 shadow-2xl transition-all">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         {/* Profile info */}
         <div className="flex items-center space-x-3.5">
@@ -48,32 +48,32 @@ export const DriverHeader: React.FC<DriverHeaderProps> = ({
 
           <div>
             <div className="flex items-center space-x-2 flex-wrap gap-y-1">
-              <h2 className="text-xl font-black text-slate-900 tracking-tight">{currentUser.fullName}</h2>
+              <h2 className="text-xl font-black text-slate-900 dark:text-white tracking-tight">{currentUser.fullName}</h2>
               {isApproved ? (
-                <span className="flex items-center space-x-1 text-xs font-extrabold px-3 py-1 bg-emerald-500/15 text-emerald-900 border border-emerald-500/30 rounded-full shadow-2xs">
-                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+                <span className="flex items-center space-x-1 text-xs font-extrabold px-3 py-1 bg-emerald-500/15 dark:bg-emerald-950/40 text-emerald-900 dark:text-emerald-300 border border-emerald-500/30 rounded-full shadow-2xs">
+                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
                   <span>Verified Captain</span>
                 </span>
               ) : isUnderReview ? (
-                <span className="flex items-center space-x-1 text-xs font-extrabold px-3 py-1 bg-amber-500/15 text-amber-900 border border-amber-500/30 rounded-full shadow-2xs">
-                  <Clock className="w-3.5 h-3.5 text-amber-600" />
+                <span className="flex items-center space-x-1 text-xs font-extrabold px-3 py-1 bg-amber-500/15 dark:bg-amber-950/40 text-amber-900 dark:text-amber-300 border border-amber-500/30 rounded-full shadow-2xs">
+                  <Clock className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
                   <span>Documents Under Review</span>
                 </span>
               ) : (
-                <span className="flex items-center space-x-1 text-xs font-extrabold px-3 py-1 bg-blue-500/15 text-blue-900 border border-blue-500/30 rounded-full shadow-2xs">
-                  <AlertCircle className="w-3.5 h-3.5 text-blue-600" />
+                <span className="flex items-center space-x-1 text-xs font-extrabold px-3 py-1 bg-blue-500/15 dark:bg-blue-950/40 text-blue-900 dark:text-blue-300 border border-blue-500/30 rounded-full shadow-2xs">
+                  <AlertCircle className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
                   <span>Documents Pending</span>
                 </span>
               )}
             </div>
 
-            <p className="text-xs text-slate-500 mt-1 font-medium">
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 font-medium">
               {profile.vehicle?.plateNumber ? (
                 <span>
                   {iconChar} {profile.vehicle.make} {profile.vehicle.model} ({profile.vehicle.plateNumber})
                 </span>
               ) : (
-                <span className="text-amber-600 font-semibold">Vehicle details pending</span>
+                <span className="text-amber-600 dark:text-amber-400 font-semibold">Vehicle details pending</span>
               )}
             </p>
           </div>

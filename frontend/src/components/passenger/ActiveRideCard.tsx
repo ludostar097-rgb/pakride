@@ -97,45 +97,45 @@ export const ActiveRideCard: React.FC<ActiveRideCardProps> = ({
   const canCancel = isBiddingSearch || isDriverAssigned;
 
   return (
-    <div className="glass-panel p-6 shadow-2xl shadow-slate-900/5 border border-white/80 space-y-5 transition-all">
+    <div className="glass-panel p-6 shadow-2xl border border-white/80 dark:border-white/10 space-y-5 transition-all">
       {/* CASE 1: inDrive RADAR / SEARCHING LOBBY (Modern Glass Sonar Pulse) */}
       {isBiddingSearch && (
         <div className="space-y-4">
           {/* Radar Header */}
-          <div className="flex items-center justify-between pb-3 border-b border-slate-200/50">
+          <div className="flex items-center justify-between pb-3 border-b border-slate-200/50 dark:border-white/10">
             <div className="flex items-center space-x-3">
               <div className="relative flex items-center justify-center">
                 <span className="w-4 h-4 rounded-full bg-pakgreen-500 animate-ping absolute opacity-75"></span>
                 <span className="w-3.5 h-3.5 rounded-full bg-gradient-to-tr from-pakgreen-600 to-emerald-400 relative shadow-sm"></span>
               </div>
               <div>
-                <span className="text-xs font-black uppercase tracking-wider text-slate-900">
+                <span className="text-xs font-black uppercase tracking-wider text-slate-900 dark:text-white">
                   Searching for Captains
                 </span>
-                <div className="text-[11px] text-slate-500 font-medium">
-                  {detectedCity} • Elapsed: <span className="font-mono font-extrabold text-emerald-700">{elapsedSeconds}s</span>
+                <div className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">
+                  {detectedCity} • Elapsed: <span className="font-mono font-extrabold text-emerald-700 dark:text-emerald-400">{elapsedSeconds}s</span>
                 </div>
               </div>
             </div>
 
             <div className="text-right">
-              <span className="text-[10px] text-slate-400 uppercase font-extrabold block">Your Offer</span>
-              <span className="text-2xl font-black text-pakgreen-700 tracking-tight">
+              <span className="text-[10px] text-slate-400 dark:text-slate-500 uppercase font-extrabold block">Your Offer</span>
+              <span className="text-2xl font-black text-pakgreen-700 dark:text-emerald-400 tracking-tight">
                 PKR {farePkr}
               </span>
             </div>
           </div>
 
           {/* Animated Glass Radar Visual & Fare Bump Bar */}
-          <div className="bg-gradient-to-br from-emerald-500/10 via-white/80 to-emerald-500/5 backdrop-blur-xl border border-emerald-500/25 rounded-3xl p-5 text-center space-y-4 shadow-sm">
-            <div className="flex items-center justify-center space-x-2 text-xs font-bold text-emerald-900">
-              <Radio className="w-4 h-4 text-emerald-600 animate-pulse" />
+          <div className="bg-gradient-to-br from-emerald-500/10 via-white/80 to-emerald-500/5 dark:from-emerald-950/40 dark:via-slate-900/60 dark:to-emerald-950/20 backdrop-blur-xl border border-emerald-500/25 dark:border-emerald-500/30 rounded-3xl p-5 text-center space-y-4 shadow-sm">
+            <div className="flex items-center justify-center space-x-2 text-xs font-bold text-emerald-900 dark:text-emerald-300">
+              <Radio className="w-4 h-4 text-emerald-600 dark:text-emerald-400 animate-pulse" />
               <span>Broadcasted to verified captains nearby</span>
             </div>
 
             {/* inDrive 1-Tap Fare Bump with Glass Controls */}
             <div className="pt-1">
-              <div className="text-[11px] font-extrabold text-slate-700 mb-2.5 flex items-center justify-center space-x-1.5">
+              <div className="text-[11px] font-extrabold text-slate-700 dark:text-slate-300 mb-2.5 flex items-center justify-center space-x-1.5">
                 <Zap className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
                 <span>Raise fare to attract captains faster:</span>
               </div>
@@ -145,7 +145,7 @@ export const ActiveRideCard: React.FC<ActiveRideCardProps> = ({
                   type="button"
                   disabled={bumpingFare}
                   onClick={() => handleBump(25)}
-                  className="px-5 py-2.5 bg-white/90 hover:bg-emerald-50 active:scale-95 border-2 border-emerald-500 text-emerald-800 font-black text-xs rounded-2xl shadow-sm transition flex items-center space-x-1.5 disabled:opacity-50"
+                  className="px-5 py-2.5 bg-white/90 dark:bg-slate-900/90 hover:bg-emerald-50 dark:hover:bg-emerald-950/50 active:scale-95 border-2 border-emerald-500 text-emerald-800 dark:text-emerald-300 font-black text-xs rounded-2xl shadow-sm transition flex items-center space-x-1.5 disabled:opacity-50"
                 >
                   <span>+ PKR 25</span>
                 </button>
@@ -167,51 +167,51 @@ export const ActiveRideCard: React.FC<ActiveRideCardProps> = ({
       {/* CASE 2: DRIVER ASSIGNED & EN ROUTE (Uber / Careem Style) */}
       {isDriverAssigned && (
         <div className="space-y-4">
-          <div className="flex justify-between items-center pb-2.5 border-b border-slate-200/50">
+          <div className="flex justify-between items-center pb-2.5 border-b border-slate-200/50 dark:border-white/10">
             <div className="flex items-center space-x-2">
               <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping"></span>
-              <span className="text-xs font-black text-emerald-900 bg-emerald-500/15 px-3 py-1 rounded-full border border-emerald-500/30 shadow-2xs">
+              <span className="text-xs font-black text-emerald-900 dark:text-emerald-300 bg-emerald-500/15 px-3 py-1 rounded-full border border-emerald-500/30 shadow-2xs">
                 Captain En Route
               </span>
             </div>
             <div className="text-right">
-              <span className="text-[10px] text-slate-400 block font-bold uppercase">Agreed Fare (Cash)</span>
-              <span className="text-2xl font-black text-pakgreen-700">PKR {farePkr}</span>
+              <span className="text-[10px] text-slate-400 dark:text-slate-500 block font-bold uppercase">Agreed Fare (Cash)</span>
+              <span className="text-2xl font-black text-pakgreen-700 dark:text-emerald-400">PKR {farePkr}</span>
             </div>
           </div>
 
           {/* CRITICAL: 4-Digit Security Ride PIN (Uber / Careem Standard) with Amber Glass Effect */}
           {activeRide.verificationOtp && (
-            <div className="p-4 bg-amber-500/10 backdrop-blur-xl rounded-2xl border-2 border-amber-400/50 flex items-center justify-between shadow-sm">
+            <div className="p-4 bg-amber-500/10 dark:bg-amber-950/40 backdrop-blur-xl rounded-2xl border-2 border-amber-400/50 dark:border-amber-500/40 flex items-center justify-between shadow-sm">
               <div className="flex items-center space-x-3">
                 <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-amber-500 to-amber-400 text-white flex items-center justify-center font-black shadow-md shadow-amber-500/30 border border-white/30">
                   <KeyRound className="w-5 h-5" />
                 </div>
                 <div>
-                  <span className="text-[10px] uppercase font-black text-amber-900 tracking-wider block">
+                  <span className="text-[10px] uppercase font-black text-amber-900 dark:text-amber-400 tracking-wider block">
                     Ride Start PIN
                   </span>
-                  <span className="text-xs text-amber-950 font-semibold">
+                  <span className="text-xs text-amber-950 dark:text-amber-200 font-semibold">
                     Provide to your captain upon arrival:
                   </span>
                 </div>
               </div>
-              <span className="text-2xl font-mono font-black text-amber-950 tracking-widest bg-white/95 backdrop-blur px-4 py-1.5 rounded-xl border border-amber-300 shadow-sm">
+              <span className="text-2xl font-mono font-black text-amber-950 dark:text-amber-300 tracking-widest bg-white/95 dark:bg-slate-900/90 backdrop-blur px-4 py-1.5 rounded-xl border border-amber-300 dark:border-amber-500/50 shadow-sm">
                 {activeRide.verificationOtp}
               </span>
             </div>
           )}
 
           {/* Captain Profile Card with Glass Card Styling */}
-          <div className="p-4 glass-card border border-white/80 flex items-center justify-between shadow-xs">
+          <div className="p-4 glass-card border border-white/80 dark:border-white/10 flex items-center justify-between shadow-xs">
             <div>
-              <div className="font-extrabold text-sm text-slate-900">
+              <div className="font-extrabold text-sm text-slate-900 dark:text-white">
                 {activeRide.driverName || 'Assigned Captain'}
               </div>
-              <div className="text-xs text-slate-600 mt-0.5 font-medium">
+              <div className="text-xs text-slate-600 dark:text-slate-400 mt-0.5 font-medium">
                 {activeRide.vehicleDetails || 'Verified Vehicle'}
               </div>
-              <div className="text-[11px] font-extrabold text-emerald-700 mt-0.5">
+              <div className="text-[11px] font-extrabold text-emerald-700 dark:text-emerald-400 mt-0.5">
                 ★ 4.9 • Verified Captain
               </div>
             </div>
@@ -221,7 +221,7 @@ export const ActiveRideCard: React.FC<ActiveRideCardProps> = ({
                 <button
                   type="button"
                   onClick={onOpenChat}
-                  className="p-2.5 glass-btn-secondary text-pakgreen-700 rounded-xl transition shadow-2xs flex items-center space-x-1.5 text-xs font-bold"
+                  className="p-2.5 glass-btn-secondary text-pakgreen-700 dark:text-emerald-400 rounded-xl transition shadow-2xs flex items-center space-x-1.5 text-xs font-bold"
                   title="Live Chat"
                 >
                   <MessageSquare className="w-4 h-4" />
@@ -245,17 +245,17 @@ export const ActiveRideCard: React.FC<ActiveRideCardProps> = ({
 
       {/* CASE 3: IN PROGRESS */}
       {isInProgress && (
-        <div className="p-5 bg-emerald-500/10 backdrop-blur-xl rounded-3xl border border-emerald-500/30 space-y-2.5 shadow-sm">
+        <div className="p-5 bg-emerald-500/10 dark:bg-emerald-950/40 backdrop-blur-xl rounded-3xl border border-emerald-500/30 space-y-2.5 shadow-sm">
           <div className="flex justify-between items-center">
             <div className="flex items-center space-x-2">
               <span className="w-2.5 h-2.5 rounded-full bg-emerald-600 animate-pulse"></span>
-              <span className="font-black text-xs text-emerald-900 uppercase tracking-wide">
+              <span className="font-black text-xs text-emerald-900 dark:text-emerald-300 uppercase tracking-wide">
                 Trip In Progress
               </span>
             </div>
-            <span className="text-xl font-black text-emerald-900">PKR {farePkr}</span>
+            <span className="text-xl font-black text-emerald-900 dark:text-emerald-300">PKR {farePkr}</span>
           </div>
-          <p className="text-xs text-emerald-950 font-medium">
+          <p className="text-xs text-emerald-950 dark:text-emerald-200 font-medium">
             Enjoy your ride with Captain {activeRide.driverName || 'Captain'}. Please have cash ready upon arrival.
           </p>
         </div>
@@ -263,25 +263,25 @@ export const ActiveRideCard: React.FC<ActiveRideCardProps> = ({
 
       {/* CASE 4: COMPLETED */}
       {isCompleted && (
-        <div className="p-5 bg-emerald-500/10 backdrop-blur-xl rounded-3xl border border-emerald-500/30 text-center space-y-2 shadow-sm">
-          <CheckCircle2 className="w-9 h-9 text-emerald-600 mx-auto" />
-          <h4 className="font-black text-base text-emerald-950">Ride Completed Successfully</h4>
-          <p className="text-xs text-emerald-800 font-medium">
+        <div className="p-5 bg-emerald-500/10 dark:bg-emerald-950/40 backdrop-blur-xl rounded-3xl border border-emerald-500/30 text-center space-y-2 shadow-sm">
+          <CheckCircle2 className="w-9 h-9 text-emerald-600 dark:text-emerald-400 mx-auto" />
+          <h4 className="font-black text-base text-emerald-950 dark:text-emerald-200">Ride Completed Successfully</h4>
+          <p className="text-xs text-emerald-800 dark:text-emerald-400 font-medium">
             Fare: PKR {farePkr} paid in Cash. 0% platform commission deducted.
           </p>
         </div>
       )}
 
       {/* Route Addresses Summary */}
-      <div className="p-3.5 glass-panel-subtle rounded-2xl border border-white/70 space-y-2 text-xs text-slate-700">
+      <div className="p-3.5 glass-panel-subtle rounded-2xl border border-white/70 dark:border-white/10 space-y-2 text-xs text-slate-700 dark:text-slate-300">
         <div className="truncate">
-          🟢 <span className="font-bold text-slate-900">Pickup:</span> {activeRide.pickup.address}
+          🟢 <span className="font-bold text-slate-900 dark:text-white">Pickup:</span> {activeRide.pickup.address}
         </div>
         <div className="truncate">
-          🔴 <span className="font-bold text-slate-900">Drop-off:</span> {activeRide.destination.address}
+          🔴 <span className="font-bold text-slate-900 dark:text-white">Drop-off:</span> {activeRide.destination.address}
         </div>
         {activeRide.pickupNotes && (
-          <div className="text-amber-900 bg-amber-500/10 p-2.5 rounded-xl border border-amber-300/40 mt-1 font-semibold text-xs">
+          <div className="text-amber-900 dark:text-amber-300 bg-amber-500/10 dark:bg-amber-950/40 p-2.5 rounded-xl border border-amber-300/40 dark:border-amber-500/30 mt-1 font-semibold text-xs">
             📌 Gate Note: {activeRide.pickupNotes}
           </div>
         )}
@@ -302,7 +302,7 @@ export const ActiveRideCard: React.FC<ActiveRideCardProps> = ({
           <button
             type="button"
             onClick={onOpenSos}
-            className="py-3 px-4 bg-red-500/10 hover:bg-red-500/20 text-red-600 border border-red-500/30 font-black text-xs rounded-xl transition flex items-center justify-center space-x-1.5 active:scale-95 shadow-2xs"
+            className="py-3 px-4 bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 border border-red-500/30 font-black text-xs rounded-xl transition flex items-center justify-center space-x-1.5 active:scale-95 shadow-2xs"
           >
             <ShieldAlert className="w-4 h-4" />
             <span>SOS 15</span>
@@ -313,7 +313,7 @@ export const ActiveRideCard: React.FC<ActiveRideCardProps> = ({
           <button
             type="button"
             onClick={() => setShowCancelModal(true)}
-            className="py-3 px-4 rounded-xl border border-red-200 hover:bg-red-50 text-red-600 font-bold text-xs flex items-center justify-center space-x-1 transition active:scale-95"
+            className="py-3 px-4 rounded-xl border border-red-200 dark:border-red-500/30 hover:bg-red-50 dark:hover:bg-red-950/30 text-red-600 dark:text-red-400 font-bold text-xs flex items-center justify-center space-x-1 transition active:scale-95"
           >
             <XCircle className="w-4 h-4" />
             <span>Cancel</span>

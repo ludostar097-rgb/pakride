@@ -35,6 +35,19 @@ export const MapView: React.FC<MapViewProps> = ({
 
   const [routeInfo, setRouteInfo] = useState<{ distanceKm: number; durationMin: number } | null>(null);
   const [locating, setLocating] = useState(false);
+  const tileLayerRef = useRef<L.TileLayer | null>(null);
+  const [isDark, setIsDark] = useState<boolean>(() => 
+    typeof document !== 'undefined' ? document.documentElement.classList.contains('dark') : true
+  );
+
+  // Sync theme changes with DOM
+  useEffect(() => {
+    const observer = new MutationObserver(() => {
+      setIsDark(document.documentElement.classList.contains('dark'));
+    });
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+    return () => observer.disconnect();
+  }, []);
 
   // Initialize Map
   useEffect(() => {
@@ -49,10 +62,15 @@ export const MapView: React.FC<MapViewProps> = ({
       attributionControl: false
     }).setView(initialCenter, 13);
 
-    // Free OpenStreetMap vector/raster tiles
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 19
+    // Initial Tile Layer
+    const tileUrl = isDark
+      ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
+      : 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
+    const layer = L.tileLayer(tileUrl, {
+      maxZoom: 19,
+      subdomains: 'abcd'
     }).addTo(map);
+    tileLayerRef.current = layer;
 
     // Map click handler: places pin and performs live Reverse Geocoding
     map.on('click', async (e) => {
@@ -76,6 +94,22 @@ export const MapView: React.FC<MapViewProps> = ({
       mapRef.current = null;
     };
   }, []);
+
+  // Dynamically swap map tiles when switching between Dark Orbix Glass and Light Glass
+  useEffect(() => {
+    if (!mapRef.current) return;
+    if (tileLayerRef.current) {
+      tileLayerRef.current.remove();
+    }
+    const tileUrl = isDark
+      ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
+      : 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
+    const layer = L.tileLayer(tileUrl, {
+      maxZoom: 19,
+      subdomains: 'abcd'
+    }).addTo(mapRef.current);
+    tileLayerRef.current = layer;
+  }, [isDark]);
 
   // Pan smoothly to user's Pickup Location whenever set or updated
   useEffect(() => {
@@ -283,18 +317,18 @@ export const MapView: React.FC<MapViewProps> = ({
   };
 
   return (
-    <div className="relative w-full h-full min-h-[300px] overflow-hidden rounded-2xl border border-slate-200 shadow-inner">
+    <div className="relative w-full h-full min-h-[300px] overflow-hidden rounded-3xl border border-slate-200 dark:border-white/10 shadow-inner">
       <div ref={mapContainerRef} className="w-full h-full z-0" />
 
       {/* Floating Road Route Stats Banner (When Route is loaded) */}
       {routeInfo && (
-        <div className="absolute top-3 right-3 z-[400] bg-charcoal-900/90 text-white backdrop-blur-md px-3 py-1.5 rounded-xl shadow-lg border border-slate-700 flex items-center space-x-3 text-xs">
+        <div className="absolute top-3 right-3 z-[400] bg-slate-900/90 text-white backdrop-blur-xl px-3.5 py-1.5 rounded-2xl shadow-xl border border-white/15 flex items-center space-x-3 text-xs">
           <div className="flex items-center space-x-1">
-            <Navigation className="w-3.5 h-3.5 text-pakgreen-400" />
+            <Navigation className="w-3.5 h-3.5 text-emerald-400" />
             <span className="font-bold">{routeInfo.distanceKm} km</span>
           </div>
-          <div className="text-slate-400">|</div>
-          <div className="text-pakgreen-300 font-semibold">{routeInfo.durationMin} mins drive</div>
+          <div className="text-slate-500">|</div>
+          <div className="text-emerald-300 font-semibold">{routeInfo.durationMin} mins drive</div>
         </div>
       )}
 
@@ -304,9 +338,9 @@ export const MapView: React.FC<MapViewProps> = ({
         onClick={handleLocateMe}
         disabled={locating}
         title="Locate my GPS position"
-        className="absolute bottom-4 right-4 z-[400] p-3 bg-white hover:bg-slate-50 text-slate-700 rounded-full shadow-lg border border-slate-200 active:scale-95 transition"
+        className="absolute bottom-4 right-4 z-[400] p-3 bg-white/90 dark:bg-slate-900/90 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 rounded-full shadow-xl border border-slate-200 dark:border-white/15 active:scale-95 transition backdrop-blur-md"
       >
-        <Crosshair className={`w-5 h-5 ${locating ? 'animate-spin text-pakgreen-500' : 'text-slate-700'}`} />
+        <Crosshair className={`w-5 h-5 ${locating ? 'animate-spin text-emerald-500' : 'text-slate-700 dark:text-slate-300'}`} />
       </button>
     </div>
   );

@@ -357,7 +357,7 @@ export const PassengerView: React.FC<PassengerViewProps> = ({
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 pb-12">
       {/* Left Column: Interactive Map with Glass Frame */}
       <div className="lg:col-span-7 h-[360px] sm:h-[440px] lg:h-[720px] relative lg:sticky lg:top-24">
-        <div className="w-full h-full rounded-3xl p-1.5 glass-panel-subtle shadow-xl border border-white/80 overflow-hidden">
+        <div className="w-full h-full rounded-3xl p-1.5 glass-panel-subtle shadow-xl border border-white/80 dark:border-white/10 overflow-hidden">
           <MapView
             pickup={pickup || undefined}
             destination={destination || undefined}
@@ -377,7 +377,7 @@ export const PassengerView: React.FC<PassengerViewProps> = ({
             zoneName={detectedCity}
           />
         </div>
-        <div className="mt-2.5 flex items-center justify-between text-[11px] text-slate-600 bg-white/75 backdrop-blur-xl px-4 py-2 rounded-2xl border border-white/80 shadow-xs">
+        <div className="mt-2.5 flex items-center justify-between text-[11px] text-slate-600 dark:text-slate-400 bg-white/75 dark:bg-slate-900/70 backdrop-blur-xl px-4 py-2 rounded-2xl border border-white/80 dark:border-white/10 shadow-xs">
           <div className="flex items-center space-x-2">
             <Compass className="w-3.5 h-3.5 text-pakgreen-600" />
             <span className="font-medium">Tap map anytime to fine-tune route pin</span>
