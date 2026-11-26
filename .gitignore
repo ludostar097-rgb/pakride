@@ -14,5 +14,7 @@ frontend/android/.gradle/
 frontend/android/app/build/
 frontend/android/build/
 frontend/android/.idea/
+.claude/
 .vscode/
 .idea/
+.claude/

@@ -149,16 +149,14 @@ npm run dev
 
 ---
 
-## 👥 Pre-Seeded Demonstration Personas
+## 🔐 User Authentication & Roles
 
-| Role | Name | Phone | Password | Details |
-| :--- | :--- | :--- | :--- | :--- |
-| **Passenger** | Ali Khan | `03001234567` | `pakride123` | Requests rides, proposes fares, compares driver offers. |
-| **Driver (Car)** | Tariq Mehmood | `03007654321` | `pakride123` | Toyota Corolla White (`KHI-8291`), Approved & Online. |
-| **Driver (Bike)** | Kamran Iqbal | `03112233445` | `pakride123` | Honda CD70 Red (`KHI-4412`), Approved & Online. |
-| **Driver (Rickshaw)** | Zubair Ahmed | `03229988776` | `pakride123` | Sazgar CNG Green (`KHI-9931`), Approved & Online. |
-| **Driver (Pending)** | Usman Farooq | `03335555555` | `pakride123` | Suzuki Alto (`KHI-3012`), Under Review (cannot go online). |
-| **Admin** | Ahmad Hassan | `03009999999` | `pakride123` | Super Admin: document review, active ride radar, ledger. |
+PakRide supports role-governed user accounts:
+- **Passenger**: Book rides, negotiate fares via transparent bidding, track trips with security PIN verification.
+- **Driver**: Register vehicle, submit documents for review, accept ride requests or place counter-bids, receive 100% net earnings.
+- **Admin**: Document review and approval, multi-city zone management, dispute settlement, and 0% commission transparent ledger.
+
+Users register and sign in securely through the in-app authentication portal. All session tokens are cryptographically signed JWTs.
 
 ---
 

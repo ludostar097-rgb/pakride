@@ -68,7 +68,7 @@ export const PassengerView: React.FC<PassengerViewProps> = ({
   const notePresets = [t.noteGate || 'Near Gate', t.noteBakery || 'Near Bakery', t.noteCall || 'Call on arrival', t.noteCorner || 'Corner'];
 
   const getAuthToken = () => {
-    return authToken || localStorage.getItem('pakride_token') || `mock-token-${currentUser.id}`;
+    return authToken || localStorage.getItem('pakride_token') || '';
   };
 
   // Automatically detect GPS location on app launch (Zero-effort onboarding)

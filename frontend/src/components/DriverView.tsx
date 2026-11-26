@@ -65,7 +65,7 @@ export const DriverView: React.FC<DriverViewProps> = ({
   };
 
   const getAuthToken = () => {
-    return authToken || localStorage.getItem('pakride_token') || `mock-token-${currentUser.id}`;
+    return authToken || localStorage.getItem('pakride_token') || '';
   };
 
   // Sync profile when initialProfile or currentUser changes

@@ -63,7 +63,7 @@ export const AdminView: React.FC<AdminViewProps> = ({
   );
 
   const getAuthToken = () => {
-    return localStorage.getItem('pakride_token') || `mock-token-${currentUser.id}`;
+    return localStorage.getItem('pakride_token') || '';
   };
 
   const fetchAdminData = async () => {

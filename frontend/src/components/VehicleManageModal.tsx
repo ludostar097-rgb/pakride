@@ -37,7 +37,7 @@ export const VehicleManageModal: React.FC<VehicleManageModalProps> = ({
     setError(null);
 
     try {
-      const token = localStorage.getItem('pakride_token') || `mock-token-${driverId}`;
+      const token = localStorage.getItem('pakride_token') || '';
       const res = await fetch(`${apiBaseUrl}/api/driver/vehicle`, {
         method: 'POST',
         headers: {

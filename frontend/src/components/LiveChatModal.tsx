@@ -30,7 +30,7 @@ export const LiveChatModal: React.FC<LiveChatModalProps> = ({
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const getAuthToken = () => {
-    return localStorage.getItem('pakride_token') || `mock-token-${currentUser.id}`;
+    return localStorage.getItem('pakride_token') || '';
   };
 
   // Fetch initial chat history
