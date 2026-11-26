@@ -1,3 +1,6 @@
+import dotenv from 'dotenv';
+dotenv.config();
+
 import express from 'express';
 import http from 'http';
 import { Server as SocketIOServer } from 'socket.io';
@@ -19,6 +22,10 @@ import {
   MULTAN_LANDMARKS,
   DGKHAN_LANDMARKS
 } from './shared/constants.js';
+import crypto from 'crypto';
+import rateLimit from 'express-rate-limit';
+import { z } from 'zod';
+import { smsService } from './services/sms.js';
 import {
   RideRequest,
   RideOffer,
@@ -29,18 +36,66 @@ import {
 
 const app = express();
 const server = http.createServer(app);
+
+// Prompt 1.2: Lock CORS to FRONTEND_URL from environment (not '*')
+const allowedOrigins = process.env.FRONTEND_URL
+  ? process.env.FRONTEND_URL.split(',').map((url) => url.trim())
+  : ['http://localhost:5173', 'http://localhost:4173', 'https://pakride.vercel.app'];
+
+const corsOptions: cors.CorsOptions = {
+  origin: (origin, callback) => {
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.indexOf(origin) !== -1 || allowedOrigins.includes('*')) {
+      return callback(null, true);
+    }
+    return callback(new Error('CORS policy: Access blocked for origin ' + origin), false);
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS']
+};
+
 const io = new SocketIOServer(server, {
   cors: {
-    origin: '*',
-    methods: ['GET', 'POST', 'PUT']
+    origin: allowedOrigins,
+    methods: ['GET', 'POST', 'PUT'],
+    credentials: true
   }
 });
 
 const PORT = process.env.PORT || 4000;
 
-app.use(cors());
+app.use(cors(corsOptions));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// Prompt 1.2: express-rate-limit
+// Login & register: 10 attempts per 15 minutes per IP + phone
+export const authRateLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  keyGenerator: (req) => {
+    const phone = req.body?.phone ? String(req.body.phone).trim() : '';
+    const ip = req.ip || req.socket.remoteAddress || 'unknown';
+    return `${ip}_${phone}`;
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many authentication attempts. Please try again after 15 minutes.' }
+});
+
+// Forgot / reset password: 5 requests per hour per IP + phone
+export const forgotResetRateLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 5,
+  keyGenerator: (req) => {
+    const phone = req.body?.phone ? String(req.body.phone).trim() : '';
+    const ip = req.ip || req.socket.remoteAddress || 'unknown';
+    return `${ip}_${phone}`;
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many password reset requests. Please try again after 1 hour.' }
+});
 
 // Request logger
 app.use((req, res, next) => {
@@ -65,18 +120,26 @@ app.get('/healthz', (req, res) => {
   return res.status(200).send('OK');
 });
 
-// Seed synthetic data on startup if empty
-seedDemoData();
+// Seed synthetic demo data on startup if not in production
+if (process.env.NODE_ENV !== 'production') {
+  seedDemoData();
+}
 
 // ==========================================
 // 1. AUTHENTICATION ROUTES
 // ==========================================
 
-app.post('/api/auth/login', async (req, res) => {
-  const { phone, password } = req.body;
-  if (!phone || !password) {
-    return res.status(400).json({ error: 'Phone and password are required' });
+const loginSchema = z.object({
+  phone: z.string().min(10, 'Valid phone number is required'),
+  password: z.string().min(1, 'Password is required')
+});
+
+app.post('/api/auth/login', authRateLimiter, async (req, res) => {
+  const parseResult = loginSchema.safeParse(req.body);
+  if (!parseResult.success) {
+    return res.status(400).json({ error: parseResult.error.errors[0]?.message || 'Invalid login details' });
   }
+  const { phone, password } = parseResult.data;
 
   const user = db.getUserByPhone(phone);
   if (!user) {
@@ -111,17 +174,21 @@ app.post('/api/auth/login', async (req, res) => {
   });
 });
 
-app.post('/api/auth/register', async (req, res) => {
-  const { phone, fullName, role, password, languagePreference, vehicleDetails } = req.body;
+const registerSchema = z.object({
+  phone: z.string().min(10, 'Valid phone number is required'),
+  password: z.string().min(6, 'Password must be at least 6 characters'),
+  fullName: z.string().min(2, 'Full name is required'),
+  role: z.enum(['PASSENGER', 'DRIVER'], { errorMap: () => ({ message: 'Public registration is only allowed for PASSENGER or DRIVER roles' }) }),
+  languagePreference: z.enum(['en', 'ur']).optional(),
+  vehicleDetails: z.any().optional()
+});
 
-  if (!phone || !fullName || !role || !password) {
-    return res.status(400).json({ error: 'Missing required registration fields' });
+app.post('/api/auth/register', authRateLimiter, async (req, res) => {
+  const parseResult = registerSchema.safeParse(req.body);
+  if (!parseResult.success) {
+    return res.status(400).json({ error: parseResult.error.errors[0]?.message || 'Invalid registration details' });
   }
-
-  // Prevent privilege escalation attacks (Admin accounts cannot be self-registered)
-  if (role !== 'PASSENGER' && role !== 'DRIVER') {
-    return res.status(400).json({ error: 'Public registration is only allowed for PASSENGER or DRIVER roles' });
-  }
+  const { phone, fullName, role, password, languagePreference, vehicleDetails } = parseResult.data;
 
   const existing = db.getUserByPhone(phone);
   if (existing) {
@@ -200,36 +267,76 @@ app.post('/api/auth/register', async (req, res) => {
   });
 });
 
-// Simulated OTP storage for password reset
-const resetOtpStore: Record<string, { otp: string; expiresAt: number }> = {};
+// Prompt 1.2: Cryptographically Secure OTP Store for Password Reset
+interface ResetOtpRecord {
+  phone: string;
+  otpHash: string;
+  expiresAt: number;
+  attempts: number;
+}
+const resetOtpStore: Record<string, ResetOtpRecord> = {};
 
-app.post('/api/auth/forgot-password', (req, res) => {
-  const { phone } = req.body;
-  if (!phone) return res.status(400).json({ error: 'Phone number is required' });
+app.post('/api/auth/forgot-password', forgotResetRateLimiter, async (req, res) => {
+  const schema = z.object({
+    phone: z.string().min(10, 'Valid phone number is required')
+  });
+  const parseResult = schema.safeParse(req.body);
+  if (!parseResult.success) {
+    return res.status(400).json({ error: parseResult.error.errors[0]?.message || 'Phone number is required' });
+  }
+  const { phone } = parseResult.data;
 
   const user = db.getUserByPhone(phone);
   if (!user) return res.status(404).json({ error: 'No account found with this phone number' });
 
-  // Generate 4-digit reset OTP
-  const otp = '7788'; // Predictable demo code, plus randomized fallback
-  resetOtpStore[phone] = { otp, expiresAt: Date.now() + 10 * 60 * 1000 };
+  // Generate cryptographically secure random 6-digit OTP (e.g. 583921)
+  const rawOtp = crypto.randomInt(100000, 1000000).toString();
+  const otpHash = crypto.createHash('sha256').update(rawOtp).digest('hex');
+
+  // Store hashed OTP with 5 minute expiration and max 5 attempts tracking
+  resetOtpStore[phone] = {
+    phone,
+    otpHash,
+    expiresAt: Date.now() + 5 * 60 * 1000,
+    attempts: 0
+  };
+
+  // Dispatch OTP via SmsService (never return code in response)
+  await smsService.sendOtp(phone, rawOtp);
 
   return res.json({
     success: true,
-    message: 'Reset OTP sent to your phone (Demo OTP: 7788)',
-    demoOtp: otp
+    message: 'Reset OTP has been sent to your registered phone number.'
   });
 });
 
-app.post('/api/auth/reset-password', async (req, res) => {
-  const { phone, otp, newPassword } = req.body;
-  if (!phone || !otp || !newPassword) {
-    return res.status(400).json({ error: 'Phone, OTP, and new password are required' });
+app.post('/api/auth/reset-password', forgotResetRateLimiter, async (req, res) => {
+  const schema = z.object({
+    phone: z.string().min(10, 'Valid phone number is required'),
+    otp: z.string().length(6, '6-digit OTP code is required'),
+    newPassword: z.string().min(6, 'Password must be at least 6 characters')
+  });
+  const parseResult = schema.safeParse(req.body);
+  if (!parseResult.success) {
+    return res.status(400).json({ error: parseResult.error.errors[0]?.message || 'Phone, OTP, and new password are required' });
   }
+  const { phone, otp, newPassword } = parseResult.data;
 
   const record = resetOtpStore[phone];
-  if (!record || record.otp !== otp || Date.now() > record.expiresAt) {
-    return res.status(400).json({ error: 'Invalid or expired OTP code' });
+  if (!record || Date.now() > record.expiresAt) {
+    delete resetOtpStore[phone];
+    return res.status(400).json({ error: 'Invalid or expired OTP code. Please request a new code.' });
+  }
+
+  record.attempts += 1;
+  if (record.attempts > 5) {
+    delete resetOtpStore[phone];
+    return res.status(400).json({ error: 'Maximum reset attempts exceeded (5). Please request a new code.' });
+  }
+
+  const inputHash = crypto.createHash('sha256').update(otp.trim()).digest('hex');
+  if (inputHash !== record.otpHash) {
+    return res.status(400).json({ error: `Incorrect OTP code. Attempt ${record.attempts} of 5.` });
   }
 
   const user = db.getUserByPhone(phone);
@@ -361,26 +468,34 @@ app.post('/api/rides/calculate-fare', (req, res) => {
 // 3. RIDE REQUEST & DISPATCH ENGINE
 // ==========================================
 
+const rideRequestSchema = z.object({
+  category: z.enum(['CAR', 'MOTORCYCLE', 'RICKSHAW'], {
+    errorMap: () => ({ message: 'Invalid vehicle category. Allowed: CAR, MOTORCYCLE, RICKSHAW' })
+  }),
+  pickup: z.object({
+    lat: z.number({ required_error: 'Pickup latitude is required' }),
+    lng: z.number({ required_error: 'Pickup longitude is required' }),
+    address: z.string().default('')
+  }),
+  destination: z.object({
+    lat: z.number({ required_error: 'Destination latitude is required' }),
+    lng: z.number({ required_error: 'Destination longitude is required' }),
+    address: z.string().default('')
+  }),
+  proposedFarePkr: z
+    .number({ invalid_type_error: 'Proposed fare must be a valid positive amount' })
+    .positive('Proposed fare must be a valid positive amount')
+    .max(500000, 'Proposed fare cannot exceed PKR 500,000'),
+  zoneId: z.string().optional(),
+  pickupNotes: z.string().max(250, 'Pickup notes cannot exceed 250 characters').optional()
+});
+
 app.post('/api/rides/request', AuthService.requireAuth, (req: AuthenticatedRequest, res) => {
-  const { category, pickup, destination, proposedFarePkr, zoneId, pickupNotes } = req.body;
-
-  if (!category || !pickup || !destination || !proposedFarePkr) {
-    return res.status(400).json({ error: 'Missing required ride fields' });
+  const parseResult = rideRequestSchema.safeParse(req.body);
+  if (!parseResult.success) {
+    return res.status(400).json({ error: parseResult.error.errors[0]?.message || 'Missing or invalid required ride fields' });
   }
-
-  const validCategories: VehicleCategory[] = ['CAR', 'MOTORCYCLE', 'RICKSHAW'];
-  if (!validCategories.includes(category)) {
-    return res.status(400).json({ error: 'Invalid vehicle category. Allowed: CAR, MOTORCYCLE, RICKSHAW' });
-  }
-
-  const numFare = Number(proposedFarePkr);
-  if (isNaN(numFare) || numFare <= 0 || numFare > 500000) {
-    return res.status(400).json({ error: 'Proposed fare must be a valid positive amount' });
-  }
-
-  if (typeof pickup.lat !== 'number' || typeof pickup.lng !== 'number' || typeof destination.lat !== 'number' || typeof destination.lng !== 'number') {
-    return res.status(400).json({ error: 'Invalid pickup or destination coordinates' });
-  }
+  const { category, pickup, destination, proposedFarePkr, zoneId, pickupNotes } = parseResult.data;
 
   const distanceKm = PricingService.calculateDistanceKm(
     pickup.lat,
@@ -439,12 +554,39 @@ app.post('/api/rides/request', AuthService.requireAuth, (req: AuthenticatedReque
   return res.status(201).json({ ride: db.getRide(newRide.id) });
 });
 
-app.get('/api/rides/:id', AuthService.requireAuth, (req, res) => {
+app.get('/api/rides/:id', AuthService.requireAuth, (req: AuthenticatedRequest, res) => {
   const rideId = req.params.id as string;
   const ride = db.getRide(rideId);
   if (!ride) return res.status(404).json({ error: 'Ride not found' });
+
+  const user = req.user!;
+  const isPassenger = ride.passengerId === user.userId;
+  const isAssignedDriver = ride.driverId === user.userId;
+  const isAdmin = user.role === 'ADMIN' || user.role === 'CITY_MANAGER';
+
+  // Ownership Guard: Only passenger, assigned driver, or admin
+  if (!isPassenger && !isAssignedDriver && !isAdmin) {
+    if (user.role === 'DRIVER') {
+      // Drivers who are not assigned see NO passengerPhone and NO verificationOtp
+      const sanitizedRide: Partial<RideRequest> = {
+        ...ride,
+        passengerPhone: undefined,
+        verificationOtp: undefined
+      };
+      const driverOffers = db.getOffersForRide(ride.id).filter((o) => o.driverId === user.userId);
+      return res.json({ ride: sanitizedRide, offers: driverOffers });
+    }
+    return res.status(403).json({ error: 'Forbidden: You do not have permission to view this ride' });
+  }
+
+  // Assigned driver does not see verificationOtp in advance (the passenger holds it until pickup)
+  const responseRide = { ...ride };
+  if (!isPassenger && !isAdmin && isAssignedDriver) {
+    responseRide.verificationOtp = undefined;
+  }
+
   const offers = db.getOffersForRide(ride.id);
-  return res.json({ ride, offers });
+  return res.json({ ride: responseRide, offers });
 });
 
 app.get('/api/rides/passenger/active-ride', AuthService.requireAuth, (req: AuthenticatedRequest, res) => {
@@ -536,7 +678,18 @@ app.get('/api/rides/driver/feed', AuthService.requireAuth, (req: AuthenticatedRe
 
 app.post('/api/rides/:id/offer', AuthService.requireAuth, (req: AuthenticatedRequest, res) => {
   const rideId = req.params.id as string;
-  const { counterFarePkr, etaMinutes } = req.body;
+  const offerSchema = z.object({
+    counterFarePkr: z
+      .number({ invalid_type_error: 'Counter fare must be a valid number' })
+      .positive('Counter offer fare must be a valid positive amount')
+      .max(500000, 'Counter offer fare cannot exceed PKR 500,000'),
+    etaMinutes: z.number().int().positive().optional()
+  });
+  const parseResult = offerSchema.safeParse(req.body);
+  if (!parseResult.success) {
+    return res.status(400).json({ error: parseResult.error.errors[0]?.message || 'Counter offer fare must be a valid positive amount' });
+  }
+  const { counterFarePkr, etaMinutes } = parseResult.data;
 
   const driverProfile = db.getDriverProfile(req.user!.userId);
   if (!driverProfile || driverProfile.verificationStatus !== 'APPROVED') {
@@ -553,12 +706,7 @@ app.post('/api/rides/:id/offer', AuthService.requireAuth, (req: AuthenticatedReq
     return res.status(400).json({ error: 'This ride is no longer accepting offers' });
   }
 
-  const numFare = Number(counterFarePkr);
-  if (isNaN(numFare) || numFare <= 0 || numFare > 500000) {
-    return res.status(400).json({ error: 'Counter offer fare must be a valid positive amount' });
-  }
-
-  const counterFarePaisa = Math.round(numFare * 100);
+  const counterFarePaisa = Math.round(counterFarePkr * 100);
 
   const offer: RideOffer = {
     id: 'off-' + uuidv4().substring(0, 8),
@@ -595,13 +743,28 @@ app.post('/api/rides/:id/offer', AuthService.requireAuth, (req: AuthenticatedReq
 
 app.post('/api/rides/:id/bump-fare', AuthService.requireAuth, (req: AuthenticatedRequest, res) => {
   const rideId = req.params.id as string;
-  const { bumpAmountPkr } = req.body;
+  const bumpSchema = z.object({
+    bumpAmountPkr: z.number().min(1, 'Bump amount must be at least PKR 1').max(500, 'Bump amount cannot exceed PKR 500')
+  });
+  const parseResult = bumpSchema.safeParse(req.body);
+  if (!parseResult.success) {
+    return res.status(400).json({ error: parseResult.error.errors[0]?.message || 'Invalid bump amount (max PKR 500)' });
+  }
+  const { bumpAmountPkr } = parseResult.data;
+
   const ride = db.getRide(rideId);
   if (!ride) return res.status(404).json({ error: 'Ride not found' });
+
   if (ride.passengerId !== req.user!.userId) {
     return res.status(403).json({ error: 'Only requesting passenger can raise fare' });
   }
-  const addPaisa = Math.round((Number(bumpAmountPkr) || 25) * 100);
+
+  // State guard: bump-fare only while status is OFFERS_OPEN (or REQUESTED)
+  if (ride.status !== 'OFFERS_OPEN' && ride.status !== 'REQUESTED') {
+    return res.status(400).json({ error: 'Fare can only be bumped while ride is accepting offers (OFFERS_OPEN)' });
+  }
+
+  const addPaisa = Math.round(bumpAmountPkr * 100);
   ride.proposedFarePaisa += addPaisa;
   ride.updatedAt = new Date().toISOString();
   db.saveRide(ride);
@@ -703,18 +866,36 @@ app.post('/api/rides/:id/transition', AuthService.requireAuth, (req: Authenticat
 // Chat Endpoints
 app.post('/api/rides/:id/chat', AuthService.requireAuth, (req: AuthenticatedRequest, res) => {
   const rideId = req.params.id as string;
-  const { text } = req.body;
-  if (!text) return res.status(400).json({ error: 'Message text is required' });
+  const chatSchema = z.object({
+    text: z.string().min(1, 'Message text is required').max(500, 'Message cannot exceed 500 characters')
+  });
+  const parseResult = chatSchema.safeParse(req.body);
+  if (!parseResult.success) {
+    return res.status(400).json({ error: parseResult.error.errors[0]?.message || 'Invalid message' });
+  }
+  const { text } = parseResult.data;
 
   const ride = db.getRide(rideId);
   if (!ride) return res.status(404).json({ error: 'Ride not found' });
 
+  // Ownership Guard: Only passenger or assigned driver (or admin) can chat
+  const user = req.user!;
+  const isParticipant =
+    ride.passengerId === user.userId ||
+    ride.driverId === user.userId ||
+    user.role === 'ADMIN' ||
+    user.role === 'CITY_MANAGER';
+
+  if (!isParticipant) {
+    return res.status(403).json({ error: 'Forbidden: You are not a participant in this ride' });
+  }
+
   const msg = {
     id: 'msg-' + uuidv4().substring(0, 8),
     rideId,
-    senderId: req.user!.userId,
-    senderName: req.user!.fullName,
-    senderRole: req.user!.role,
+    senderId: user.userId,
+    senderName: user.fullName,
+    senderRole: user.role,
     text,
     timestamp: new Date().toISOString()
   };
@@ -732,22 +913,54 @@ app.post('/api/rides/:id/chat', AuthService.requireAuth, (req: AuthenticatedRequ
   return res.status(201).json({ message: msg });
 });
 
-app.get('/api/rides/:id/chat', AuthService.requireAuth, (req, res) => {
+app.get('/api/rides/:id/chat', AuthService.requireAuth, (req: AuthenticatedRequest, res) => {
   const rideId = req.params.id as string;
   const ride = db.getRide(rideId);
   if (!ride) return res.status(404).json({ error: 'Ride not found' });
+
+  // Ownership Guard: Only passenger or assigned driver (or admin) can view chat
+  const user = req.user!;
+  const isParticipant =
+    ride.passengerId === user.userId ||
+    ride.driverId === user.userId ||
+    user.role === 'ADMIN' ||
+    user.role === 'CITY_MANAGER';
+
+  if (!isParticipant) {
+    return res.status(403).json({ error: 'Forbidden: You are not a participant in this ride' });
+  }
+
   return res.json({ messages: ride.chatMessages || [] });
 });
 
 // Rating & Reviews
 app.post('/api/rides/:id/rate', AuthService.requireAuth, (req: AuthenticatedRequest, res) => {
   const rideId = req.params.id as string;
-  const { rating, reviewComment } = req.body;
+  const rateSchema = z.object({
+    rating: z.number().int().min(1, 'Rating must be between 1 and 5').max(5, 'Rating must be between 1 and 5'),
+    reviewComment: z.string().max(500, 'Review comment cannot exceed 500 characters').optional()
+  });
+  const parseResult = rateSchema.safeParse(req.body);
+  if (!parseResult.success) {
+    return res.status(400).json({ error: parseResult.error.errors[0]?.message || 'Invalid rating' });
+  }
+  const { rating, reviewComment } = parseResult.data;
 
   const ride = db.getRide(rideId);
   if (!ride) return res.status(404).json({ error: 'Ride not found' });
 
-  ride.rating = Number(rating) || 5;
+  // Ownership & Status Guards
+  if (ride.passengerId !== req.user!.userId) {
+    return res.status(403).json({ error: 'Forbidden: Only the passenger can rate this ride' });
+  }
+  if (ride.status !== 'COMPLETED') {
+    return res.status(400).json({ error: 'Ride can only be rated once COMPLETED' });
+  }
+  if (ride.rating !== undefined) {
+    return res.status(400).json({ error: 'This ride has already been rated' });
+  }
+
+  ride.rating = rating;
   ride.reviewComment = reviewComment || '';
   db.saveRide(ride);
 
@@ -756,7 +969,7 @@ app.post('/api/rides/:id/rate', AuthService.requireAuth, (req: AuthenticatedRequ
     if (driverProfile) {
       const currentTotal = driverProfile.ratingAverage * driverProfile.ratingCount;
       driverProfile.ratingCount += 1;
-      driverProfile.ratingAverage = Math.round(((currentTotal + ride.rating) / driverProfile.ratingCount) * 10) / 10;
+      driverProfile.ratingAverage = Math.round(((currentTotal + rating) / driverProfile.ratingCount) * 10) / 10;
       db.saveDriverProfile(driverProfile);
     }
   }
@@ -943,7 +1156,17 @@ app.get('/api/admin/drivers', AuthService.requireAuth, AuthService.requireRole([
 });
 
 app.post('/api/admin/drivers/:userId/approve', AuthService.requireAuth, AuthService.requireRole(['ADMIN', 'CITY_MANAGER']), (req: AuthenticatedRequest, res) => {
-  const { status, reason } = req.body;
+  const approveSchema = z.object({
+    status: z.enum(['APPROVED', 'SUSPENDED', 'REJECTED', 'UNDER_REVIEW'], {
+      errorMap: () => ({ message: 'Status must be one of: APPROVED, SUSPENDED, REJECTED, UNDER_REVIEW' })
+    }),
+    reason: z.string().optional()
+  });
+  const parseResult = approveSchema.safeParse(req.body);
+  if (!parseResult.success) {
+    return res.status(400).json({ error: parseResult.error.errors[0]?.message || 'Invalid status. Must be APPROVED, SUSPENDED, REJECTED, or UNDER_REVIEW' });
+  }
+  const { status, reason } = parseResult.data;
   const targetUserId = req.params.userId as string;
   const profile = db.getDriverProfile(targetUserId);
   if (!profile) return res.status(404).json({ error: 'Driver not found' });

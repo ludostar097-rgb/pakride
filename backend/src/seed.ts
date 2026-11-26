@@ -5,7 +5,16 @@ import { PILOT_ZONES } from './shared/constants.js';
 export async function seedDemoData() {
   console.log('[SEED] Seeding synthetic demonstration data...');
 
-  const passwordHash = await AuthService.hashPassword('pakride123');
+  const defaultPasswordHash = await AuthService.hashPassword('pakride123');
+
+  function saveSeedUser(user: any) {
+    const existing = db.getUser(user.id) || db.getUserByPhone(user.phone);
+    if (existing && existing.passwordHash) {
+      // NEVER overwrite an existing user's password hash!
+      user.passwordHash = existing.passwordHash;
+    }
+    db.saveUser(user);
+  }
 
   // 1. Ensure Pilot Zone
   for (const zone of PILOT_ZONES) {
@@ -20,9 +29,9 @@ export async function seedDemoData() {
     role: 'PASSENGER' as const,
     languagePreference: 'en' as const,
     createdAt: new Date().toISOString(),
-    passwordHash
+    passwordHash: defaultPasswordHash
   };
-  db.saveUser(passenger1);
+  saveSeedUser(passenger1);
 
   const passenger2 = {
     id: 'user-passenger-2',
@@ -31,9 +40,9 @@ export async function seedDemoData() {
     role: 'PASSENGER' as const,
     languagePreference: 'ur' as const,
     createdAt: new Date().toISOString(),
-    passwordHash
+    passwordHash: defaultPasswordHash
   };
-  db.saveUser(passenger2);
+  saveSeedUser(passenger2);
 
   // 3. Seed Driver 1 (Car - Approved & Online)
   const driver1User = {
@@ -43,9 +52,9 @@ export async function seedDemoData() {
     role: 'DRIVER' as const,
     languagePreference: 'ur' as const,
     createdAt: new Date().toISOString(),
-    passwordHash
+    passwordHash: defaultPasswordHash
   };
-  db.saveUser(driver1User);
+  saveSeedUser(driver1User);
 
   const vehicle1 = {
     id: 'veh-car-1',
@@ -83,9 +92,9 @@ export async function seedDemoData() {
     role: 'DRIVER' as const,
     languagePreference: 'ur' as const,
     createdAt: new Date().toISOString(),
-    passwordHash
+    passwordHash: defaultPasswordHash
   };
-  db.saveUser(driver2User);
+  saveSeedUser(driver2User);
 
   const vehicle2 = {
     id: 'veh-moto-1',
@@ -123,9 +132,9 @@ export async function seedDemoData() {
     role: 'DRIVER' as const,
     languagePreference: 'ur' as const,
     createdAt: new Date().toISOString(),
-    passwordHash
+    passwordHash: defaultPasswordHash
   };
-  db.saveUser(driver3User);
+  saveSeedUser(driver3User);
 
   const vehicle3 = {
     id: 'veh-rick-1',
@@ -163,9 +172,9 @@ export async function seedDemoData() {
     role: 'DRIVER' as const,
     languagePreference: 'en' as const,
     createdAt: new Date().toISOString(),
-    passwordHash
+    passwordHash: defaultPasswordHash
   };
-  db.saveUser(driver4User);
+  saveSeedUser(driver4User);
 
   const vehicle4 = {
     id: 'veh-car-pending',
@@ -201,9 +210,9 @@ export async function seedDemoData() {
     role: 'ADMIN' as const,
     languagePreference: 'en' as const,
     createdAt: new Date().toISOString(),
-    passwordHash
+    passwordHash: defaultPasswordHash
   };
-  db.saveUser(adminUser);
+  saveSeedUser(adminUser);
 
   // 8. Seed City Manager
   const managerUser = {
@@ -213,9 +222,9 @@ export async function seedDemoData() {
     role: 'CITY_MANAGER' as const,
     languagePreference: 'en' as const,
     createdAt: new Date().toISOString(),
-    passwordHash
+    passwordHash: defaultPasswordHash
   };
-  db.saveUser(managerUser);
+  saveSeedUser(managerUser);
 
   console.log('[SEED] Demo data successfully initialized.');
 }

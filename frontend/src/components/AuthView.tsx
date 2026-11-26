@@ -249,7 +249,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
                 <input
                   type="tel"
                   required
-                  placeholder="03001234567"
+                  placeholder="03XX XXXXXXX"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
                   className="w-full pl-9 pr-4 py-2.5 bg-white/70 dark:bg-slate-900/60 border border-slate-200 dark:border-white/10 rounded-xl text-sm font-semibold text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-pakgreen-500 transition"
@@ -266,7 +266,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
                 <input
                   type="password"
                   required
-                  placeholder="••••••••"
+                  placeholder={isUrdu ? 'پاس ورڈ درج کریں' : 'Enter your password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="w-full pl-9 pr-4 py-2.5 bg-white/70 dark:bg-slate-900/60 border border-slate-200 dark:border-white/10 rounded-xl text-sm font-semibold text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-pakgreen-500 transition"
@@ -320,7 +320,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
                 <input
                   type="tel"
                   required
-                  placeholder="03001234567"
+                  placeholder="03XX XXXXXXX"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
                   className="w-full pl-9 pr-4 py-2.5 bg-white/70 dark:bg-slate-900/60 border border-slate-200 dark:border-white/10 rounded-xl text-sm font-semibold text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-pakgreen-500 transition"
@@ -369,7 +369,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
                 <input
                   type="password"
                   required
-                  placeholder="••••••••"
+                  placeholder={isUrdu ? 'پاس ورڈ درج کریں' : 'Enter a password (min 6 chars)'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="w-full pl-9 pr-4 py-2.5 bg-white/70 dark:bg-slate-900/60 border border-slate-200 dark:border-white/10 rounded-xl text-sm font-semibold text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-pakgreen-500 transition"
@@ -407,7 +407,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
                   <input
                     type="tel"
                     required
-                    placeholder="03001234567"
+                    placeholder="03XX XXXXXXX"
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
                     className="w-full pl-9 pr-4 py-2.5 bg-white/70 dark:bg-slate-900/60 border border-slate-200 dark:border-white/10 rounded-xl text-sm font-semibold text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-pakgreen-500 transition"
@@ -433,7 +433,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
                 <input
                   type="text"
                   required
-                  placeholder="e.g. 7788"
+                  placeholder={isUrdu ? '6 ہندسوں کا کوڈ' : '6-digit OTP code'}
                   value={resetOtp}
                   onChange={(e) => setResetOtp(e.target.value)}
                   className="w-full pl-9 pr-4 py-2.5 bg-white/70 dark:bg-slate-900/60 border border-slate-200 dark:border-white/10 rounded-xl text-sm font-semibold text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-pakgreen-500 transition font-mono tracking-wider"
@@ -450,7 +450,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
                 <input
                   type="password"
                   required
-                  placeholder="••••••••"
+                  placeholder={isUrdu ? 'نیا پاس ورڈ' : 'Enter new password'}
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
                   className="w-full pl-9 pr-4 py-2.5 bg-white/70 dark:bg-slate-900/60 border border-slate-200 dark:border-white/10 rounded-xl text-sm font-semibold text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-pakgreen-500 transition"

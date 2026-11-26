@@ -1,3 +1,6 @@
+import dotenv from 'dotenv';
+dotenv.config();
+
 import { db } from '../db/store.js';
 import { AuthService } from '../services/auth.js';
 import { PricingService } from '../services/pricing.js';

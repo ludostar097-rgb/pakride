@@ -1,3 +1,6 @@
+import dotenv from 'dotenv';
+dotenv.config();
+
 import { describe, it } from 'node:test';
 import assert from 'node:assert';
 import { db } from '../db/store.js';

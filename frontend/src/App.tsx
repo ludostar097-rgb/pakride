@@ -230,12 +230,14 @@ export const App: React.FC = () => {
             <div className="flex items-center space-x-2 bg-white/5 backdrop-blur-md px-3.5 py-1.5 rounded-xl border border-white/10 shadow-inner">
               {currentUser.role === 'PASSENGER' && <Car className="w-4 h-4 text-emerald-400" />}
               {currentUser.role === 'DRIVER' && <Navigation className="w-4 h-4 text-cyan-400" />}
-              {currentUser.role === 'ADMIN' && <Shield className="w-4 h-4 text-amber-400" />}
+              {(currentUser.role === 'ADMIN' || currentUser.role === 'CITY_MANAGER') && <Shield className="w-4 h-4 text-amber-400" />}
               <span className="text-xs font-bold text-slate-200">
                 {currentUser.role === 'PASSENGER'
                   ? (lang === 'ur' ? 'مسافر پورٹل' : 'Passenger Portal')
                   : currentUser.role === 'DRIVER'
                   ? (lang === 'ur' ? 'کیپٹن / ڈرائیور پورٹل' : 'Captain Portal')
+                  : currentUser.role === 'CITY_MANAGER'
+                  ? (lang === 'ur' ? 'سٹی مینیجر پورٹل' : 'City Manager Console')
                   : (lang === 'ur' ? 'ایڈمن کنٹرول' : 'Admin Console')}
               </span>
             </div>
@@ -321,31 +323,28 @@ export const App: React.FC = () => {
             )}
 
             {currentUser.role === 'DRIVER' && (
-              <DriverView
-                key={`driver-${currentUser.id}`}
-                socket={socket}
-                currentUser={currentUser}
-                authToken={authToken}
-                driverProfile={
-                  driverProfile || {
-                    id: `prof-${currentUser.id}`,
-                    userId: currentUser.id,
-                    verificationStatus: 'APPROVED',
-                    isOnline: false,
-                    activeCityId: 'city-islamabad',
-                    activeZoneId: 'zone-isb-central',
-                    ratingAverage: 5.0,
-                    ratingCount: 0,
-                    vehicle: undefined
-                  }
-                }
-                lang={lang}
-                t={t}
-                apiBaseUrl={API_BASE_URL}
-              />
+              driverProfile ? (
+                <DriverView
+                  key={`driver-${currentUser.id}`}
+                  socket={socket}
+                  currentUser={currentUser}
+                  authToken={authToken}
+                  driverProfile={driverProfile}
+                  lang={lang}
+                  t={t}
+                  apiBaseUrl={API_BASE_URL}
+                />
+              ) : (
+                <div className="flex flex-col items-center justify-center p-12 glass-panel rounded-3xl text-center max-w-md mx-auto my-12">
+                  <div className="w-8 h-8 border-2 border-pakgreen-500 border-t-transparent rounded-full animate-spin mb-4" />
+                  <p className="text-sm font-bold text-slate-700 dark:text-slate-300">
+                    {lang === 'ur' ? 'ڈرائیور پروفائل لوڈ ہو رہا ہے...' : 'Loading Driver Profile...'}
+                  </p>
+                </div>
+              )
             )}
 
-            {currentUser.role === 'ADMIN' && (
+            {(currentUser.role === 'ADMIN' || currentUser.role === 'CITY_MANAGER') && (
               <AdminView
                 currentUser={currentUser}
                 lang={lang}

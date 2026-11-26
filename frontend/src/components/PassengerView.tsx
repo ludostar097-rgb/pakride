@@ -42,7 +42,7 @@ export const PassengerView: React.FC<PassengerViewProps> = ({
   const savedRecents = GeocodingService.getRecentLocations();
   const defaultHubs = GeocodingService.getPopularHubsForLocation();
   const [pickup, setPickup] = useState<LocationCoordinates>(savedRecents[0] || defaultHubs[0]);
-  const [destination, setDestination] = useState<LocationCoordinates>(savedRecents[1] || defaultHubs[1]);
+  const [destination, setDestination] = useState<LocationCoordinates | null>(null);
   const [pickupNotes, setPickupNotes] = useState<string>('');
   const [recentChips, setRecentChips] = useState<LocationCoordinates[]>(
     savedRecents.length > 0 ? savedRecents : defaultHubs

@@ -56,11 +56,31 @@ export class RideStateMachine {
       if (actorRole === 'DRIVER' && ride.driverId !== actorId) {
         return { success: false, error: 'You are not the assigned driver for this ride' };
       }
-      // Verify OTP PIN on trip start
+      // Verify OTP PIN on trip start (max 5 attempts then lock)
       if (newStatus === 'IN_PROGRESS' && actorRole === 'DRIVER' && ride.verificationOtp) {
-        if (!otp || otp.trim() !== ride.verificationOtp.trim()) {
-          return { success: false, error: 'Incorrect 4-digit Ride PIN. Please ask passenger for the PIN.' };
+        if (!ride.pinAttempts) ride.pinAttempts = 0;
+        if (ride.pinAttempts >= 5) {
+          ride.status = 'DISPUTED';
+          ride.disputeReason = 'Ride PIN attempts exceeded maximum limit (5 attempts). Ride locked for security.';
+          db.saveRide(ride);
+          return { success: false, error: 'Maximum PIN attempts exceeded (5). Ride is now locked.' };
         }
+        if (!otp || otp.trim() !== ride.verificationOtp.trim()) {
+          ride.pinAttempts += 1;
+          if (ride.pinAttempts >= 5) {
+            ride.status = 'DISPUTED';
+            ride.disputeReason = 'Ride PIN attempts exceeded maximum limit (5 attempts). Ride locked for security.';
+            db.saveRide(ride);
+            return { success: false, error: 'Maximum PIN attempts exceeded (5). Ride is now locked.' };
+          }
+          db.saveRide(ride);
+          return {
+            success: false,
+            error: `Incorrect 4-digit Ride PIN. Attempt ${ride.pinAttempts} of 5. Please ask passenger for the PIN.`
+          };
+        }
+        // Correct PIN entered
+        ride.pinAttempts = 0;
       }
     }
 

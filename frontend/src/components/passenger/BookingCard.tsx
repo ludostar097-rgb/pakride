@@ -9,8 +9,8 @@ interface BookingCardProps {
   setCategory: (c: VehicleCategory) => void;
   pickup: LocationCoordinates;
   setPickup: (loc: LocationCoordinates) => void;
-  destination: LocationCoordinates;
-  setDestination: (loc: LocationCoordinates) => void;
+  destination: LocationCoordinates | null;
+  setDestination: (loc: LocationCoordinates | null) => void;
   recentChips: LocationCoordinates[];
   fareEstimate: {
     distanceKm: number;

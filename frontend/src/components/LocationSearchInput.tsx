@@ -6,7 +6,7 @@ import { GeocodingService } from '../services/geocoding';
 interface LocationSearchInputProps {
   label: string;
   iconColor: string;
-  value: LocationCoordinates;
+  value?: LocationCoordinates | null;
   onChange: (loc: LocationCoordinates) => void;
   placeholder: string;
   userLocation?: { lat: number; lng: number };
@@ -26,7 +26,7 @@ export const LocationSearchInput: React.FC<LocationSearchInputProps> = ({
   onLocateGps,
   isLocating = false
 }) => {
-  const [query, setQuery] = useState(value.address || '');
+  const [query, setQuery] = useState(value?.address || '');
   const [isOpen, setIsOpen] = useState(false);
   const [results, setResults] = useState<LocationCoordinates[]>([]);
   const [didYouMean, setDidYouMean] = useState<string | undefined>();
@@ -37,8 +37,8 @@ export const LocationSearchInput: React.FC<LocationSearchInputProps> = ({
 
   // Sync internal query when external value changes
   useEffect(() => {
-    setQuery(value.address || '');
-  }, [value.address]);
+    setQuery(value?.address || '');
+  }, [value?.address]);
 
   // Load recents & popular hubs on mount
   useEffect(() => {
@@ -109,7 +109,7 @@ export const LocationSearchInput: React.FC<LocationSearchInputProps> = ({
           <span className={`w-2.5 h-2.5 rounded-full ${iconColor} inline-block shadow-sm`} />
           <span>{label}</span>
         </span>
-        {value.landmark && (
+        {value?.landmark && (
           <span className="text-[10px] text-slate-400 dark:text-slate-500 font-normal truncate max-w-[150px]">
             {value.landmark}
           </span>

@@ -133,6 +133,7 @@ export interface RideRequest {
   proposedFarePaisa: number;
   agreedFarePaisa?: number;
   verificationOtp?: string; // 4-digit security PIN to start trip
+  pinAttempts?: number;
   status: RideStatus;
   driverId?: string;
   driverName?: string;
@@ -145,6 +146,7 @@ export interface RideRequest {
   paymentMethod: PaymentMethod;
   paymentStatus: PaymentStatus;
   cancellationReason?: string;
+  disputeReason?: string;
   cancelledBy?: 'PASSENGER' | 'DRIVER' | 'SYSTEM' | 'ADMIN';
   createdAt: string;
   updatedAt: string;
