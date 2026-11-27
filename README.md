@@ -131,7 +131,7 @@ npm run dev
 
 ### Deploying Frontend to Vercel
 1. Go to [vercel.com](https://vercel.com) and click **"Add New Project"**.
-2. Select your repository: **`ludostar097-rgb/pakride`**.
+2. Select your repository: **`ab069/pakride`** (or **`ludostar097-rgb/pakride`**).
 3. Set **Root Directory** to `frontend` (or keep root; both `vercel.json` files are configured).
 4. Add environment variable:
    ```env
