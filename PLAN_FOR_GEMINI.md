@@ -34,22 +34,19 @@ Typecheck passes and backend tests pass. Since then Gemini committed Phase 1.1 (
 
 ---
 
-## Status update — after Gemini commit `73bc426` ("Phase 1.1")
+## Status update — after Phase 1.2 implementation (`35dfd1a`)
 
-**What Gemini actually did:** a new login screen (AuthView), removed the Passenger/Driver/Admin switcher tabs
-and the `mock-token` fallbacks, and made the dev quick-login buttons show only in local dev. That's a real
-improvement. **Nothing on the backend was changed.**
+**What was completed in Phase 1.2 & Phase 1.1 leftovers:**
+- ✅ **Strict JWT Security:** Server refuses to start without `JWT_SECRET`.
+- ✅ **Dynamic 6-Digit Random OTP:** Retired `7788`. Random cryptographic OTP dispatched via `ISmsService`, hashed with SHA-256, 5-minute expiry, max 5 attempts, never exposed in response body.
+- ✅ **Express Rate Limiting:** Added 10 requests / 15 min for auth, 5 / hr for password resets.
+- ✅ **5-Attempt PIN Lockout:** 5 wrong PIN attempts transitions ride to `DISPUTED` and locks it.
+- ✅ **Seed Preservation:** `seedDemoData()` preserves existing user passwords and hashes.
+- ✅ **Ownership Checks & Sanitization:** `GET /api/rides/:id` sanitizes passenger phone and OTP; `POST /api/rides/:id/rate` restricted to passenger once for completed rides; `POST /api/rides/:id/bump-fare` capped at PKR 500 when OFFERS_OPEN; strict status enum validation on driver approval.
+- ✅ **Phase 1.1 Leftovers Fixed:** Deleted `AuthModal.tsx`, removed fake driver profile fallback in `App.tsx`, added `CITY_MANAGER` routing, cleaned `AuthView` placeholders, set booking destination to `null` by default (no 1,528 km route).
+- ✅ **Automated Tests:** 24/24 tests pass (8 E2E + 10 Security & Persistence + 6 Multi-City).
 
-**Still wrong in the Phase 1.1 commit:**
-1. `App.tsx` still invents a driver profile if the real one fails to load — and now marks it
-   `verificationStatus: 'APPROVED'` with zone `zone-isb-central`, **a zone that doesn't exist**. Delete it;
-   show a loading/error state instead.
-2. `AuthModal.tsx` is still in the repo (dead code) with the `7788` "Use Demo Code" box. Delete the file.
-3. A `CITY_MANAGER` user can log in but `App.tsx` renders nothing for that role (blank screen).
-4. The login form placeholder is a real seeded phone number (`03001234567`) and the password placeholder is
-   `••••••••`, so the form looks pre-filled. Use "03XX XXXXXXX" and an empty password placeholder.
-5. Sign-up has no SMS verification, no "confirm password", no terms checkbox.
-6. Booking still opens Islamabad → Karachi, 1,528 km, PKR 68,965.
+➡ **Next Up:** Prompt 1.3 (Secure the real-time socket).
 
 ### Live end-to-end test (run against the real backend, 26 Nov)
 
