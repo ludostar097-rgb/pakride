@@ -30,48 +30,85 @@ Always add this line to the end of every prompt you give Gemini:
 Typecheck passes and backend tests pass. Since then Gemini committed Phase 1.1 (frontend login only) — see
 "Status update" below. Pricing: 4/10. Vehicle categories: 3 only, no Car Plus / Premium.
 
-**Recommended order now:** 1.2 → 1.3 → 0.2 → 0.1 (leftovers) → 2.1 → 2.5 → 2.6 → 2.2 → 2.4 → 0.3 → Phase 3 → 4 → 5.
+**Recommended order now:** ~~1.2~~ ✅ → **1.2b** → 1.3 → 0.2 → 0.1 (leftovers) → 2.1 → 2.5 → 2.6 → 2.2 → 2.4 → 0.3 → Phase 3 → 4 → 5.
 
 ---
 
-## Status update — after Phase 1.2 implementation (`35dfd1a`)
+## Status update — Claude re-audit of Gemini commit `35dfd1a` ("Phase 1.2"), 26 Nov
 
-**What was completed in Phase 1.2 & Phase 1.1 leftovers:**
-- ✅ **Strict JWT Security:** Server refuses to start without `JWT_SECRET`.
-- ✅ **Dynamic 6-Digit Random OTP:** Retired `7788`. Random cryptographic OTP dispatched via `ISmsService`, hashed with SHA-256, 5-minute expiry, max 5 attempts, never exposed in response body.
-- ✅ **Express Rate Limiting:** Added 10 requests / 15 min for auth, 5 / hr for password resets.
-- ✅ **5-Attempt PIN Lockout:** 5 wrong PIN attempts transitions ride to `DISPUTED` and locks it.
-- ✅ **Seed Preservation:** `seedDemoData()` preserves existing user passwords and hashes.
-- ✅ **Ownership Checks & Sanitization:** `GET /api/rides/:id` sanitizes passenger phone and OTP; `POST /api/rides/:id/rate` restricted to passenger once for completed rides; `POST /api/rides/:id/bump-fare` capped at PKR 500 when OFFERS_OPEN; strict status enum validation on driver approval.
-- ✅ **Phase 1.1 Leftovers Fixed:** Deleted `AuthModal.tsx`, removed fake driver profile fallback in `App.tsx`, added `CITY_MANAGER` routing, cleaned `AuthView` placeholders, set booking destination to `null` by default (no 1,528 km route).
-- ✅ **Automated Tests:** 24/24 tests pass (8 E2E + 10 Security & Persistence + 6 Multi-City).
+Gemini's own summary of this commit is mostly true this time. I re-ran the live attack test against the new code:
+**20 of 29 checks pass (was 14 of 26).**
 
-➡ **Next Up:** Prompt 1.3 (Secure the real-time socket).
-
-### Live end-to-end test (run against the real backend, 26 Nov)
-
-The basic ride works end to end: login → fare → request → driver sees it → counter-offer → accept → wrong
-PIN rejected → right PIN starts → complete → driver earnings updated. ✅
-
-But **12 out of 26 checks failed**, all reproducible:
-
-| Check | Result |
+### Fixed and verified live ✅
+| Check | Now |
 |---|---|
-| Another passenger opens someone else's ride | ❌ Allowed — sees their **phone number and trip PIN** |
-| A stranger posts in someone else's trip chat | ❌ Allowed |
-| A stranger rates someone else's driver 1★ five times | ❌ All 5 accepted (can destroy any driver's rating) |
-| Passenger offers PKR 1 for a car ride | ❌ Accepted |
-| Islamabad → Karachi ride | ❌ Accepted: 1,528 km, PKR 68,930 |
-| Ride from Quetta (no PakRide zone) | ❌ Accepted and priced as **D.G. Khan** |
-| Password-reset code returned by the API | ❌ Returns `7788` |
-| Take over the **Admin** account with reset code `7788` | ❌ **Worked** — admin password changed |
-| Forge an admin login using the default secret in the code | ❌ **Worked** — full admin API access |
-| 30 wrong passwords in a row | ❌ No limit |
-| Admin sets driver status to "BANANA" / commission to 500% | ❌ No validation in the code |
-| Anonymous socket (no login) listens in | ❌ Receives every new ride (with passenger phone) and every offer |
-| Anonymous socket moves a driver on the map | ❌ Moved driver to 0,0 (Atlantic Ocean) |
+| Another passenger opens someone else's ride | ✅ Blocked (403) |
+| Stranger posts in a trip chat / rates a driver | ✅ Blocked (403), 0 of 5 ratings accepted |
+| Reset code returned by the API | ✅ No longer returned; random 6-digit code, hashed, 5 min, 5 tries |
+| Admin takeover with a guessed reset code | ✅ Blocked |
+| Forged admin token with the old default secret | ✅ Rejected; server refuses to start without `JWT_SECRET` |
+| 30 wrong passwords | ✅ Locked after 10 |
+| Driver status "BANANA" | ✅ Rejected |
+| Old login popup with `7788`, fake "APPROVED" driver profile, blank City Manager screen | ✅ Gone / fixed |
+| Booking opens on Islamabad → Karachi | ✅ Destination now starts empty |
 
-➡ **Do Prompt 1.2 and 1.3 next.** Nothing else matters until these are closed.
+### Still failing ❌
+| Check | Result | Fix in |
+|---|---|---|
+| Admin sets commission to 500% | ❌ Accepted — `PUT /api/admin/settings` still saves `req.body` as-is | Prompt 1.2b |
+| PKR 1 car fare | ❌ Accepted | Prompt 2.6 (min 75% of suggested) |
+| Book Islamabad → Karachi (1,528 km) | ❌ Accepted | Prompt 1.2b (60 km cap now), 2.6 |
+| Book from Quetta (no zone) | ❌ Accepted, priced as D.G. Khan | Prompt 1.2b |
+| Driver feed / new-ride broadcast shows passenger phone before a driver is chosen | ❌ Leaks | Prompt 1.2b + 1.3 |
+| Anonymous socket hears every new ride (with phone) and every offer | ❌ Still open | Prompt 1.3 |
+| Anonymous socket moves a driver to 0,0 | ❌ Still open | Prompt 1.3 |
+
+### New problems found in this commit (not caught by tests)
+1. **The Android app will be blocked by CORS.** `capacitor.config.json` uses `androidScheme: "http"`, so the
+   app's origin is `http://localhost`, which is not in the allowed list. Login from the phone app will fail.
+2. **Production has no admin account.** Seeding is now off in production (correct), but nothing else creates
+   an admin, so on Render nobody can approve drivers.
+3. **Rate limiter is mis-configured.** On start, express-rate-limit logs `ERR_ERL_KEY_GEN_IPV6` (IPv6 users
+   can bypass it). Also `trust proxy` is not set, so on Render every user shares the proxy's IP.
+4. **Forgot-password tells attackers which numbers have accounts** (404 "No account found").
+5. **A driver can lock any ride on purpose** by typing 5 wrong PINs (ride goes to DISPUTED). Lock the PIN for
+   10 minutes instead, and notify the passenger.
+6. **The test suite writes into the real `backend/data/pakride_store.json`** (running `npm test` changes a
+   tracked file). Tests must use a temporary data folder.
+7. The driver screen now shows "Loading Driver Profile…" forever if the profile fails to load — needs an error
+   message and a Retry button.
+8. Dummies from Phase 0 still in place: dev quick-login buttons, "Use Demo Photo/Copy/CNIC", `★ 4.9 •
+   Verified Captain`, `driverRating || 4.9`, "You Saved", ETA hard-coded to 4 min, 'CD 70' / 'KHI-0000'
+   vehicle defaults, `'zone-karachi-jauhar'` fallback.
+
+➡ **Next: Prompt 1.2b, then 1.3.** Then continue with the order at the bottom of this file.
+
+### Prompt 1.2b — Finish the backend lockdown
+```
+In backend/src (and frontend/capacitor.config.json):
+1. PUT /api/admin/settings: validate with zod. introductoryCommissionPercent 0–30, every other field typed
+   and bounded; unknown keys rejected (.strict()). Write an audit event with old and new values.
+2. Ride request + calculate-fare: if the pickup is not inside an active zone, return 400 "PakRide is not
+   available here yet". Delete the "nearest zone anywhere in Pakistan" fallback in pricing.ts and the
+   'zone-karachi-jauhar' fallback in server.ts. Reject trips longer than 60 km.
+3. Never send passengerPhone to drivers before they are the selected driver: strip it from
+   /api/rides/driver/feed and from the new_ride_available payload.
+4. express-rate-limit: use the ipKeyGenerator helper in both keyGenerators (fixes ERR_ERL_KEY_GEN_IPV6) and
+   add app.set('trust proxy', 1) for Render.
+5. forgot-password: always return the same 200 message, whether or not the number has an account.
+6. Ride PIN: after 5 wrong tries, block PIN entry for 10 minutes and notify the passenger. Do NOT move the
+   ride to DISPUTED automatically.
+7. Production admin: add a one-time script `npm run create-admin -- --phone 03XXXXXXXXX` that asks for a
+   password and creates an ADMIN user. No admin is created automatically.
+8. Android CORS: set capacitor androidScheme to "https", remove cleartext/allowMixedContent, and add
+   "https://localhost" and "capacitor://localhost" to the default allowed origins.
+9. Tests: point the store at a temp folder (e.g. env PAKRIDE_DATA_DIR) so `npm test` never changes
+   backend/data/pakride_store.json. Add tests for 1, 2, 3, 5 and 6.
+10. Frontend driver screen: if the profile fails to load, show an error and a Retry button, not an endless
+   spinner.
+```
+**Check:** commission 500 → 400. Quetta pickup → "not available here yet". Server log has no
+ERR_ERL_KEY_GEN_IPV6. `git status` is clean after `npm test`. Android app can log in.
 
 ---
 

@@ -70,8 +70,9 @@ export const MapView: React.FC<MapViewProps> = ({
 
     // Map click handler: places pin and performs live Reverse Geocoding
     map.on('click', async (e) => {
-      const lat = Math.round(e.latlng.lat * 10000) / 10000;
-      const lng = Math.round(e.latlng.lng * 10000) / 10000;
+      const wrapped = e.latlng.wrap();
+      const lat = Math.round(wrapped.lat * 10000) / 10000;
+      const lng = Math.round(wrapped.lng * 10000) / 10000;
 
       // Real Reverse Geocoding to get real street/sector name
       const realLoc = await GeocodingService.reverseGeocode(lat, lng);
@@ -102,12 +103,18 @@ export const MapView: React.FC<MapViewProps> = ({
   // Update Pickup Marker
   useEffect(() => {
     if (!mapRef.current) return;
+    // Update Pickup Marker (Airbnb Emerald Vector Badge)
     if (pickup) {
       const pickupIcon = L.divIcon({
-        className: 'custom-pin',
-        html: `<div style="background-color: #00a859; color: white; width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; border: 3px solid white; box-shadow: 0 4px 8px rgba(0,0,0,0.3); font-size: 16px;">📍</div>`,
-        iconSize: [34, 34],
-        iconAnchor: [17, 34]
+        className: 'airbnb-pickup-pin',
+        html: `<div style="display:flex; align-items:center; justify-content:center; width:36px; height:36px;">
+          <div style="position:absolute; width:36px; height:36px; border-radius:50%; background:rgba(5, 150, 105, 0.25); animation:ping 1.8s cubic-bezier(0, 0, 0.2, 1) infinite;"></div>
+          <div style="background:#059669; width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; border:2.5px solid #ffffff; box-shadow:0 4px 12px rgba(0,0,0,0.3); z-index:2;">
+            <div style="background:#ffffff; width:8px; height:8px; border-radius:50%;"></div>
+          </div>
+        </div>`,
+        iconSize: [36, 36],
+        iconAnchor: [18, 18]
       });
 
       if (!pickupMarkerRef.current) {
@@ -121,15 +128,18 @@ export const MapView: React.FC<MapViewProps> = ({
     }
   }, [pickup]);
 
-  // Update Destination Marker
+  // Update Destination Marker (Airbnb Sleek Pill / Badge Marker)
   useEffect(() => {
     if (!mapRef.current) return;
     if (destination) {
       const destIcon = L.divIcon({
-        className: 'custom-pin',
-        html: `<div style="background-color: #ef4444; color: white; width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; border: 3px solid white; box-shadow: 0 4px 8px rgba(0,0,0,0.3); font-size: 16px;">🏁</div>`,
-        iconSize: [34, 34],
-        iconAnchor: [17, 34]
+        className: 'airbnb-dest-pin',
+        html: `<div style="background:#0f172a; color:#ffffff; padding:4px 10px; border-radius:9999px; font-weight:800; font-size:11px; border:2px solid #ffffff; box-shadow:0 6px 16px rgba(0,0,0,0.35); display:inline-flex; align-items:center; gap:5px; white-space:nowrap; font-family:sans-serif;">
+          <span style="color:#ef4444; font-size:10px;">●</span>
+          <span>Destination</span>
+        </div>`,
+        iconSize: [90, 28],
+        iconAnchor: [45, 14]
       });
 
       if (!destMarkerRef.current) {
@@ -143,13 +153,20 @@ export const MapView: React.FC<MapViewProps> = ({
     }
   }, [destination]);
 
-  // Update Driver Marker
+  // Update Driver Marker (Airbnb Vehicle Top-Down Badge)
   useEffect(() => {
     if (!mapRef.current) return;
     if (driverLocation) {
       const driverIcon = L.divIcon({
-        className: 'custom-driver-pin',
-        html: `<div style="background-color: #1e293b; color: white; width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 3px solid #00a859; box-shadow: 0 4px 10px rgba(0,0,0,0.4); font-size: 18px;">🚗</div>`,
+        className: 'airbnb-driver-pin',
+        html: `<div style="background:#059669; color:#ffffff; width:38px; height:38px; border-radius:50%; display:flex; align-items:center; justify-content:center; border:3px solid #ffffff; box-shadow:0 6px 16px rgba(0,0,0,0.35);">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.4-1.7-1.1-2.2L18 8.5C17.3 7.6 16.2 7 15 7H9C7.8 7 6.7 7.6 6 8.5L3.1 10.8C2.4 11.3 2 12.1 2 13v3c0 .6.4 1 1 1h2"/>
+            <circle cx="7" cy="17" r="2.5"/>
+            <path d="M9.5 17h5"/>
+            <circle cx="17" cy="17" r="2.5"/>
+          </svg>
+        </div>`,
         iconSize: [38, 38],
         iconAnchor: [19, 19]
       });

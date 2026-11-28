@@ -130,7 +130,7 @@ export const LocationSearchInput: React.FC<LocationSearchInputProps> = ({
             setIsOpen(true);
           }}
           placeholder={placeholder}
-          className="w-full pl-9 pr-16 py-2.5 text-xs bg-slate-50 dark:bg-slate-900/70 hover:bg-slate-100/70 dark:hover:bg-slate-900/90 focus:bg-white dark:focus:bg-slate-900 border border-slate-300 dark:border-white/10 focus:border-pakgreen-500 dark:focus:border-emerald-500 rounded-xl transition outline-none font-medium text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 shadow-inner"
+          className="w-full pl-9 pr-16 py-3 text-xs bg-neutral-50 dark:bg-neutral-900 hover:bg-neutral-100/80 dark:hover:bg-neutral-800/80 focus:bg-white dark:focus:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 focus:border-neutral-900 dark:focus:border-white rounded-2xl transition outline-none font-medium text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 shadow-2xs"
         />
 
         <div className="absolute right-2 flex items-center space-x-1">
@@ -142,7 +142,7 @@ export const LocationSearchInput: React.FC<LocationSearchInputProps> = ({
                 setResults([]);
                 setDidYouMean(undefined);
               }}
-              className="p-1 hover:bg-slate-200 dark:hover:bg-white/10 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition"
+              className="p-1 hover:bg-neutral-200 dark:hover:bg-neutral-700 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition"
               title="Clear"
             >
               <X className="w-3.5 h-3.5" />
@@ -154,7 +154,7 @@ export const LocationSearchInput: React.FC<LocationSearchInputProps> = ({
               type="button"
               onClick={onLocateGps}
               disabled={isLocating}
-              className={`p-1.5 rounded-lg text-pakgreen-600 dark:text-emerald-400 hover:bg-pakgreen-50 dark:hover:bg-emerald-950/40 border border-pakgreen-200 dark:border-emerald-500/30 shadow-xs transition ${
+              className={`p-1.5 rounded-xl text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/40 shadow-2xs transition ${
                 isLocating ? 'animate-pulse text-amber-500' : ''
               }`}
               title="Use Current GPS Location"

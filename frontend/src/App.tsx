@@ -9,7 +9,11 @@ import {
   Bell,
   LogOut,
   Sun,
-  Moon
+  Moon,
+  Menu,
+  Search,
+  MapPin,
+  Sparkles
 } from 'lucide-react';
 import { PassengerView } from './components/PassengerView';
 import { DriverView } from './components/DriverView';
@@ -206,62 +210,58 @@ export const App: React.FC = () => {
         </div>
       )}
 
-      {/* Modern Glass Header Navigation */}
-      <header className="sticky top-0 z-40 bg-slate-950/80 backdrop-blur-2xl border-b border-white/10 shadow-lg shadow-black/5 text-white transition-all">
-        <div className="max-w-7xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3">
-          {/* Brand Logo */}
-          <div className="flex items-center space-x-3">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-pakgreen-600 to-emerald-400 flex items-center justify-center font-black text-white text-base shadow-md shadow-pakgreen-500/30 border border-white/20">
+      {/* Airbnb-Style Elevated Floating Header Navigation */}
+      <header className="sticky top-0 z-40 bg-white/95 dark:bg-[#0c101a]/95 backdrop-blur-xl border-b border-neutral-200/80 dark:border-white/10 shadow-xs transition-all">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between gap-4">
+          {/* 1. Left: Brand Mark */}
+          <div className="flex items-center space-x-3 cursor-pointer">
+            <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-emerald-600 to-teal-500 flex items-center justify-center font-black text-white text-base shadow-md shadow-emerald-600/25 border border-white/20">
               PR
             </div>
             <div>
-              <div className="font-extrabold text-base tracking-tight flex items-center space-x-2">
+              <div className="font-black text-base text-slate-900 dark:text-white tracking-tight flex items-center space-x-2">
                 <span>{t.brand}</span>
-                <span className="text-[10px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-2 py-0.5 rounded-full font-mono font-bold">
-                  PILOT v2.0
+                <span className="text-[10px] bg-emerald-500/10 text-emerald-800 dark:text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded-full font-bold">
+                  Airbnb Luxe
                 </span>
               </div>
-              <div className="text-[10px] text-slate-400 hidden sm:block">{t.tagline}</div>
+              <div className="text-[11px] text-slate-500 dark:text-slate-400 hidden sm:block font-medium">
+                {t.tagline || 'Transparent Bidding • 0% Commission'}
+              </div>
             </div>
           </div>
 
-          {/* Active Role Indicator (When Authenticated) */}
-          {currentUser && (
-            <div className="flex items-center space-x-2 bg-white/5 backdrop-blur-md px-3.5 py-1.5 rounded-xl border border-white/10 shadow-inner">
-              {currentUser.role === 'PASSENGER' && <Car className="w-4 h-4 text-emerald-400" />}
-              {currentUser.role === 'DRIVER' && <Navigation className="w-4 h-4 text-cyan-400" />}
-              {(currentUser.role === 'ADMIN' || currentUser.role === 'CITY_MANAGER') && <Shield className="w-4 h-4 text-amber-400" />}
-              <span className="text-xs font-bold text-slate-200">
-                {currentUser.role === 'PASSENGER'
-                  ? (lang === 'ur' ? 'مسافر پورٹل' : 'Passenger Portal')
-                  : currentUser.role === 'DRIVER'
-                  ? (lang === 'ur' ? 'کیپٹن / ڈرائیور پورٹل' : 'Captain Portal')
-                  : currentUser.role === 'CITY_MANAGER'
-                  ? (lang === 'ur' ? 'سٹی مینیجر پورٹل' : 'City Manager Console')
-                  : (lang === 'ur' ? 'ایڈمن کنٹرول' : 'Admin Console')}
-              </span>
+          {/* 2. Center: The Iconic Airbnb Floating Search Capsule */}
+          <div className="hidden md:flex items-center airbnb-search-capsule px-4 py-2 cursor-pointer shadow-sm hover:shadow-md transition">
+            <span className="text-xs font-bold text-slate-900 dark:text-white px-2">
+              Anywhere in Pakistan
+            </span>
+            <span className="text-slate-300 dark:text-slate-600 text-sm">|</span>
+            <span className="text-xs font-semibold text-slate-600 dark:text-slate-300 px-2">
+              Where to?
+            </span>
+            <span className="text-slate-300 dark:text-slate-600 text-sm">|</span>
+            <span className="text-xs font-medium text-slate-400 dark:text-slate-400 px-2">
+              Any Ride
+            </span>
+            <div className="w-7 h-7 rounded-full bg-emerald-600 text-white flex items-center justify-center ml-1 shadow-xs">
+              <Search className="w-3.5 h-3.5" />
             </div>
-          )}
+          </div>
 
-          {/* User Controls: Theme, Language, Profile / Logout */}
-          <div className="flex items-center space-x-2">
+          {/* 3. Right: Controls & The Iconic Airbnb Profile Pill */}
+          <div className="flex items-center space-x-2 sm:space-x-3">
             {/* Theme Toggle Button */}
             <button
               type="button"
               onClick={toggleTheme}
-              className="flex items-center space-x-1.5 bg-white/10 hover:bg-white/15 text-slate-200 border border-white/10 px-2.5 py-1.5 rounded-xl text-xs font-bold transition"
+              className="p-2 rounded-full hover:bg-neutral-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 transition"
               title="Toggle Theme"
             >
               {theme === 'dark' ? (
-                <>
-                  <Sun className="w-3.5 h-3.5 text-amber-400" />
-                  <span className="hidden sm:inline">Light</span>
-                </>
+                <Sun className="w-4 h-4 text-amber-400" />
               ) : (
-                <>
-                  <Moon className="w-3.5 h-3.5 text-indigo-300" />
-                  <span className="hidden sm:inline">Dark</span>
-                </>
+                <Moon className="w-4 h-4 text-slate-600" />
               )}
             </button>
 
@@ -269,32 +269,37 @@ export const App: React.FC = () => {
             <button
               type="button"
               onClick={toggleLanguage}
-              className="flex items-center space-x-1 bg-white/10 hover:bg-white/15 text-emerald-400 border border-white/10 px-3 py-1.5 rounded-xl text-xs font-bold transition"
+              className="flex items-center space-x-1.5 px-3 py-1.5 rounded-full hover:bg-neutral-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 text-xs font-bold transition"
             >
-              <Globe className="w-3.5 h-3.5" />
+              <Globe className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
               <span>{t.langToggle}</span>
             </button>
 
-            {/* Profile Pill & Logout (When Logged In) */}
-            {currentUser && (
-              <div className="flex items-center space-x-2 bg-white/10 backdrop-blur-md px-3 py-1.5 rounded-xl border border-white/10">
-                <div className="w-6 h-6 rounded-full bg-gradient-to-tr from-pakgreen-600 to-emerald-400 flex items-center justify-center text-xs font-black text-white shadow-xs">
+            {/* Airbnb User Profile Pill (Hamburger + User Circle) */}
+            {currentUser ? (
+              <div className="airbnb-profile-pill">
+                <Menu className="w-4 h-4 text-slate-500 dark:text-slate-400" />
+                <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-emerald-600 to-teal-500 text-white text-xs font-extrabold flex items-center justify-center shadow-xs">
                   {currentUser.fullName.charAt(0)}
                 </div>
-                <div className="text-left text-xs hidden sm:block">
-                  <div className="font-bold text-white truncate max-w-[110px]">{currentUser.fullName}</div>
-                  <div className="text-[10px] text-emerald-400 font-semibold">{currentUser.role}</div>
+                <div className="hidden sm:block text-left text-xs pr-1">
+                  <div className="font-bold text-slate-800 dark:text-slate-100 truncate max-w-[100px]">
+                    {currentUser.fullName}
+                  </div>
+                  <div className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold leading-tight">
+                    {currentUser.role}
+                  </div>
                 </div>
                 <button
                   type="button"
                   onClick={handleLogout}
-                  className="p-1 hover:bg-white/10 text-red-400 rounded-lg transition ml-1"
+                  className="p-1 hover:bg-neutral-100 dark:hover:bg-slate-700 text-slate-400 hover:text-red-500 rounded-full transition ml-0.5"
                   title="Log out"
                 >
                   <LogOut className="w-3.5 h-3.5" />
                 </button>
               </div>
-            )}
+            ) : null}
           </div>
         </div>
       </header>

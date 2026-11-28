@@ -182,16 +182,16 @@ export const AuthView: React.FC<AuthViewProps> = ({
         </p>
       </div>
 
-      {/* Main Glass Card */}
-      <div className="glass-panel max-w-md w-full p-6 sm:p-8 shadow-2xl border border-white/80 dark:border-white/10 rounded-3xl relative overflow-hidden transition-all">
-        {/* Tab Navigation */}
-        <div className="flex bg-slate-100/80 dark:bg-slate-900/80 backdrop-blur-md p-1 rounded-2xl border border-slate-200/80 dark:border-white/10 mb-6">
+      {/* Main Airbnb Luxury Card */}
+      <div className="airbnb-card max-w-md w-full p-6 sm:p-8 shadow-2xl relative overflow-hidden transition-all">
+        {/* Tab Navigation (Airbnb Segmented Style) */}
+        <div className="flex bg-neutral-100 dark:bg-neutral-900 p-1 rounded-full border border-neutral-200 dark:border-neutral-800 mb-6">
           <button
             type="button"
             onClick={() => { setTab('login'); setError(null); setSuccessMsg(null); }}
-            className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all ${
+            className={`flex-1 py-2 text-xs font-bold rounded-full transition-all ${
               tab === 'login'
-                ? 'bg-pakgreen-600 text-white shadow-md shadow-pakgreen-600/30'
+                ? 'bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 shadow-sm'
                 : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
             }`}
           >
@@ -200,9 +200,9 @@ export const AuthView: React.FC<AuthViewProps> = ({
           <button
             type="button"
             onClick={() => { setTab('signup'); setError(null); setSuccessMsg(null); }}
-            className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all ${
+            className={`flex-1 py-2 text-xs font-bold rounded-full transition-all ${
               tab === 'signup'
-                ? 'bg-pakgreen-600 text-white shadow-md shadow-pakgreen-600/30'
+                ? 'bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 shadow-sm'
                 : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
             }`}
           >
@@ -211,9 +211,9 @@ export const AuthView: React.FC<AuthViewProps> = ({
           <button
             type="button"
             onClick={() => { setTab('forgot'); setError(null); setSuccessMsg(null); }}
-            className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all ${
+            className={`flex-1 py-2 text-xs font-bold rounded-full transition-all ${
               tab === 'forgot'
-                ? 'bg-pakgreen-600 text-white shadow-md shadow-pakgreen-600/30'
+                ? 'bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 shadow-sm'
                 : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
             }`}
           >

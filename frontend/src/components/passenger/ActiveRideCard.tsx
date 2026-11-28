@@ -97,8 +97,8 @@ export const ActiveRideCard: React.FC<ActiveRideCardProps> = ({
   const canCancel = isBiddingSearch || isDriverAssigned;
 
   return (
-    <div className="glass-panel p-6 shadow-2xl border border-white/80 dark:border-white/10 space-y-5 transition-all">
-      {/* CASE 1: inDrive RADAR / SEARCHING LOBBY (Modern Glass Sonar Pulse) */}
+    <div className="airbnb-card p-6 shadow-xl space-y-5 transition-all">
+      {/* CASE 1: inDrive RADAR / SEARCHING LOBBY (Airbnb Elevated Pulse) */}
       {isBiddingSearch && (
         <div className="space-y-4">
           {/* Radar Header */}
@@ -272,27 +272,32 @@ export const ActiveRideCard: React.FC<ActiveRideCardProps> = ({
         </div>
       )}
 
-      {/* Route Addresses Summary */}
-      <div className="p-3.5 glass-panel-subtle rounded-2xl border border-white/70 dark:border-white/10 space-y-2 text-xs text-slate-700 dark:text-slate-300">
-        <div className="truncate">
-          🟢 <span className="font-bold text-slate-900 dark:text-white">Pickup:</span> {activeRide.pickup.address}
+      {/* Route Addresses Summary (Airbnb Style) */}
+      <div className="p-4 airbnb-card-subtle space-y-2 text-xs text-slate-700 dark:text-slate-300">
+        <div className="flex items-center space-x-2 truncate">
+          <span className="w-2 h-2 rounded-full bg-emerald-500 flex-shrink-0"></span>
+          <span className="font-bold text-slate-900 dark:text-white">Pickup:</span>
+          <span className="truncate">{activeRide.pickup.address}</span>
         </div>
-        <div className="truncate">
-          🔴 <span className="font-bold text-slate-900 dark:text-white">Drop-off:</span> {activeRide.destination.address}
+        <div className="flex items-center space-x-2 truncate">
+          <span className="w-2 h-2 rounded-full bg-red-500 flex-shrink-0"></span>
+          <span className="font-bold text-slate-900 dark:text-white">Drop-off:</span>
+          <span className="truncate">{activeRide.destination.address}</span>
         </div>
         {activeRide.pickupNotes && (
-          <div className="text-amber-900 dark:text-amber-300 bg-amber-500/10 dark:bg-amber-950/40 p-2.5 rounded-xl border border-amber-300/40 dark:border-amber-500/30 mt-1 font-semibold text-xs">
-            📌 Gate Note: {activeRide.pickupNotes}
+          <div className="text-amber-900 dark:text-amber-300 bg-amber-500/10 dark:bg-amber-950/40 p-2.5 rounded-xl border border-amber-300/40 dark:border-amber-500/30 mt-1 font-semibold text-xs flex items-center space-x-1.5">
+            <span className="font-bold">Gate Note:</span>
+            <span>{activeRide.pickupNotes}</span>
           </div>
         )}
       </div>
 
-      {/* Action / Safety Bar */}
+      {/* Action / Safety Bar (Airbnb Pill Buttons) */}
       <div className="pt-1 flex flex-col sm:flex-row gap-2.5">
         <button
           type="button"
           onClick={handleShareWhatsApp}
-          className="flex-1 py-3 glass-btn-primary text-white font-extrabold text-xs rounded-xl shadow-md shadow-pakgreen-600/25 flex items-center justify-center space-x-2 transition active:scale-95"
+          className="flex-1 py-3.5 airbnb-btn-primary text-xs rounded-full flex items-center justify-center space-x-2"
         >
           <Share2 className="w-4 h-4" />
           <span>{t.safetyShare || 'Share Trip on WhatsApp'}</span>
@@ -302,7 +307,7 @@ export const ActiveRideCard: React.FC<ActiveRideCardProps> = ({
           <button
             type="button"
             onClick={onOpenSos}
-            className="py-3 px-4 bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 border border-red-500/30 font-black text-xs rounded-xl transition flex items-center justify-center space-x-1.5 active:scale-95 shadow-2xs"
+            className="py-3 px-5 bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 border border-red-500/30 font-black text-xs rounded-full transition flex items-center justify-center space-x-1.5 active:scale-95 shadow-2xs"
           >
             <ShieldAlert className="w-4 h-4" />
             <span>SOS 15</span>
@@ -313,7 +318,7 @@ export const ActiveRideCard: React.FC<ActiveRideCardProps> = ({
           <button
             type="button"
             onClick={() => setShowCancelModal(true)}
-            className="py-3 px-4 rounded-xl border border-red-200 dark:border-red-500/30 hover:bg-red-50 dark:hover:bg-red-950/30 text-red-600 dark:text-red-400 font-bold text-xs flex items-center justify-center space-x-1 transition active:scale-95"
+            className="py-3 px-5 rounded-full border border-neutral-300 dark:border-neutral-700 hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-600 dark:text-neutral-400 font-bold text-xs flex items-center justify-center space-x-1 transition active:scale-95"
           >
             <XCircle className="w-4 h-4" />
             <span>Cancel</span>

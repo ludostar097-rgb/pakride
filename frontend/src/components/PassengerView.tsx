@@ -38,9 +38,11 @@ export const PassengerView: React.FC<PassengerViewProps> = ({
   const [mapTargetMode, setMapTargetMode] = useState<'pickup' | 'destination'>('pickup');
   const [isLocatingGps, setIsLocatingGps] = useState(false);
 
-  // Initialize with dynamic popular hubs or saved user history
-  const savedRecents = GeocodingService.getRecentLocations();
+  // Initialize with dynamic popular hubs or validated saved user history
   const defaultHubs = GeocodingService.getPopularHubsForLocation();
+  const savedRecents = GeocodingService.getRecentLocations().filter(
+    (loc) => loc.lat >= 23 && loc.lat <= 38 && loc.lng >= 60 && loc.lng <= 78
+  );
   const [pickup, setPickup] = useState<LocationCoordinates>(savedRecents[0] || defaultHubs[0]);
   const [destination, setDestination] = useState<LocationCoordinates | null>(null);
   const [pickupNotes, setPickupNotes] = useState<string>('');
@@ -355,9 +357,9 @@ export const PassengerView: React.FC<PassengerViewProps> = ({
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 pb-12">
-      {/* Left Column: Interactive Map with Glass Frame */}
-      <div className="lg:col-span-7 h-[360px] sm:h-[440px] lg:h-[720px] relative lg:sticky lg:top-24">
-        <div className="w-full h-full rounded-3xl p-1.5 glass-panel-subtle shadow-xl border border-white/80 dark:border-white/10 overflow-hidden">
+      {/* Left Column: Airbnb-Style Map Canvas with Subtle Border */}
+      <div className="lg:col-span-7 h-[360px] sm:h-[440px] lg:h-[720px] relative lg:sticky lg:top-20">
+        <div className="w-full h-full rounded-3xl airbnb-card p-1 shadow-lg overflow-hidden">
           <MapView
             pickup={pickup || undefined}
             destination={destination || undefined}
@@ -377,15 +379,21 @@ export const PassengerView: React.FC<PassengerViewProps> = ({
             zoneName={detectedCity}
           />
         </div>
-        <div className="mt-2.5 flex items-center justify-between text-[11px] text-slate-600 dark:text-slate-400 bg-white/75 dark:bg-slate-900/70 backdrop-blur-xl px-4 py-2 rounded-2xl border border-white/80 dark:border-white/10 shadow-xs">
+        <div className="mt-3 flex items-center justify-between text-xs text-slate-600 dark:text-slate-400 bg-white dark:bg-neutral-900 px-4 py-2 rounded-full border border-neutral-200 dark:border-neutral-800 shadow-sm">
           <div className="flex items-center space-x-2">
-            <Compass className="w-3.5 h-3.5 text-pakgreen-600" />
+            <Compass className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
             <span className="font-medium">Tap map anytime to fine-tune route pin</span>
           </div>
-          <div className="flex items-center space-x-1.5 font-bold">
-            <span className="text-emerald-700 bg-emerald-50/80 px-2 py-0.5 rounded-md border border-emerald-200">🟢 Pickup</span>
-            <span>→</span>
-            <span className="text-red-700 bg-red-50/80 px-2 py-0.5 rounded-md border border-red-200">🔴 Drop</span>
+          <div className="flex items-center space-x-2 font-semibold">
+            <span className="flex items-center space-x-1 text-emerald-700 dark:text-emerald-400">
+              <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+              <span>Pickup</span>
+            </span>
+            <span className="text-neutral-400">→</span>
+            <span className="flex items-center space-x-1 text-red-600 dark:text-red-400">
+              <span className="w-2 h-2 rounded-full bg-red-500"></span>
+              <span>Drop</span>
+            </span>
           </div>
         </div>
       </div>
